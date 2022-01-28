@@ -1,16 +1,16 @@
 import asyncio
 from http import HTTPStatus
 import json
-from multiprocessing import AuthenticationError
 from typing import Any, Dict
 
 import aiohttp
 from graphql import OperationType
 from rath.operation import GraphQLResult, Operation
-from rath.transports.base import Transport
+from rath.links.base import TerminatingLink
+from rath.links.errors import AuthenticationError
 
 
-class AIOHttpTransport(Transport):
+class AIOHttpLink(TerminatingLink):
 
     auth_errors = [HTTPStatus.FORBIDDEN]
 
@@ -53,7 +53,7 @@ class AIOHttpTransport(Transport):
             payload["variables"] = operation.variables
             post_kwargs = {"json": payload}
 
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(headers=operation.context.headers) as session:
             async with session.post(self.url, **post_kwargs) as response:
 
                 if response.status == HTTPStatus.OK:

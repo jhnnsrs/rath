@@ -1,6 +1,6 @@
 from asyncio.tasks import create_task
 from typing import Dict
-from rath.transports.errors import TransportError
+from rath.links.errors import TransportError
 from graphql import OperationType
 import websockets
 import json
@@ -14,7 +14,7 @@ import logging
 import uuid
 
 from rath.operation import GraphQLResult, Operation
-from rath.transports.base import Transport
+from rath.links.base import TerminatingLink, Transport
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +46,7 @@ class InvalidPayload(TransportError):
     pass
 
 
-class WebSocketTransport(Transport):
+class WebSocketLink(TerminatingLink):
     def __init__(
         self, url="", allow_reconnect=True, time_between_retries=1, retries=3
     ) -> None:

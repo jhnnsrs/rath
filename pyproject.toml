@@ -13,6 +13,7 @@ aiohttp = "^3.8.1"
 graphql-core = "^3.2.0"
 pydantic = "^1.9.0"
 
+
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"
 pytest-aiohttp = "^1.0.3"

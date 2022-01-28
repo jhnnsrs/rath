@@ -1,6 +1,6 @@
 from koil import koil
 from rath.parsers.base import Parser
-from rath.transports.base import Transport
+from rath.links.base import TerminatingLink
 import asyncio
 from typing import Dict, Any, Optional, List, Union, Callable, Awaitable
 from rath.operation import GraphQLResult, opify
@@ -11,17 +11,18 @@ class Rath:
     parsers: List[Parser]
 
     def __init__(
-        self, parsers: List[Parser], transport: Transport, register=False
+        self, parsers: List[Parser], link: TerminatingLink, register=False
     ) -> None:
         self.parsers = [parser(self) for parser in parsers]  # initialized defered
-        self.transport = transport(self)
+        self.link = link
+        self.link(self)
 
         if register:
             set_current_rath(self)
 
     async def aconnect(self):
         await asyncio.gather(*[parser.aconnect() for parser in self.parsers])
-        await self.transport.aconnect()
+        await self.link.aconnect()
 
     def connect(self):
         return koil(self.aconnect())
@@ -43,7 +44,7 @@ class Rath:
         for parser in self.parsers:
             op = await parser.aparse(op)
 
-        return await self.transport.aquery(
+        return await self.link.aquery(
             op,
         )
 
@@ -61,7 +62,7 @@ class Rath:
             op = parser.parse(op)
 
         return koil(
-            self.transport.aquery(
+            self.link.aquery(
                 op,
             )
         )
@@ -77,10 +78,14 @@ class Rath:
 
         op = opify(query, variables, headers, operation_name, **kwargs)
 
-        for link in self.links:
-            op = link.parse(op)
+        for parser in self.parsers:
+            op = parser.parse(op)
 
-        pass
+        return koil(
+            self.link.asubscribe(
+                op,
+            )
+        )
 
     async def asubscribe(
         self,

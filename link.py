@@ -2,21 +2,17 @@ import asyncio
 from examples.api.schema import aget_random_rep, get_random_rep
 from rath.parsers.file import FileParser
 from rath.rath import Rath
-from rath.transports.aiohttp import AIOHttpTransport
+from rath.links.aiohttp import AIOHttpLink
+from rath.links.token import TokenContinuationLink
+from rath.links.compose import compose
 
 
-test = """
-query User {
-    users {
-        id
-    }
-}
-"""
+link = compose(TokenContinuationLink(), AIOHttpLink("http://localhost:8080/graphql"))
 
 
 RATH = Rath(
     parsers=[FileParser()],
-    transport=AIOHttpTransport("http://localhost:8080/graphql"),
+    link=link,
     register=True,
 )
 
@@ -24,7 +20,7 @@ RATH = Rath(
 async def main():
 
     johannes = await aget_random_rep()
-    print(johannes)
+    print(johannes.store)
 
 
 def hallo():

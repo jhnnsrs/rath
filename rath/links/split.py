@@ -1,19 +1,22 @@
-from typing import Callable
+from typing import Callable, List
 from rath.operation import Operation
-from rath.transports.base import Transport
+from rath.links.base import ContinuationLink, Link, TerminatingLink, Transport
 
 
-class SplitTransport(Transport):
+class SplitTransport(TerminatingLink):
     def __init__(
         self,
-        transport: Transport,
-        transport2: Transport,
+        left: List[Link],
+        right: List[Link],
         split: Callable[[Operation], bool],
     ) -> None:
         super().__init__()
         self.transport = transport
         self.transport2 = transport2
         self.split = split
+
+    async def __call__(self, rath):
+        return super().__call__(rath)
 
     async def aconnect(self) -> None:
         await self.transport.aconnect()
