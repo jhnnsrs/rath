@@ -75,7 +75,7 @@ auth = AuthTokenLink(token_loader=aload_token)
 link = AioHttpLink(url="https://api.spacex.land/graphql/")
 
 
-async def main()
+async def main():
   rath = Rath(links=compose(auth,link))
   await rath.aconnect()
 
