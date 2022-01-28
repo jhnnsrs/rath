@@ -146,9 +146,3 @@ asyncio.run(main())
 ## Examples
 
 This github repository also contains an example client with a turms generated query with the public SpaceX api, as well as a sample of the generated api.
-
-## CLI
-
-```bash
-rath run
-```
