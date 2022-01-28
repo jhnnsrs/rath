@@ -146,3 +146,8 @@ asyncio.run(main())
 ## Examples
 
 This github repository also contains an example client with a turms generated query with the public SpaceX api, as well as a sample of the generated api.
+
+## Parsers
+
+Besides links, there is also support for sequentially parsing of the Operation before it enters the asynchronous links (example in thread upload to
+s3fs), this is aided through parsers that provide both async and sync interfaces.
