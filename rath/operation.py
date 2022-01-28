@@ -31,6 +31,10 @@ class GraphQLResult:
     data: Dict[str, Any]
 
 
+class GraphQLException(Exception):
+    pass
+
+
 def opify(
     query: str,
     variables: Dict[str, Any] = None,

@@ -12,17 +12,8 @@
 
 ## Inspiration
 
-Rath is an Apollo (that typescript thing) like library for python, it supports a link like structure
-to facilitate and multiple links
-
-## Features
-
-- includes modular links to support specificatiosn for
-
-  - Subscriptions (via websockets)
-  - File Uploads (multipart specifications)
-
-- Works well with turms created queries
+Rath is like Apollo, but for python. It adheres to the design principle of Links and enables complex GraphQL
+setups, like seperation of query and subscription endpoints, dynamic token loading, etc..
 
 ## Installation
 
@@ -30,31 +21,127 @@ to facilitate and multiple links
 pip install rath
 ```
 
-## Usage Query
+## Usage Example
 
 ```python
 from rath.links.auth import AuthTokenLink
 from rath.links.aiohttp import AioHttpLink
+from rath.links import compose, split
 from rath.gql import gql
 
+async def aload_token():
+    return "SERVER_TOKEN"
+
+
 auth = AuthTokenLink(token_loader=aload_token)
-link = AioHttpLink(url="http://localhost:3000/graphql")
+link = AioHttpLink(url="https://api.spacex.land/graphql/")
 
 
-rath = Rath(links=[auth,link])
-
+rath = Rath(links=compose(auth,link))
 rath.connect()
 
-query = qgl("query space ex")
+
+query = """query TestQuery {
+  capsules {
+    id
+    missions {
+      flight
+    }
+  }
+}
+"""
 
 result = rath.execute(query)
 ```
 
-Generate beautifully typed Operations, Enums,...
+This example composes both the AuthToken and AioHttp link: During each query the Bearer headers are set to the retrieved token, on authentication fail (for example if Token Expired) the
+AuthToken automatically refetches the token and retries the query.
+
+## Async Usage
+
+Rath is build with koil, for async/sync compatibility but also exposed a complete asynhronous api
+
+```python
+from rath.links.auth import AuthTokenLink
+from rath.links.aiohttp import AioHttpLink
+from rath.links import compose, split
+from rath.gql import gql
+
+async def aload_token():
+    return "SERVER_TOKEN"
+
+
+auth = AuthTokenLink(token_loader=aload_token)
+link = AioHttpLink(url="https://api.spacex.land/graphql/")
+
+
+async def main()
+  rath = Rath(links=compose(auth,link))
+  await rath.aconnect()
+
+
+  query = """query TestQuery {
+    capsules {
+      id
+      missions {
+        flight
+      }
+    }
+  }
+  """
+
+  result = await rath.aexecute(query)
+
+asyncio.run(main())
+```
+
+## Included Links
+
+- Reconnecting WebsocketLink (untested)
+- AioHttpLink (supports multipart uploads)
+- SplitLink (allows to split the terminating link - Subscription into WebsocketLink, Query, Mutation into Aiohttp)
+- AuthTokenLink (Token insertion with automatic refresh)
 
 ### Why Rath
 
 Well "apollo" is already taken as a name, and rath (according to wikipedia) is an etruscan deity identified with Apollo.
+
+## Rath + Turms
+
+Rath works especially well with turms generated typed operations:
+
+```python
+import asyncio
+from examples.api.schema import aget_capsules
+from rath.rath import Rath
+from rath.links.aiohttp import AIOHttpLink
+from rath.links.auth import AuthTokenLink
+from rath.links.compose import compose
+
+
+async def token_loader():
+    return ""
+
+
+link = compose(
+    AuthTokenLink(token_loader), AIOHttpLink("https://api.spacex.land/graphql/")
+)
+
+
+RATH = Rath(
+    link=link,
+    register=True, # allows global access (singleton-antipattern, but rath has no state)
+)
+
+
+async def main():
+    capsules = await aget_capsules() # fully typed pydantic powered dataclasses generated through turms
+    print(capsules)
+
+
+asyncio.run(main())
+
+```
 
 ## Examples
 

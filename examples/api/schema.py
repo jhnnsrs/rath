@@ -3,219 +3,199 @@ from turms.types.object import GraphQLObject
 from pydantic.fields import Field
 from typing import Optional, List, Dict, Union, Literal
 from enum import Enum
-from turms.types.object import GraphQLInputObject
 from turms.types.object import GraphQLObject
 from rath.turms.operation import GraphQLQuery
 from rath.turms.operation import GraphQLMutation
 from rath.turms.operation import GraphQLSubscription
 
 
-class OmeroFileType(str, Enum):
-    """An enumeration."""
+class users_select_column(str, Enum):
+    '''select columns of table "users"'''
 
-    TIFF = "TIFF"
-    "Tiff"
-    JPEG = "JPEG"
-    "Jpeg"
-    MSR = "MSR"
-    "MSR File"
-    CZI = "CZI"
-    "Zeiss Microscopy File"
-    UNKNOWN = "UNKNOWN"
-    "Unwknon File Format"
-
-
-class RepresentationVariety(str, Enum):
-    """An enumeration."""
-
-    MASK = "MASK"
-    "Mask (Value represent Labels)"
-    VOXEL = "VOXEL"
-    "Voxel (Value represent Intensity)"
-    UNKNOWN = "UNKNOWN"
-    "Unknown"
+    id = "id"
+    "column name"
+    name = "name"
+    "column name"
+    rocket = "rocket"
+    "column name"
+    timestamp = "timestamp"
+    "column name"
+    twitter = "twitter"
+    "column name"
 
 
-class RepresentationVarietyInput(str, Enum):
-    """Variety expresses the Type of Representation we are dealing with"""
+class order_by(str, Enum):
+    """column ordering options"""
 
-    MASK = "MASK"
-    "Mask (Value represent Labels)"
-    VOXEL = "VOXEL"
-    "Voxel (Value represent Intensity)"
-    UNKNOWN = "UNKNOWN"
-    "Unknown"
-
-
-class OmeroRepresentationInput(GraphQLInputObject):
-    None
-    planes: Optional[List[Optional["PlaneInput"]]]
-    channels: Optional[List[Optional["ChannelInput"]]]
-    physicalSize: Optional["PhysicalSizeInput"]
-    scale: Optional[List[Optional[float]]]
+    asc = "asc"
+    "in the ascending order, nulls last"
+    asc_nulls_first = "asc_nulls_first"
+    "in the ascending order, nulls first"
+    asc_nulls_last = "asc_nulls_last"
+    "in the ascending order, nulls last"
+    desc = "desc"
+    "in the descending order, nulls first"
+    desc_nulls_first = "desc_nulls_first"
+    "in the descending order, nulls first"
+    desc_nulls_last = "desc_nulls_last"
+    "in the descending order, nulls last"
 
 
-class PlaneInput(GraphQLInputObject):
-    None
-    zIndex: Optional[int]
-    yIndex: Optional[int]
-    xIndex: Optional[int]
-    cIndex: Optional[int]
-    tIndex: Optional[int]
-    exposureTime: Optional[float]
-    deltaT: Optional[float]
+class users_constraint(str, Enum):
+    '''unique or primary key constraints on table "users"'''
+
+    users_pkey = "users_pkey"
+    "unique or primary key constraint"
 
 
-class ChannelInput(GraphQLInputObject):
-    None
-    name: Optional[str]
-    emmissionWavelength: Optional[float]
-    excitationWavelength: Optional[float]
-    acquisitionMode: Optional[str]
-    color: Optional[str]
+class users_update_column(str, Enum):
+    '''update columns of table "users"'''
+
+    id = "id"
+    "column name"
+    name = "name"
+    "column name"
+    rocket = "rocket"
+    "column name"
+    timestamp = "timestamp"
+    "column name"
+    twitter = "twitter"
+    "column name"
 
 
-class PhysicalSizeInput(GraphQLInputObject):
-    None
-    x: Optional[int]
-    y: Optional[int]
-    z: Optional[int]
-    t: Optional[int]
-    c: Optional[int]
+class conflict_action(str, Enum):
+    """conflict action"""
+
+    ignore = "ignore"
+    "ignore the insert on this row"
+    update = "update"
+    "update the row with the given values"
 
 
-OmeroRepresentationInput.update_forward_refs()
-
-
-class RepresentationFragmentSample(GraphQLObject):
-    """Samples are storage containers for representations. A Sample is to be understood analogous to a Biological Sample. It existed in Time (the time of acquisiton and experimental procedure),
-    was measured in space (x,y,z) and in different modalities (c). Sample therefore provide a datacontainer where each Representation of
-    the data shares the same dimensions. Every transaction to our image data is still part of the original acuqistion, so also filtered images are refering back to the sample
-    """
-
-    typename: Optional[Literal["Sample"]] = Field(alias="__typename")
-    name: str
-
-
-class RepresentationFragment(GraphQLObject):
-    typename: Optional[Literal["Representation"]] = Field(alias="__typename")
-    sample: Optional[RepresentationFragmentSample]
-    "The Sample this representation belongs to"
-    type: Optional[str]
-    "The Representation can have varying types, consult your API"
+class UserFragment(GraphQLObject):
+    typename: Optional[Literal["users"]] = Field(alias="__typename")
     id: str
-    store: Optional[str]
-    variety: RepresentationVariety
-    "The Representation can have varying types, consult your API"
-    name: Optional[str]
-    "Cleartext name"
 
 
-class From_xarrayMutation(GraphQLMutation):
-    fromXArray: Optional[RepresentationFragment]
+class UserQuery(GraphQLQuery):
+    users: List[UserFragment]
 
     class Meta:
-        domain = "mikro"
-        document = "fragment Representation on Representation {\n  sample {\n    name\n  }\n  type\n  id\n  store\n  variety\n  name\n}\n\nmutation from_xarray($xarray: XArray!, $name: String, $origins: [ID], $tags: [String], $sample: ID, $omero: OmeroRepresentationInput) {\n  fromXArray(\n    xarray: $xarray\n    name: $name\n    origins: $origins\n    tags: $tags\n    sample: $sample\n    omero: $omero\n  ) {\n    ...Representation\n  }\n}"
+        domain = "default"
+        document = "fragment User on users {\n  id\n}\n\nquery User {\n  users {\n    ...User\n  }\n}"
 
 
-class Get_random_repQuery(GraphQLQuery):
-    randomRepresentation: Optional[RepresentationFragment]
+class Get_capsulesQueryCapsulesMissions(GraphQLObject):
+    typename: Optional[Literal["CapsuleMission"]] = Field(alias="__typename")
+    flight: Optional[int]
+
+
+class Get_capsulesQueryCapsules(GraphQLObject):
+    typename: Optional[Literal["Capsule"]] = Field(alias="__typename")
+    id: Optional[str]
+    missions: Optional[List[Optional[Get_capsulesQueryCapsulesMissions]]]
+
+
+class Get_capsulesQuery(GraphQLQuery):
+    capsules: Optional[List[Optional[Get_capsulesQueryCapsules]]]
 
     class Meta:
-        domain = "mikro"
-        document = "fragment Representation on Representation {\n  sample {\n    name\n  }\n  type\n  id\n  store\n  variety\n  name\n}\n\nquery get_random_rep {\n  randomRepresentation {\n    ...Representation\n  }\n}"
+        domain = "default"
+        document = "query get_capsules {\n  capsules {\n    id\n    missions {\n      flight\n    }\n  }\n}"
 
 
-async def afrom_xarray(
-    xarray: str,
-    name: str = None,
-    origins: List[str] = None,
-    tags: List[str] = None,
-    sample: str = None,
-    omero: OmeroRepresentationInput = None,
-) -> RepresentationFragment:
-    """from_xarray
+class Inset_userMutationInsert_usersReturning(GraphQLObject):
+    '''columns and relationships of "users"'''
 
-    Creates a Representation
-
-    Arguments:
-        xarray (XArray): XArray
-        name (String, Optional): String
-        origins (List[ID], Optional): ID
-        tags (List[String], Optional): String
-        sample (ID, Optional): ID
-        omero (OmeroRepresentationInput, Optional): OmeroRepresentationInput
-
-    Returns:
-        RepresentationFragment: The returned Mutation"""
-    return (
-        await From_xarrayMutation.aexecute(
-            {
-                "xarray": xarray,
-                "name": name,
-                "origins": origins,
-                "tags": tags,
-                "sample": sample,
-                "omero": omero,
-            }
-        )
-    ).fromXArray
+    typename: Optional[Literal["users"]] = Field(alias="__typename")
+    id: str
 
 
-def from_xarray(
-    xarray: str,
-    name: str = None,
-    origins: List[str] = None,
-    tags: List[str] = None,
-    sample: str = None,
-    omero: OmeroRepresentationInput = None,
-) -> RepresentationFragment:
-    """from_xarray
+class Inset_userMutationInsert_users(GraphQLObject):
+    '''response of any mutation on the table "users"'''
 
-    Creates a Representation
-
-    Arguments:
-        xarray (XArray): XArray
-        name (String, Optional): String
-        origins (List[ID], Optional): ID
-        tags (List[String], Optional): String
-        sample (ID, Optional): ID
-        omero (OmeroRepresentationInput, Optional): OmeroRepresentationInput
-
-    Returns:
-        RepresentationFragment: The returned Mutation"""
-    return From_xarrayMutation.execute(
-        {
-            "xarray": xarray,
-            "name": name,
-            "origins": origins,
-            "tags": tags,
-            "sample": sample,
-            "omero": omero,
-        }
-    ).fromXArray
+    typename: Optional[Literal["users_mutation_response"]] = Field(alias="__typename")
+    returning: List[Inset_userMutationInsert_usersReturning]
+    "data of the affected rows by the mutation"
 
 
-async def aget_random_rep() -> RepresentationFragment:
-    """get_random_rep
+class Inset_userMutation(GraphQLMutation):
+    insert_users: Optional[Inset_userMutationInsert_users]
 
-    Get a single representation by ID
+    class Meta:
+        domain = "default"
+        document = "mutation inset_user($id: uuid) {\n  insert_users(objects: {id: $id}) {\n    returning {\n      id\n    }\n  }\n}"
+
+
+async def aUser() -> UserFragment:
+    """User
+
+    fetch data from the table: "users"
 
     Arguments:
 
     Returns:
-        RepresentationFragment: The returned Mutation"""
-    return (await Get_random_repQuery.aexecute({})).randomRepresentation
+        UserFragment: The returned Mutation"""
+    return (await UserQuery.aexecute({})).users
 
 
-def get_random_rep() -> RepresentationFragment:
-    """get_random_rep
+def User() -> UserFragment:
+    """User
 
-    Get a single representation by ID
+    fetch data from the table: "users"
 
     Arguments:
 
     Returns:
-        RepresentationFragment: The returned Mutation"""
-    return Get_random_repQuery.execute({}).randomRepresentation
+        UserFragment: The returned Mutation"""
+    return UserQuery.execute({}).users
+
+
+async def aget_capsules() -> List[Get_capsulesQueryCapsules]:
+    """get_capsules
+
+
+
+    Arguments:
+
+    Returns:
+        Get_capsulesQueryCapsules: The returned Mutation"""
+    return (await Get_capsulesQuery.aexecute({})).capsules
+
+
+def get_capsules() -> List[Get_capsulesQueryCapsules]:
+    """get_capsules
+
+
+
+    Arguments:
+
+    Returns:
+        Get_capsulesQueryCapsules: The returned Mutation"""
+    return Get_capsulesQuery.execute({}).capsules
+
+
+async def ainset_user(id: str = None) -> Inset_userMutationInsert_users:
+    """inset_user
+
+    insert data into the table: "users"
+
+    Arguments:
+        id (uuid, Optional): uuid
+
+    Returns:
+        Inset_userMutationInsert_users: The returned Mutation"""
+    return (await Inset_userMutation.aexecute({"id": id})).insert_users
+
+
+def inset_user(id: str = None) -> Inset_userMutationInsert_users:
+    """inset_user
+
+    insert data into the table: "users"
+
+    Arguments:
+        id (uuid, Optional): uuid
+
+    Returns:
+        Inset_userMutationInsert_users: The returned Mutation"""
+    return Inset_userMutation.execute({"id": id}).insert_users

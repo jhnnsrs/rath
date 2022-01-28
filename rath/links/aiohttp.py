@@ -5,7 +5,7 @@ from typing import Any, Dict
 
 import aiohttp
 from graphql import OperationType
-from rath.operation import GraphQLResult, Operation
+from rath.operation import GraphQLException, GraphQLResult, Operation
 from rath.links.base import TerminatingLink
 from rath.links.errors import AuthenticationError
 
@@ -64,8 +64,14 @@ class AIOHttpLink(TerminatingLink):
 
                 json_response = await response.json()
 
+                if "errors" in json_response:
+                    raise GraphQLException(
+                        "\n".join([e["message"] for e in json_response["errors"]])
+                    )
+
                 if "data" not in json_response:
-                    raise Exception("Response does not contain data")
+
+                    raise Exception(f"Response does not contain data {json_response}")
 
                 return GraphQLResult(data=json_response["data"])
 

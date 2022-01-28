@@ -1,17 +1,21 @@
 import asyncio
-from examples.api.schema import aget_random_rep, get_random_rep
-from rath.parsers.file import FileParser
+from examples.api.schema import aget_capsules
 from rath.rath import Rath
 from rath.links.aiohttp import AIOHttpLink
-from rath.links.token import TokenContinuationLink
+from rath.links.auth import AuthTokenLink
 from rath.links.compose import compose
 
 
-link = compose(TokenContinuationLink(), AIOHttpLink("http://localhost:8080/graphql"))
+async def token_loader():
+    return ""
+
+
+link = compose(
+    AuthTokenLink(token_loader), AIOHttpLink("https://api.spacex.land/graphql/")
+)
 
 
 RATH = Rath(
-    parsers=[FileParser()],
     link=link,
     register=True,
 )
@@ -19,13 +23,8 @@ RATH = Rath(
 
 async def main():
 
-    johannes = await aget_random_rep()
-    print(johannes.store)
+    capsules = await aget_capsules()
+    print(capsules)
 
 
-def hallo():
-    print(get_random_rep())
-
-
-hallo()
 asyncio.run(main())

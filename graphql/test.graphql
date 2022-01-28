@@ -1,0 +1,26 @@
+query User {
+  users {
+    ...User
+  }
+}
+
+fragment User on users {
+  id
+}
+
+query get_capsules {
+  capsules {
+    id
+    missions {
+      flight
+    }
+  }
+}
+
+mutation inset_user($id: uuid) {
+  insert_users(objects: { id: $id }) {
+    returning {
+      id
+    }
+  }
+}
