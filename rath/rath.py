@@ -11,7 +11,7 @@ class Rath:
     parsers: List[Parser]
 
     def __init__(
-        self, parsers: List[Parser], link: TerminatingLink, register=False
+        self, link: TerminatingLink, parsers: List[Parser] = [], register=False
     ) -> None:
         self.parsers = [parser(self) for parser in parsers]  # initialized defered
         self.link = link

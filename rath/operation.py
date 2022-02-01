@@ -6,7 +6,7 @@ from graphql.language import OperationDefinitionNode, parse
 @dataclass
 class Context:
     headers: Optional[Dict[str, str]] = field(default_factory=dict)
-    files: Optional[Dict[str, Any]] = None
+    files: Optional[Dict[str, Any]] = field(default_factory=dict)
     kwargs: Optional[Dict[str, Any]] = field(default_factory=dict)
 
 

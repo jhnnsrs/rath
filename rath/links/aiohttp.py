@@ -60,7 +60,9 @@ class AIOHttpLink(TerminatingLink):
                     result = await response.json()
 
                 if response.status in self.auth_errors:
-                    raise AuthenticationError("Token Expired Error")
+                    raise AuthenticationError(
+                        f"Token Expired Error {operation.context.headers}"
+                    )
 
                 json_response = await response.json()
 

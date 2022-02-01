@@ -88,6 +88,7 @@ class UserQuery(GraphQLQuery):
 class Get_capsulesQueryCapsulesMissions(GraphQLObject):
     typename: Optional[Literal["CapsuleMission"]] = Field(alias="__typename")
     flight: Optional[int]
+    name: Optional[str]
 
 
 class Get_capsulesQueryCapsules(GraphQLObject):
@@ -101,7 +102,7 @@ class Get_capsulesQuery(GraphQLQuery):
 
     class Meta:
         domain = "default"
-        document = "query get_capsules {\n  capsules {\n    id\n    missions {\n      flight\n    }\n  }\n}"
+        document = "query get_capsules {\n  capsules {\n    id\n    missions {\n      flight\n      name\n    }\n  }\n}"
 
 
 class Inset_userMutationInsert_usersReturning(GraphQLObject):

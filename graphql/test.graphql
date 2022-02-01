@@ -13,6 +13,7 @@ query get_capsules {
     id
     missions {
       flight
+      name
     }
   }
 }

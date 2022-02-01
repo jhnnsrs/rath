@@ -1,7 +1,7 @@
-from multiprocessing import AuthenticationError
 from typing import Any, Coroutine
 from rath.links.base import Link, ContinuationLink
 from rath.operation import GraphQLResult, Operation
+from rath.links.errors import AuthenticationError
 
 
 async def fake_loader():
@@ -22,15 +22,17 @@ class AuthTokenLink(ContinuationLink):
 
     async def reload_token(self) -> None:
         self.token = await self.token_loader()
+        return self.token
 
     async def aquery(self, operation: Operation, retry=0) -> GraphQLResult:
-        if retry >= self.maximum_refresh_attempts:
-            raise AuthenticationError("Maximum refresh attempts reached")
 
-        # operation.context.headers["Authorization"] = f"Bearer {self.token}"
+        operation.context.headers["Authorization"] = f"Bearer {self.token}"
         try:
             return await self.next.aquery(operation)
-        except Exception as e:
+        except AuthenticationError as e:
+            if retry >= self.maximum_refresh_attempts:
+                raise AuthenticationError("Maximum refresh attempts reached") from e
+
             self.token = await self.reload_token()
             return await self.aquery(operation, retry=retry + 1)
 
