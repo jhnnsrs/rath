@@ -1,4 +1,5 @@
 from typing import Callable, List
+from koil.loop import koil, koil_gen
 from rath.operation import Operation
 from rath.links.base import TerminatingLink
 
@@ -33,13 +34,34 @@ class SplitTransport(TerminatingLink):
         )
         return await future
 
-    def asubscribe(self, operation: Operation) -> Operation:
-        future = (
+    async def asubscribe(self, operation: Operation) -> Operation:
+        iterator = (
             self.left.asubscribe(operation)
             if self.split(operation)
             else self.right.asubscribe(operation)
         )
-        return future
+
+        async for res in iterator:
+            yield res
+
+    def query(self, operation: Operation) -> Operation:
+        future = (
+            self.left.aquery(operation)
+            if self.split(operation)
+            else self.right.aquery(operation)
+        )
+
+        return koil(future)
+
+    def subscribe(self, operation: Operation) -> Operation:
+        iterator = (
+            self.left.asubscribe(operation)
+            if self.split(operation)
+            else self.right.asubscribe(operation)
+        )
+
+        for res in koil_gen(iterator):
+            yield res
 
 
 def split(

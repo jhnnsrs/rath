@@ -1,5 +1,6 @@
+from http.client import NotConnected
 from koil import koil
-from rath.parsers.base import Parser
+from rath.errors import NotConnectedError
 from rath.links.base import TerminatingLink
 import asyncio
 from typing import Dict, Any, Optional, List, Union, Callable, Awaitable
@@ -8,21 +9,23 @@ from contextvars import ContextVar
 
 
 class Rath:
-    parsers: List[Parser]
-
     def __init__(
-        self, link: TerminatingLink, parsers: List[Parser] = [], register=False
+        self,
+        link: TerminatingLink,
+        register=False,
+        autoconnect=True,
     ) -> None:
-        self.parsers = [parser(self) for parser in parsers]  # initialized defered
         self.link = link
+        self.autoconnect = autoconnect
         self.link(self)
+        self.connected = False
 
         if register:
             set_current_rath(self)
 
     async def aconnect(self):
-        await asyncio.gather(*[parser.aconnect() for parser in self.parsers])
         await self.link.aconnect()
+        self.connected = True
 
     def connect(self):
         return koil(self.aconnect())
@@ -38,6 +41,14 @@ class Rath:
         operation_name="",
         **kwargs,
     ) -> GraphQLResult:
+
+        if not self.connected:
+            if not self.autoconnect:
+                raise NotConnectedError(
+                    "Rath is not connected and autoconnect is set to false. Please connect first or set autoconnect to true."
+                )
+
+            await self.aconnect()
 
         op = opify(query, variables, headers, operation_name, **kwargs)
 
@@ -58,13 +69,15 @@ class Rath:
     ) -> GraphQLResult:
         op = opify(query, variables, headers, operation_name, **kwargs)
 
-        for parser in self.parsers:
-            op = parser.parse(op)
+        if not self.connected:
+            if not self.autoconnect:
+                raise NotConnectedError(
+                    "Rath is not connected and autoconnect is set to false. Please connect first or set autoconnect to true."
+                )
+            koil(self.aconnect())
 
-        return koil(
-            self.link.aquery(
-                op,
-            )
+        return self.link.query(
+            op,
         )
 
     def subscribe(
@@ -77,15 +90,8 @@ class Rath:
     ) -> GraphQLResult:
 
         op = opify(query, variables, headers, operation_name, **kwargs)
-
-        for parser in self.parsers:
-            op = parser.parse(op)
-
-        return koil(
-            self.link.asubscribe(
-                op,
-            )
-        )
+        for res in self.link.subscribe(op):
+            yield res
 
     async def asubscribe(
         self,
@@ -95,7 +101,9 @@ class Rath:
         operation_name="",
         **kwargs,
     ) -> GraphQLResult:
-        pass
+        op = opify(query, variables, headers, operation_name, **kwargs)
+        async for res in self.link.asubscribe(op):
+            yield res
 
 
 CURRENT_RATH = None

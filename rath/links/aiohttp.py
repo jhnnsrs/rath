@@ -6,16 +6,15 @@ from typing import Any, Dict
 import aiohttp
 from graphql import OperationType
 from rath.operation import GraphQLException, GraphQLResult, Operation
-from rath.links.base import TerminatingLink
+from rath.links.base import AsyncTerminatingLink
 from rath.links.errors import AuthenticationError
 
 
-class AIOHttpLink(TerminatingLink):
+class AIOHttpLink(AsyncTerminatingLink):
 
     auth_errors = [HTTPStatus.FORBIDDEN]
 
-    def __init__(self, url: str) -> None:
-        super().__init__()
+    def __init__(self, url: str = "") -> None:
         self.url = url
 
     async def aquery(self, operation: Operation) -> GraphQLResult:
@@ -92,3 +91,9 @@ class AIOHttpLink(TerminatingLink):
                 raise NotImplementedError(
                     "If you didn't specify a pollInterval you cannot use subscribe to this query"
                 )
+
+    def query(self, operation: Operation) -> GraphQLResult:
+        raise NotImplementedError()
+
+    def subscribe(self, operation: Operation) -> GraphQLResult:
+        raise NotImplementedError()

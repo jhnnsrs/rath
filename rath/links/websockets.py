@@ -14,7 +14,7 @@ import logging
 import uuid
 
 from rath.operation import GraphQLResult, Operation
-from rath.links.base import TerminatingLink, Transport
+from rath.links.base import AsyncTerminatingLink, TerminatingLink, Transport
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +46,7 @@ class InvalidPayload(TransportError):
     pass
 
 
-class WebSocketLink(TerminatingLink):
+class WebSocketLink(AsyncTerminatingLink):
     def __init__(
         self, url="", allow_reconnect=True, time_between_retries=1, retries=3
     ) -> None:

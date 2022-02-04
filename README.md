@@ -59,7 +59,7 @@ AuthToken automatically refetches the token and retries the query.
 
 ## Async Usage
 
-Rath is build with koil, for async/sync compatibility but also exposed a complete asynhronous api
+Rath is build with koil, for async/sync compatibility but also exposed a complete asynhronous api, also it is completely threadsafe
 
 ```python
 from rath.links.auth import AuthTokenLink
@@ -95,12 +95,37 @@ async def main():
 asyncio.run(main())
 ```
 
+## Usage of Async Links in Sync Environments
+
+Links can either have a synchronous or asynchronous interface (inheriting from SyncLink or AsyncLink). Using an Async Link from a Sync
+context however is not possible without switching context. For this purpose exist SwitchLinks that can either switch from sync to async
+or back.
+
+```python
+
+upload_files = UploadFilesSyncLink(bucket="lala")
+switch = SwitchAsync(token_loader=aload_token)
+link = AioHttpLink(url="https://api.spacex.land/graphql/")
+
+rath = Rath(link=compose(upload_files, switch, link))
+
+```
+
 ## Included Links
 
 - Reconnecting WebsocketLink (untested)
 - AioHttpLink (supports multipart uploads)
 - SplitLink (allows to split the terminating link - Subscription into WebsocketLink, Query, Mutation into Aiohttp)
 - AuthTokenLink (Token insertion with automatic refresh)
+
+## Dynamic Configuration
+
+rath follows some design principles of fakts for asynchronous configuration retrieval, and provides some examplary links
+
+## Authentication
+
+If you want to use rath with herre for getting access_tokens in oauth2/openid-connect scenarios, there is also a herre link
+in this repository
 
 ### Why Rath
 
@@ -146,8 +171,3 @@ asyncio.run(main())
 ## Examples
 
 This github repository also contains an example client with a turms generated query with the public SpaceX api, as well as a sample of the generated api.
-
-## Parsers
-
-Besides links, there is also support for sequentially parsing of the Operation before it enters the asynchronous links (example in thread upload to
-s3fs), this is aided through parsers that provide both async and sync interfaces.

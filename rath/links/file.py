@@ -1,10 +1,11 @@
+from rath.links.base import ContinuationLink, SyncContinuationLink
+from rath.operation import Operation
 from rath.operation import Operation
 
 import io
 import aiohttp
 from typing import AsyncGenerator
 
-from rath.parsers.base import Parser
 
 FILE_CLASSES = (
     io.IOBase,
@@ -54,9 +55,34 @@ def parse_variables(
     return nulled_variables, files
 
 
-class FileParser(Parser):
-    def parse(self, operation: Operation) -> Operation:
+class FileExtraction(ContinuationLink):
+    def __init__(self) -> None:
+        super().__init__()
+
+    async def aquery(self, operation: Operation) -> Operation:
         operation.variables, operation.context.files = parse_variables(
             operation.variables
         )
-        return operation
+        return await self.next.aquery(operation)
+
+    async def asubscribe(self, operation: Operation) -> Operation:
+        operation.variables, operation.context.files = parse_variables(
+            operation.variables
+        )
+
+        async for result in self.next.asubscribe(operation):
+            yield result
+
+    def query(self, operation: Operation) -> Operation:
+        operation.variables, operation.context.files = parse_variables(
+            operation.variables
+        )
+        return self.next.query(operation)
+
+    def subscribe(self, operation: Operation) -> Operation:
+        operation.variables, operation.context.files = parse_variables(
+            operation.variables
+        )
+
+        for result in self.next.subscribe(operation):
+            yield result
