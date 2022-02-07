@@ -52,9 +52,6 @@ class Rath:
 
         op = opify(query, variables, headers, operation_name, **kwargs)
 
-        for parser in self.parsers:
-            op = await parser.aparse(op)
-
         return await self.link.aquery(
             op,
         )
@@ -89,6 +86,13 @@ class Rath:
         **kwargs,
     ) -> GraphQLResult:
 
+        if not self.connected:
+            if not self.autoconnect:
+                raise NotConnectedError(
+                    "Rath is not connected and autoconnect is set to false. Please connect first or set autoconnect to true."
+                )
+            koil(self.aconnect())
+
         op = opify(query, variables, headers, operation_name, **kwargs)
         for res in self.link.subscribe(op):
             yield res
@@ -101,6 +105,14 @@ class Rath:
         operation_name="",
         **kwargs,
     ) -> GraphQLResult:
+        if not self.connected:
+            if not self.autoconnect:
+                raise NotConnectedError(
+                    "Rath is not connected and autoconnect is set to false. Please connect first or set autoconnect to true."
+                )
+
+            await self.aconnect()
+
         op = opify(query, variables, headers, operation_name, **kwargs)
         async for res in self.link.asubscribe(op):
             yield res

@@ -10,11 +10,11 @@ class ParsingLink(ContinuationLink):
         raise NotImplementedError("Please implement this method")
 
     async def aquery(self, operation: Operation) -> Operation:
-        operation = self.aparse(operation)
+        operation = await self.aparse(operation)
         return await self.next.aquery(operation)
 
     async def asubscribe(self, operation: Operation) -> Operation:
-        operation = self.aparse(operation)
+        operation = await self.aparse(operation)
         async for result in self.next.asubscribe(operation):
             yield result
 

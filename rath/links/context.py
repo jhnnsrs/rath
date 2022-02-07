@@ -8,10 +8,10 @@ from koil import koil
 
 class SwitchAsyncLink(ContinuationLink):
     async def aquery(self, operation: Operation) -> GraphQLResult:
-        return self.next.aquery(operation)
+        return await self.next.aquery(operation)
 
-    async def asubscibe(self, operation: Operation) -> GraphQLResult:
-        async for result in self.next.aconnect(operation):
+    async def asubscribe(self, operation: Operation) -> GraphQLResult:
+        async for result in self.next.asubscribe(operation):
             yield result
 
     def query(self, operation: Operation) -> GraphQLResult:
@@ -33,7 +33,7 @@ class SwitchSyncLink(ContinuationLink):
     async def aquery(self, operation: Operation) -> GraphQLResult:
         return await asyncio.wrap_future(self.e.submit(self.next.query, operation))
 
-    async def asubscibe(self, operation: Operation) -> GraphQLResult:
+    async def asubscribe(self, operation: Operation) -> GraphQLResult:
         raise NotImplementedError(
             "We need to fiqure this out yet. Normally a __next__ call here would be enough"
         )

@@ -1,6 +1,5 @@
 from asyncio.tasks import create_task
 from typing import Dict
-from rath.links.errors import TransportError
 from graphql import OperationType
 import websockets
 import json
@@ -12,9 +11,10 @@ from websockets.exceptions import (
 )
 import logging
 import uuid
+from rath.links.errors import TerminatingLinkError
 
-from rath.operation import GraphQLResult, Operation
-from rath.links.base import AsyncTerminatingLink, TerminatingLink, Transport
+from rath.operation import GraphQLException, GraphQLResult, Operation
+from rath.links.base import AsyncTerminatingLink
 
 logger = logging.getLogger(__name__)
 
@@ -34,27 +34,37 @@ GQL_COMPLETE = "complete"
 GQL_CONNECTION_KEEP_ALIVE = "ka"
 
 
-class CorrectableConnectionFail(TransportError):
+class CorrectableConnectionFail(TerminatingLinkError):
     pass
 
 
-class DefiniteConnectionFail(TransportError):
+class DefiniteConnectionFail(TerminatingLinkError):
     pass
 
 
-class InvalidPayload(TransportError):
+class InvalidPayload(TerminatingLinkError):
     pass
+
+
+async def none_token_loader():
+    return None
 
 
 class WebSocketLink(AsyncTerminatingLink):
     def __init__(
-        self, url="", allow_reconnect=True, time_between_retries=1, retries=3
+        self,
+        url="",
+        allow_reconnect=True,
+        token_loader=none_token_loader,
+        time_between_retries=1,
+        retries=3,
     ) -> None:
         self.connection_initialized = False
         self.ongoing_subscriptions: Dict[str, asyncio.Queue] = {}
         self.url = url
         self.retries = retries
         self.allow_reconnect = allow_reconnect
+        self.token_loader = token_loader
         self.time_between_retries = time_between_retries
         pass
 
@@ -79,8 +89,10 @@ class WebSocketLink(AsyncTerminatingLink):
         self.connection_initialized = False
         try:
             try:
+                token = await self.token_loader()
+                url = f"{self.url}?token={token}" if token else self.url
                 async with websockets.connect(
-                    self.url,
+                    url,
                     subprotocols=[GQL_WS_SUBPROTOCOL],
                 ) as client:
 
@@ -106,7 +118,6 @@ class WebSocketLink(AsyncTerminatingLink):
                 raise CorrectableConnectionFail from e
 
             except Exception as e:
-                print(e)
                 raise CorrectableConnectionFail from e
 
         except CorrectableConnectionFail as e:
@@ -149,7 +160,7 @@ class WebSocketLink(AsyncTerminatingLink):
     async def receiving(self, client):
         try:
             async for message in client:
-                logger.debug("Postman Websocket: <<<<<<< " + message)
+                logger.debug("GraphQL Websocket: <<<<<<< " + message)
                 await self.broadcast(message)
         except asyncio.CancelledError as e:
             logger.debug("Receiving Task sucessfully Cancelled")
@@ -178,16 +189,12 @@ class WebSocketLink(AsyncTerminatingLink):
             ), "Received Result for subscription that is no longer or was never active"
             await self.ongoing_subscriptions[id].put(message)
 
-        print(message)
-
     async def asubscribe(self, operation: Operation):
 
         assert (
             operation.node.operation == OperationType.SUBSCRIPTION
         ), "Operation is not a subscription"
-        assert (
-            operation.context.files is None
-        ), "We cannot send files through websockets"
+        assert not operation.context.files, "We cannot send files through websockets"
 
         id = str(uuid.uuid4())
         subscribe_queue = asyncio.Queue()
@@ -206,6 +213,11 @@ class WebSocketLink(AsyncTerminatingLink):
 
             if answer["type"] == GQL_DATA:
                 payload = answer["payload"]
+
+                if "errors" in payload:
+                    raise GraphQLException(
+                        "\n".join([e["message"] for e in payload["errors"]])
+                    )
 
                 if "data" in payload:
                     yield GraphQLResult(data=payload["data"])

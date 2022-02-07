@@ -4,7 +4,7 @@ from rath.operation import Operation
 from rath.links.base import TerminatingLink
 
 
-class SplitTransport(TerminatingLink):
+class SplitLink(TerminatingLink):
     def __init__(
         self,
         left: TerminatingLink,
@@ -18,7 +18,7 @@ class SplitTransport(TerminatingLink):
         self.right = right
         self.split = split
 
-    async def __call__(self, rath):
+    def __call__(self, rath):
         self.left(rath)
         self.right(rath)
 

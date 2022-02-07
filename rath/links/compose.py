@@ -30,7 +30,7 @@ class ComposedLink(TerminatingLink):
         return await self.first_link.aquery(operation)
 
     async def asubscribe(self, operation: Operation):
-        for result in await self.first_link.asubscribe(operation):
+        async for result in self.first_link.asubscribe(operation):
             yield result
 
     def query(self, operation: Operation):
