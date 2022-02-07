@@ -114,7 +114,12 @@ rath = Rath(link=compose(upload_files, switch, link))
 ## Example Transport Switch
 
 ```python
-link = SplitLink(AioHttpLink(url="https://api.spacex.land/graphql/"), WebsocketLink(url="ws://api.spacex.land/graphql/", lamda o: o.node.operation == OperationType.SUBSCRIPTION)
+link = SplitLink(
+  AioHttpLink(url="https://api.spacex.land/graphql/"),
+  WebsocketLink(url="ws://api.spacex.land/graphql/",
+  lamda o: o.node.operation == OperationType.SUBSCRIPTION
+)
+
 rath = Rath(link=link)
 
 ```
