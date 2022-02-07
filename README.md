@@ -104,16 +104,24 @@ or back.
 ```python
 
 upload_files = UploadFilesSyncLink(bucket="lala")
-switch = SwitchAsync(token_loader=aload_token)
+switch = SwitchAsyncLink()
 link = AioHttpLink(url="https://api.spacex.land/graphql/")
 
 rath = Rath(link=compose(upload_files, switch, link))
 
 ```
 
+## Example Transport Switch
+
+```python
+link = SplitLink(AioHttpLink(url="https://api.spacex.land/graphql/"), WebsocketLink(url="ws://api.spacex.land/graphql/", lamda o: o.node.operation == OperationType.SUBSCRIPTION)
+rath = Rath(link=link)
+
+```
+
 ## Included Links
 
-- Reconnecting WebsocketLink (untested)
+- Reconnecting WebsocketLink
 - AioHttpLink (supports multipart uploads)
 - SplitLink (allows to split the terminating link - Subscription into WebsocketLink, Query, Mutation into Aiohttp)
 - AuthTokenLink (Token insertion with automatic refresh)
