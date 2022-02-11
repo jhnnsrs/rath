@@ -47,6 +47,7 @@ class InvalidPayload(TerminatingLinkError):
 
 
 async def none_token_loader():
+    print("Fake token")
     return None
 
 
@@ -54,7 +55,7 @@ class WebSocketLink(AsyncTerminatingLink):
     def __init__(
         self,
         url="",
-        allow_reconnect=True,
+        allow_reconnect=False,
         token_loader=none_token_loader,
         time_between_retries=1,
         retries=3,
@@ -66,6 +67,8 @@ class WebSocketLink(AsyncTerminatingLink):
         self.allow_reconnect = allow_reconnect
         self.token_loader = token_loader
         self.time_between_retries = time_between_retries
+        self.connected = False
+        self._lock = None
         pass
 
     async def aforward(self, message):
@@ -73,7 +76,8 @@ class WebSocketLink(AsyncTerminatingLink):
 
     async def aconnect(self):
         self.send_queue = asyncio.Queue()
-        self.connection_task = create_task(self.websocket_loop())
+        self.connection_task = asyncio.create_task(self.websocket_loop())
+        self.connected = True
 
     async def adisconnect(self):
         self.connection_task.cancel()
@@ -96,8 +100,8 @@ class WebSocketLink(AsyncTerminatingLink):
                     subprotocols=[GQL_WS_SUBPROTOCOL],
                 ) as client:
 
-                    send_task = create_task(self.sending(client))
-                    receive_task = create_task(self.receiving(client))
+                    send_task = asyncio.create_task(self.sending(client))
+                    receive_task = asyncio.create_task(self.receiving(client))
 
                     self.connection_alive = True
                     self.connection_dead = False
@@ -115,9 +119,11 @@ class WebSocketLink(AsyncTerminatingLink):
 
             except ConnectionClosedError as e:
                 logger.exception(e)
+                print(e)
                 raise CorrectableConnectionFail from e
 
             except Exception as e:
+                print(e)
                 raise CorrectableConnectionFail from e
 
         except CorrectableConnectionFail as e:
@@ -134,7 +140,7 @@ class WebSocketLink(AsyncTerminatingLink):
             raise e
 
         except asyncio.CancelledError as e:
-            logger.info("Got Canceleld")
+            print("Websocket got cancelled")
             if send_task and receive_task:
                 send_task.cancel()
                 receive_task.cancel()
@@ -190,6 +196,12 @@ class WebSocketLink(AsyncTerminatingLink):
             await self.ongoing_subscriptions[id].put(message)
 
     async def asubscribe(self, operation: Operation):
+        if not self._lock:
+            self._lock = asyncio.Lock()
+
+        async with self._lock:
+            if not self.connected:
+                await self.aconnect()
 
         assert (
             operation.node.operation == OperationType.SUBSCRIPTION
@@ -227,6 +239,9 @@ class WebSocketLink(AsyncTerminatingLink):
                 return
 
     async def aquery(self, operation: Operation):
+        async with self._lock:
+            if not self.connected:
+                await self.aconnect()
 
         assert (
             operation.node.operation != OperationType.SUBSCRIPTION

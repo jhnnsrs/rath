@@ -1,6 +1,8 @@
+import asyncio
 from pydantic import BaseModel
 from fakts.fakts import Fakts, get_current_fakts
 from rath.links.aiohttp import AIOHttpLink
+from rath.operation import Operation
 
 
 class FaktsAioHttpLinkConfig(BaseModel):
@@ -8,22 +10,24 @@ class FaktsAioHttpLinkConfig(BaseModel):
 
 
 class FaktsAioHttpLink(AIOHttpLink):
-
-
     def __init__(self, *args, fakts: Fakts = None, fakts_key="rath", **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        self._lock = None
         self.fakts = fakts or get_current_fakts()
         self.fakts_key = fakts_key
         self.config = None
 
-
     def configure(self, fakts: FaktsAioHttpLinkConfig):
         self.url = fakts.endpoint_url
+        self.config = fakts
 
+    async def aquery(self, operation: Operation, **kwargs) -> None:
+        if not self._lock:
+            self._lock = asyncio.Lock()
 
-    async def aconnect(self) -> None:
-        if not self.config:
-            self.fakts = await self.fakts.aget(self.fakts_key)
-            self.configure(FaktsAioHttpLinkConfig(**self.fakts))
+        async with self._lock:
+            if not self.config:
+                fakts = await self.fakts.aget(self.fakts_key)
+                self.configure(FaktsAioHttpLinkConfig(**fakts))
 
-        return await super().aconnect()
+        return await super().aquery(operation, **kwargs)

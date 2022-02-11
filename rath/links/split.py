@@ -22,10 +22,6 @@ class SplitLink(TerminatingLink):
         self.left(rath)
         self.right(rath)
 
-    async def aconnect(self) -> None:
-        await self.left.aconnect()
-        await self.right.aconnect()
-
     async def aquery(self, operation: Operation) -> Operation:
         future = (
             self.left.aquery(operation)

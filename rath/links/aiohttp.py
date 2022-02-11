@@ -1,7 +1,7 @@
 import asyncio
 from http import HTTPStatus
 import json
-from typing import Any, Dict
+from typing import Any, AsyncIterator, Dict
 
 import aiohttp
 from graphql import OperationType
@@ -53,30 +53,36 @@ class AIOHttpLink(AsyncTerminatingLink):
             post_kwargs = {"json": payload}
 
         async with aiohttp.ClientSession(headers=operation.context.headers) as session:
-            async with session.post(self.url, **post_kwargs) as response:
+            try:
+                async with session.post(self.url, **post_kwargs) as response:
 
-                if response.status == HTTPStatus.OK:
-                    result = await response.json()
+                    if response.status == HTTPStatus.OK:
+                        result = await response.json()
 
-                if response.status in self.auth_errors:
-                    raise AuthenticationError(
-                        f"Token Expired Error {operation.context.headers}"
-                    )
+                    if response.status in self.auth_errors:
+                        raise AuthenticationError(
+                            f"Token Expired Error {operation.context.headers}"
+                        )
 
-                json_response = await response.json()
+                    json_response = await response.json()
 
-                if "errors" in json_response:
-                    raise GraphQLException(
-                        "\n".join([e["message"] for e in json_response["errors"]])
-                    )
+                    if "errors" in json_response:
+                        raise GraphQLException(
+                            "\n".join([e["message"] for e in json_response["errors"]])
+                        )
 
-                if "data" not in json_response:
+                    if "data" not in json_response:
 
-                    raise Exception(f"Response does not contain data {json_response}")
+                        raise Exception(
+                            f"Response does not contain data {json_response}"
+                        )
 
-                return GraphQLResult(data=json_response["data"])
+                    return GraphQLResult(data=json_response["data"])
 
-    async def asubscribe(self, operation: Operation) -> GraphQLResult:
+            except aiohttp.client_exceptions.InvalidURL as e:
+                raise Exception(f"Invalid URL {self.url}") from e
+
+    async def asubscribe(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
         if operation.node.operation == OperationType.SUBSCRIPTION:
             raise NotImplementedError(
                 "Aiohttp Transport does not support subscriptions"

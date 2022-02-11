@@ -1,16 +1,14 @@
+from typing import AsyncIterator, Iterator
 from rath.operation import GraphQLResult, Operation
 
 
 class Link:
-    async def aconnect(self) -> None:
-        pass
-
     async def aquery(self, operation: Operation) -> GraphQLResult:
         raise NotImplementedError(
             f"Please overwrite the aquery method in {self.__class__.__name__}"
         )
 
-    async def asubscribe(self, operation: Operation) -> GraphQLResult:
+    async def asubscribe(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
         raise NotImplementedError(
             f"Please overwrite the asubscribe method in {self.__class__.__name__}"
         )
@@ -20,7 +18,7 @@ class Link:
             f"Please overwrite the query method in {self.__class__.__name__}"
         )
 
-    def subscribe(self, operation: Operation) -> GraphQLResult:
+    def subscribe(self, operation: Operation) -> Iterator[GraphQLResult]:
         raise NotImplementedError(
             f"Please overwrite the subscribe method in {self.__class__.__name__}"
         )
@@ -38,7 +36,7 @@ class AsyncTerminatingLink(TerminatingLink):
             "Async Terminating link does not support syncrhonous queries. Please compose together with a context switch link"
         )
 
-    def subscribe(self, operation: Operation) -> GraphQLResult:
+    def subscribe(self, operation: Operation) -> Iterator[GraphQLResult]:
         raise NotImplementedError(
             "Async Terminating link does not support syncrhonous queries. Please compose together with a context switch link"
         )
@@ -50,7 +48,7 @@ class SyncTerminatingLink(TerminatingLink):
             "Sync Terminating link does not support asynchronous queries. Please compose together with a context switch link"
         )
 
-    async def asubscribe(self, operation: Operation) -> GraphQLResult:
+    async def asubscribe(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
         raise NotImplementedError(
             "Sync Terminating link does not support asynchronous queries. Please compose together with a context switch link"
         )
@@ -69,7 +67,7 @@ class AsyncContinuationLink(ContinuationLink):
             "Async Terminating link does not support syncrhonous queries. Please compose together with a context switch link"
         )
 
-    def subscribe(self, operation: Operation) -> GraphQLResult:
+    def subscribe(self, operation: Operation) -> Iterator[GraphQLResult]:
         raise NotImplementedError(
             "Async Terminating link does not support syncrhonous queries. Please compose together with a context switch link"
         )
@@ -81,7 +79,7 @@ class SyncContinuationLink(ContinuationLink):
             "Sync Terminating link does not support asynchronous queries. Please compose together with a context switch link"
         )
 
-    async def asubscribe(self, operation: Operation) -> GraphQLResult:
+    async def asubscribe(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
         raise NotImplementedError(
             "Sync Terminating link does not support asynchronous queries. Please compose together with a context switch link"
         )

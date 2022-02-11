@@ -25,12 +25,19 @@ class SwitchAsyncLink(ContinuationLink):
 class SwitchSyncLink(ContinuationLink):
     def __init__(self, excecutor=None) -> None:
         self.excecutor = excecutor or ThreadPoolExecutor()
+        self._lock = asyncio.Lock()
+        self.connected = False
         super().__init__()
 
     async def aconnect(self) -> None:
         self.e = self.excecutor.__enter__()
+        self.connected = True
 
     async def aquery(self, operation: Operation) -> GraphQLResult:
+        async with self._lock:
+            if not self.connected:
+                await self.aconnect()
+
         return await asyncio.wrap_future(self.e.submit(self.next.query, operation))
 
     async def asubscribe(self, operation: Operation) -> GraphQLResult:

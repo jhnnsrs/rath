@@ -23,9 +23,6 @@ class ComposedLink(TerminatingLink):
 
         self.links[-1](rath)  # last one gets only rath
 
-    async def aconnect(self):
-        return await asyncio.gather(*[link.aconnect() for link in self.links])
-
     async def aquery(self, operation: Operation):
         return await self.first_link.aquery(operation)
 

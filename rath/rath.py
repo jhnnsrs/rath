@@ -1,8 +1,4 @@
-from http.client import NotConnected
-from koil import koil
-from rath.errors import NotConnectedError
 from rath.links.base import TerminatingLink
-import asyncio
 from typing import Dict, Any, Optional, List, Union, Callable, Awaitable
 from rath.operation import GraphQLResult, opify
 from contextvars import ContextVar
@@ -15,20 +11,22 @@ class Rath:
         register=False,
         autoconnect=True,
     ) -> None:
+        """Initialize a Rath client
+
+        Rath takes a instance of TerminatingLink and creates an interface around it
+        to enable easy usage of the GraphQL API.
+
+        Args:
+            link (TerminatingLink): A terminating link or a composed link.
+            register (bool, optional): Register as a global rath (knowing the risks). Defaults to False.
+            autoconnect (bool, optional): [description]. Defaults to True.
+        """
         self.link = link
         self.autoconnect = autoconnect
         self.link(self)
-        self.connected = False
 
         if register:
             set_current_rath(self)
-
-    async def aconnect(self):
-        await self.link.aconnect()
-        self.connected = True
-
-    def connect(self):
-        return koil(self.aconnect())
 
     async def asubscribe(self):
         pass
@@ -41,14 +39,6 @@ class Rath:
         operation_name="",
         **kwargs,
     ) -> GraphQLResult:
-
-        if not self.connected:
-            if not self.autoconnect:
-                raise NotConnectedError(
-                    "Rath is not connected and autoconnect is set to false. Please connect first or set autoconnect to true."
-                )
-
-            await self.aconnect()
 
         op = opify(query, variables, headers, operation_name, **kwargs)
 
@@ -66,13 +56,6 @@ class Rath:
     ) -> GraphQLResult:
         op = opify(query, variables, headers, operation_name, **kwargs)
 
-        if not self.connected:
-            if not self.autoconnect:
-                raise NotConnectedError(
-                    "Rath is not connected and autoconnect is set to false. Please connect first or set autoconnect to true."
-                )
-            koil(self.aconnect())
-
         return self.link.query(
             op,
         )
@@ -86,13 +69,6 @@ class Rath:
         **kwargs,
     ) -> GraphQLResult:
 
-        if not self.connected:
-            if not self.autoconnect:
-                raise NotConnectedError(
-                    "Rath is not connected and autoconnect is set to false. Please connect first or set autoconnect to true."
-                )
-            koil(self.aconnect())
-
         op = opify(query, variables, headers, operation_name, **kwargs)
         for res in self.link.subscribe(op):
             yield res
@@ -105,13 +81,6 @@ class Rath:
         operation_name="",
         **kwargs,
     ) -> GraphQLResult:
-        if not self.connected:
-            if not self.autoconnect:
-                raise NotConnectedError(
-                    "Rath is not connected and autoconnect is set to false. Please connect first or set autoconnect to true."
-                )
-
-            await self.aconnect()
 
         op = opify(query, variables, headers, operation_name, **kwargs)
         async for res in self.link.asubscribe(op):

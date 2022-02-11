@@ -1,4 +1,4 @@
-from typing import Any, Coroutine
+from typing import Any, AsyncIterator, Coroutine
 from rath.links.base import AsyncContinuationLink
 from rath.operation import GraphQLResult, Operation
 from rath.links.errors import AuthenticationError
@@ -12,7 +12,7 @@ class AuthTokenLink(AsyncContinuationLink):
     def __init__(
         self,
         token_loader: Coroutine[Any, Any, str] = fake_loader,
-        maximum_refresh_attempts=3,
+        maximum_refresh_attempts=2,
         load_token_on_connect=True,
     ) -> None:
         self.token_loader = token_loader
@@ -25,18 +25,23 @@ class AuthTokenLink(AsyncContinuationLink):
         return self.token
 
     async def aquery(self, operation: Operation, retry=0) -> GraphQLResult:
-
         operation.context.headers["Authorization"] = f"Bearer {self.token}"
+        if not self.token:
+            await self.reload_token()
         try:
+
             return await self.next.aquery(operation)
         except AuthenticationError as e:
-            if retry >= self.maximum_refresh_attempts:
+            retry = retry + 1
+            if retry > self.maximum_refresh_attempts:
                 raise AuthenticationError("Maximum refresh attempts reached") from e
 
             self.token = await self.reload_token()
-            return await self.aquery(operation, retry=retry + 1)
+            return await self.aquery(operation, retry=retry)
 
-    async def asubscribe(self, operation: Operation, retry=0) -> GraphQLResult:
+    async def asubscribe(
+        self, operation: Operation, retry=0
+    ) -> AsyncIterator[GraphQLResult]:
         if retry >= self.maximum_refresh_attempts:
             raise AuthenticationError("Maximum refresh attempts reached")
 
@@ -48,7 +53,3 @@ class AuthTokenLink(AsyncContinuationLink):
         except AuthenticationError as e:
             async for result in self.asubscribe(operation, retry=retry + 1):
                 yield result
-
-    async def aconnect(self) -> None:
-        if self.load_token_on_connect:
-            self.token = await self.token_loader()
