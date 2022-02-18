@@ -34,7 +34,14 @@ class GraphQLObject(BaseModel):
             f"{attr} is not a valid attribute of {self.__class__.__name__}. Have you checked the schema?"
         )
 
-    async def shrink(self):
+    async def ashrink(self):
+        """WIll be called by the ward"""
+        assert (
+            self.id
+        ), "Cannot convert an object to a variable if you didn't query its unique id"
+        return self.id
+
+    def shrink(self):
         """WIll be called by the ward"""
         assert (
             self.id
@@ -58,3 +65,11 @@ class GraphQLInputObject(BaseModel):
         dictionary = self.dict(exclude={"typename"})
         clean_dict(dictionary, lambda key, value: key == "__typename" or value is None)
         return dictionary
+
+    async def ashrink(self):
+        """WIll be called by the ward"""
+        return self.dict()
+
+    def shrink(self):
+        """WIll be called by the ward"""
+        return self.dict()

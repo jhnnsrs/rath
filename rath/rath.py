@@ -36,7 +36,7 @@ class Rath:
         query: str,
         variables: Dict[str, Any] = None,
         headers: Dict[str, Any] = {},
-        operation_name="",
+        operation_name=None,
         **kwargs,
     ) -> GraphQLResult:
 
@@ -51,7 +51,7 @@ class Rath:
         query: str,
         variables: Dict[str, Any] = None,
         headers: Dict[str, Any] = {},
-        operation_name="",
+        operation_name=None,
         **kwargs,
     ) -> GraphQLResult:
         op = opify(query, variables, headers, operation_name, **kwargs)
@@ -65,7 +65,7 @@ class Rath:
         query: str,
         variables: Dict[str, Any] = None,
         headers: Dict[str, Any] = {},
-        operation_name="",
+        operation_name=None,
         **kwargs,
     ) -> GraphQLResult:
 
@@ -78,7 +78,7 @@ class Rath:
         query: str,
         variables: Dict[str, Any] = None,
         headers: Dict[str, Any] = {},
-        operation_name="",
+        operation_name=None,
         **kwargs,
     ) -> GraphQLResult:
 
