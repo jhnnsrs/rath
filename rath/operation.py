@@ -54,7 +54,6 @@ def opify(
 ) -> Operation:
 
     document = parse(query)
-    print(operation_name)
     op = get_operation_ast(document, operation_name)
     assert op, f"No operation named {operation_name}"
     return Operation(

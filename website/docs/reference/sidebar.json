@@ -1,0 +1,72 @@
+{
+  "items": [
+    {
+      "items": [
+        "reference/__init__/__init__"
+      ],
+      "label": "__init__",
+      "type": "category"
+    },
+    {
+      "items": [
+        "reference/fakts/__init__",
+        "reference/fakts/links"
+      ],
+      "label": "fakts",
+      "type": "category"
+    },
+    {
+      "items": [
+        "reference/herre/__init__",
+        "reference/herre/links"
+      ],
+      "label": "herre",
+      "type": "category"
+    },
+    {
+      "items": [
+        {
+          "items": [
+            "reference/links/testing/__init__",
+            "reference/links/testing/mock"
+          ],
+          "label": "links.testing",
+          "type": "category"
+        },
+        "reference/links/__init__",
+        "reference/links/aiohttp",
+        "reference/links/auth",
+        "reference/links/base",
+        "reference/links/compose",
+        "reference/links/context",
+        "reference/links/dictinglink",
+        "reference/links/errors",
+        "reference/links/file",
+        "reference/links/parsing",
+        "reference/links/shrink",
+        "reference/links/split",
+        "reference/links/validate",
+        "reference/links/websockets"
+      ],
+      "label": "links",
+      "type": "category"
+    },
+    {
+      "items": [
+        "reference/turms/__init__",
+        "reference/turms/object",
+        "reference/turms/operation",
+        "reference/turms/utils"
+      ],
+      "label": "turms",
+      "type": "category"
+    },
+    "reference/errors",
+    "reference/operation",
+    "reference/rath",
+    "reference/registry",
+    "reference/utils"
+  ],
+  "label": "Reference",
+  "type": "category"
+}
