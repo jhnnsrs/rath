@@ -66,20 +66,3 @@ def opify(
         extensions={},
         context=Context(headers=headers, kwargs=kwargs),
     )
-
-
-def schemify(schema_dsl: str = None, schema_glob: str = None) -> GraphQLSchema:
-    if schema_dsl:
-        return build_ast_schema(parse(schema_dsl))
-    if schema_glob:
-        schema_glob = glob(schema_glob, recursive=True)
-        dsl_string = ""
-        for file in schema_glob:
-            with open(file, "r") as f:
-                if file.endswith(".graphql"):
-                    dsl_string += f.read()
-
-        assert dsl_string, f"No schema found in glob {schema_glob}"
-        return build_ast_schema(parse(dsl_string))
-
-    raise NotImplementedError("Please provide either a dsl or glob")

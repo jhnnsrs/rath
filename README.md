@@ -126,6 +126,7 @@ rath = Rath(link=link)
 
 ## Included Links
 
+- Validating Link (validate query against local schema (or introspect the schema))
 - Reconnecting WebsocketLink
 - AioHttpLink (supports multipart uploads)
 - SplitLink (allows to split the terminating link - Subscription into WebsocketLink, Query, Mutation into Aiohttp)

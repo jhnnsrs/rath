@@ -13,7 +13,7 @@ class SplitLink(TerminatingLink):
     ) -> None:
         super().__init__()
         assert isinstance(left, TerminatingLink), "left must be a TerminatingLink"
-        assert isinstance(right, TerminatingLink), "left must be a TerminatingLink"
+        assert isinstance(right, TerminatingLink), "right must be a TerminatingLink"
         self.left = left
         self.right = right
         self.split = split
@@ -67,4 +67,4 @@ def split(
     Splits a Link into two paths. Acording to a predicate function. If predicate returns
     true, the operation is sent to the left path, otherwise to the right path.
     """
-    return SplitTransport(left, right, split)
+    return SplitLink(left, right, split)

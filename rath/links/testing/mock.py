@@ -81,12 +81,13 @@ class AsyncMockLink(AsyncTerminatingLink):
             op = operation.node.selection_set.selections[0]
             assert (
                 op.name.value in self.subscription_resolver
-            ), f"Mocked Resolver for Mutation {op.name.value} not in resolver: {self.subscription_resolver} for AsyncMockLink"
+            ), f"Mocked Resolver for Subscription {op.name.value} not in resolver: {self.subscription_resolver} for AsyncMockLink"
 
             async for event in self.subscription_resolver[op.name.value](operation):
                 yield GraphQLResult(data={target_from_node(op): event})
 
-        raise NotImplementedError("Only subscription is supported")
+        else:
+            raise NotImplementedError("Only subscription are mocked")
 
     def query(self, operation: Operation) -> GraphQLResult:
         raise NotImplementedError("This is a async Terminating Link")

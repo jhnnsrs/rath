@@ -1,5 +1,15 @@
 from rath.links.base import TerminatingLink
-from typing import Dict, Any, Optional, List, Union, Callable, Awaitable
+from typing import (
+    AsyncIterator,
+    Dict,
+    Any,
+    Iterator,
+    Optional,
+    List,
+    Union,
+    Callable,
+    Awaitable,
+)
 from rath.operation import GraphQLResult, opify
 from contextvars import ContextVar
 
@@ -67,7 +77,7 @@ class Rath:
         headers: Dict[str, Any] = {},
         operation_name=None,
         **kwargs,
-    ) -> GraphQLResult:
+    ) -> Iterator[GraphQLResult]:
 
         op = opify(query, variables, headers, operation_name, **kwargs)
         for res in self.link.subscribe(op):
@@ -80,7 +90,7 @@ class Rath:
         headers: Dict[str, Any] = {},
         operation_name=None,
         **kwargs,
-    ) -> GraphQLResult:
+    ) -> AsyncIterator[GraphQLResult]:
 
         op = opify(query, variables, headers, operation_name, **kwargs)
         async for res in self.link.asubscribe(op):
