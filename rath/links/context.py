@@ -1,12 +1,34 @@
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
-from koil.loop import koil_gen
 from rath.links.base import ContinuationLink
 from rath.operation import GraphQLResult, Operation
-from koil import koil
+from koil import unkoil, unkoil_gen, Koil
 
 
 class SwitchAsyncLink(ContinuationLink):
+    """Swithc Async Link
+
+    Async switches allow to use async resolvers in an sync context.
+    It uses the koil library to facilitate the switch.
+
+    Koil can use unstateful links (no "async with" logic), by simply calling
+    asyncio.run(). Or spin up a thread with the async logic for stateful links
+    (with "async with" logic). It also takes care of stoppin the thread when
+    the link is disconnected.
+
+    This allows us to use the same logic for both sync and async links, where
+    a connection is required.
+
+    Check the koil documentation to learn more about how koil does it in detail.
+
+    Args:
+        ContinuationLink (_type_): _description_
+    """
+
+    def __init__(self, **koilparams):
+        super().__init__()
+        self.__koil = Koil(**koilparams)
+
     async def aquery(self, operation: Operation) -> GraphQLResult:
         return await self.next.aquery(operation)
 
@@ -15,11 +37,19 @@ class SwitchAsyncLink(ContinuationLink):
             yield result
 
     def query(self, operation: Operation) -> GraphQLResult:
-        return koil(self.next.aquery(operation))
+        return unkoil(self.next.aquery, operation)
 
     def subscribe(self, operation: Operation) -> GraphQLResult:
-        for result in koil_gen(self.next.asubscribe(operation)):
+        for result in unkoil_gen(self.next.asubscribe, operation):
             yield result
+
+    def connect(self) -> None:
+        self.__koil.__enter__()  # spin up a new thread if needed (if we are already in a koiled environment, use that one)
+        unkoil(self.next.aconnect, ensure_koiled=True)
+
+    def disconnect(self) -> None:
+        unkoil(self.next.adisconnect, ensure_koiled=True)
+        self.__koil.__exit__(None, None, None)  # cleanup thread if we had to spin it up
 
 
 class SwitchSyncLink(ContinuationLink):
@@ -51,3 +81,7 @@ class SwitchSyncLink(ContinuationLink):
     def subscribe(self, operation: Operation) -> GraphQLResult:
         for result in self.next.subscribe(operation):
             yield result
+
+    async def aconnect(self) -> None:
+        self.e = self.excecutor.__exit__()
+        self.connected = False

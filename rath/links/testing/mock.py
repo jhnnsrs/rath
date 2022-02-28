@@ -22,20 +22,16 @@ class AsyncMockResolver:
 class AsyncMockLink(AsyncTerminatingLink):
     def __init__(
         self,
-        query_resolver: Union[AsyncMockResolver, dict] = {},
-        mutation_resolver: Union[AsyncMockResolver, dict] = {},
-        subscription_resolver: Union[AsyncMockResolver, dict] = {},
-        schema: GraphQLSchema = None,
+        resolver: Union[AsyncMockResolver, dict] = {},
+        query_resolver: Union[AsyncMockResolver, dict] = None,
+        mutation_resolver: Union[AsyncMockResolver, dict] = None,
+        subscription_resolver: Union[AsyncMockResolver, dict] = None,
     ) -> None:
-        self.query_resolver = query_resolver
-        self.mutation_resolver = mutation_resolver
-        self.subscription_resolver = subscription_resolver
-        self.schema = schema
+        self.query_resolver = query_resolver or resolver
+        self.mutation_resolver = mutation_resolver or resolver
+        self.subscription_resolver = subscription_resolver or resolver
 
     async def aquery(self, operation: Operation) -> GraphQLResult:
-
-        if self.schema is not None:
-            validate(self.schema, operation.document_node)
 
         if operation.node.operation == OperationType.QUERY:
             futures = []

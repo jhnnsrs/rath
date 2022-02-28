@@ -1,3 +1,4 @@
+import asyncio
 from rath.links.base import TerminatingLink
 from typing import (
     AsyncIterator,
@@ -38,8 +39,17 @@ class Rath:
         if register:
             set_current_rath(self)
 
-    async def asubscribe(self):
-        pass
+    def connect(self):
+        self.link.connect()
+
+    def disconnect(self):
+        self.link.disconnect()
+
+    async def aconnect(self):
+        await self.link.aconnect()
+
+    async def adisconnect(self):
+        await self.link.adisconnect()
 
     async def aexecute(
         self,
@@ -47,10 +57,14 @@ class Rath:
         variables: Dict[str, Any] = None,
         headers: Dict[str, Any] = {},
         operation_name=None,
+        timeout=None,
         **kwargs,
     ) -> GraphQLResult:
 
         op = opify(query, variables, headers, operation_name, **kwargs)
+
+        if timeout:
+            return await asyncio.wait_for(self.link.aquery(op), timeout)
 
         return await self.link.aquery(
             op,
@@ -95,6 +109,20 @@ class Rath:
         op = opify(query, variables, headers, operation_name, **kwargs)
         async for res in self.link.asubscribe(op):
             yield res
+
+    async def __aenter__(self):
+        await self.aconnect()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.adisconnect()
+
+    def __enter__(self):
+        self.connect()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.disconnect()
 
 
 CURRENT_RATH = None

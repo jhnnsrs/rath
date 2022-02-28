@@ -22,6 +22,10 @@ class SplitLink(TerminatingLink):
         self.left(rath)
         self.right(rath)
 
+    async def aconnect(self):
+        await self.left.aconnect()
+        await self.right.aconnect()
+
     async def aquery(self, operation: Operation) -> Operation:
         future = (
             self.left.aquery(operation)
@@ -58,6 +62,10 @@ class SplitLink(TerminatingLink):
 
         for res in koil_gen(iterator):
             yield res
+
+    async def adisconnect(self):
+        await self.left.adisconnect()
+        await self.right.adisconnect()
 
 
 def split(

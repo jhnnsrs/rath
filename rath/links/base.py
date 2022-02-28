@@ -3,6 +3,18 @@ from rath.operation import GraphQLResult, Operation
 
 
 class Link:
+    def connect(self) -> None:
+        pass
+
+    def disconnect(self) -> None:
+        pass
+
+    async def aconnect(self) -> None:
+        pass
+
+    async def adisconnect(self) -> None:
+        pass
+
     async def aquery(self, operation: Operation) -> GraphQLResult:
         raise NotImplementedError(
             f"Please overwrite the aquery method in {self.__class__.__name__}"
@@ -28,6 +40,18 @@ class TerminatingLink(Link):
     def __call__(self, rath):
         self.rath = rath
         return self
+
+    async def aconnect(self) -> None:
+        pass
+
+    async def adisconnect(self) -> None:
+        pass
+
+    def connect(self) -> None:
+        pass
+
+    def disconnect(self) -> None:
+        pass
 
 
 class AsyncTerminatingLink(TerminatingLink):
@@ -59,6 +83,18 @@ class ContinuationLink(Link):
         self.rath = rath
         self.next = next
         return self
+
+    async def aconnect(self) -> None:
+        await self.next.aconnect()
+
+    async def adisconnect(self) -> None:
+        await self.next.adisconnect()
+
+    def connect(self) -> None:
+        self.next.connect()
+
+    def disconnect(self) -> None:
+        self.next.disconnect()
 
 
 class AsyncContinuationLink(ContinuationLink):
