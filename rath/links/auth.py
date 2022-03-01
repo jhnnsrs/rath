@@ -20,7 +20,7 @@ class AuthTokenLink(AsyncContinuationLink):
         self.maximum_refresh_attempts = maximum_refresh_attempts
         self.token = None
 
-    async def aconnect(self):
+    async def __aenter__(self):
         if self.load_token_on_connect:
             await self.reload_token()
 

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "rath"
-version = "0.1.17"
+version = "0.1.18"
 description = "aiohttp powered apollo like graphql client"
 authors = ["jhnnsrs <jhnnsrs@gmail.com>"]
 readme = "README.md"
@@ -8,7 +8,7 @@ packages = [{include = "rath"}]
 
 [tool.poetry.dependencies]
 python = "^3.7"
-koil = "^0.1.75"
+koil = "0.1.77"
 aiohttp = "^3.8.1"
 graphql-core = "^3.2.0"
 pydantic = "^1.9.0"

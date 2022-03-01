@@ -3,16 +3,16 @@ from rath.operation import GraphQLResult, Operation
 
 
 class Link:
-    def connect(self) -> None:
+    async def __aenter__(self) -> None:
         pass
 
-    def disconnect(self) -> None:
+    async def __aexit__(self, *args, **kwargs) -> None:
         pass
 
-    async def aconnect(self) -> None:
+    def __enter__(self) -> None:
         pass
 
-    async def adisconnect(self) -> None:
+    def __exit__(self, *args, **kwargs) -> None:
         pass
 
     async def aquery(self, operation: Operation) -> GraphQLResult:
@@ -41,16 +41,16 @@ class TerminatingLink(Link):
         self.rath = rath
         return self
 
-    async def aconnect(self) -> None:
+    async def __aenter__(self) -> None:
         pass
 
-    async def adisconnect(self) -> None:
+    async def __aexit__(self, *args, **kwargs) -> None:
         pass
 
-    def connect(self) -> None:
+    def __enter__(self) -> None:
         pass
 
-    def disconnect(self) -> None:
+    def __exit__(self, *args, **kwargs) -> None:
         pass
 
 
@@ -84,17 +84,17 @@ class ContinuationLink(Link):
         self.next = next
         return self
 
-    async def aconnect(self) -> None:
-        await self.next.aconnect()
+    async def __aenter__(self) -> None:
+        return await self.next.__aenter__()
 
-    async def adisconnect(self) -> None:
-        await self.next.adisconnect()
+    async def __aexit__(self, *args, **kwargs) -> None:
+        return await self.next.__aexit__(*args, **kwargs)
 
-    def connect(self) -> None:
-        self.next.connect()
+    def __enter__(self) -> None:
+        self.next.__enter__()
 
-    def disconnect(self) -> None:
-        self.next.disconnect()
+    def __exit__(self, *args, **kwargs) -> None:
+        self.next.__exit__(*args, **kwargs)
 
 
 class AsyncContinuationLink(ContinuationLink):

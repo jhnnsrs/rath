@@ -39,18 +39,6 @@ class Rath:
         if register:
             set_current_rath(self)
 
-    def connect(self):
-        self.link.connect()
-
-    def disconnect(self):
-        self.link.disconnect()
-
-    async def aconnect(self):
-        await self.link.aconnect()
-
-    async def adisconnect(self):
-        await self.link.adisconnect()
-
     async def aexecute(
         self,
         query: str,
@@ -111,18 +99,24 @@ class Rath:
             yield res
 
     async def __aenter__(self):
-        await self.aconnect()
+        await self.link.__aenter__()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self.adisconnect()
+        await self.link.__aexit__(exc_type, exc_val, exc_tb)
 
     def __enter__(self):
-        self.connect()
+        self.link.__enter__()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.disconnect()
+        self.link.__exit__(exc_type, exc_val, exc_tb)
+
+    def connect(self):
+        return self.__enter__()
+
+    def disconnect(self):
+        return self.__exit__(None, None, None)
 
 
 CURRENT_RATH = None

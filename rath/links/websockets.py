@@ -69,23 +69,25 @@ class WebSocketLink(AsyncTerminatingLink):
         self.time_between_retries = time_between_retries
         self.connected = False
         self._lock = None
+        self.connection_task = None
         pass
 
     async def aforward(self, message):
         await self.send_queue.put(message)
 
-    async def aconnect(self):
+    async def __aenter__(self):
         self.send_queue = asyncio.Queue()
         self.connection_task = asyncio.create_task(self.websocket_loop())
         self.connected = True
 
-    async def adisconnect(self):
-        self.connection_task.cancel()
+    async def __aexit__(self, *args, **kwargs):
+        if self.connection_task:
+            self.connection_task.cancel()
 
-        try:
-            await self.connection_task
-        except asyncio.CancelledError:
-            logger.info(f"Websocket Transport {self} succesfully disconnected")
+            try:
+                await self.connection_task
+            except asyncio.CancelledError:
+                logger.info(f"Websocket Transport {self} succesfully disconnected")
 
     async def websocket_loop(self, retry=0):
         send_task = None

@@ -98,7 +98,7 @@ class ValidatingLink(ContinuationLink):
         self.validate(operation)
         return self.next.query(operation)
 
-    def ubscribe(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
+    def subscribe(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
         if not self.schema:
             self.load_schema(operation)
 

@@ -43,12 +43,12 @@ class SwitchAsyncLink(ContinuationLink):
         for result in unkoil_gen(self.next.asubscribe, operation):
             yield result
 
-    def connect(self) -> None:
+    def __enter__(self) -> None:
         self.__koil.__enter__()  # spin up a new thread if needed (if we are already in a koiled environment, use that one)
-        unkoil(self.next.aconnect, ensure_koiled=True)
+        unkoil(self.next.__aenter__)
 
-    def disconnect(self) -> None:
-        unkoil(self.next.adisconnect, ensure_koiled=True)
+    def __exit__(self, *args, **kwargs) -> None:
+        unkoil(self.next.__aexit__, *args, **kwargs)
         self.__koil.__exit__(None, None, None)  # cleanup thread if we had to spin it up
 
 
@@ -59,8 +59,9 @@ class SwitchSyncLink(ContinuationLink):
         self.connected = False
         super().__init__()
 
-    async def aconnect(self) -> None:
+    async def __aenter__(self) -> None:
         self.e = self.excecutor.__enter__()
+        self.next.__enter__()
         self.connected = True
 
     async def aquery(self, operation: Operation) -> GraphQLResult:
@@ -82,6 +83,7 @@ class SwitchSyncLink(ContinuationLink):
         for result in self.next.subscribe(operation):
             yield result
 
-    async def aconnect(self) -> None:
+    async def __aexit__(self, *args, **kwargs) -> None:
         self.e = self.excecutor.__exit__()
+        self.next.__exit__(*args, **kwargs)
         self.connected = False

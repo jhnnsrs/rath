@@ -321,7 +321,7 @@ python-versions = "*"
 
 [[package]]
 name = "koil"
-version = "0.1.59"
+version = "0.1.77"
 description = "An abstract event loop to run in an async and sync context (especially jupyter and qt), with utility functions to allow both accesses"
 category = "main"
 optional = false
@@ -773,7 +773,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "7d13dca46119e955f682af32649274fe3ca5238c0f233d8f7636143956b74737"
+content-hash = "88362423cb4afb748e1359172d27c46d375fc9317c025487df136832f7fef688"
 
 [metadata.files]
 aiohttp = [
@@ -1046,8 +1046,8 @@ iniconfig = [
     {file = "iniconfig-1.1.1.tar.gz", hash = "sha256:bc3af051d7d14b2ee5ef9969666def0cd1a000e121eaea580d4a313df4b37f32"},
 ]
 koil = [
-    {file = "koil-0.1.59-py3-none-any.whl", hash = "sha256:975dca32615c7b229d2fde5eb533ce75da2c1cbe686c5a0e6997687295afcfa0"},
-    {file = "koil-0.1.59.tar.gz", hash = "sha256:f124de2f56598f68c6e2eca540cf4be08c1cc08a16bd71f264557ce3de74e6f3"},
+    {file = "koil-0.1.77-py3-none-any.whl", hash = "sha256:2a1e488e4e81cd0821e39844b24ceda2283e69f343e03255e3f42c200de55a9c"},
+    {file = "koil-0.1.77.tar.gz", hash = "sha256:b9d7c6166338ae4f2f0277aa5b4915a5a0387196c779d094afae5f8d0a6680ad"},
 ]
 multidict = [
     {file = "multidict-6.0.2-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:0b9e95a740109c6047602f4db4da9949e6c5945cefbad34a1299775ddc9a62e2"},

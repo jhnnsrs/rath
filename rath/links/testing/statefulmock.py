@@ -37,12 +37,12 @@ class AsyncStatefulMockLink(AsyncTerminatingLink):
         self.connected = False
         self.futures = {}
 
-    async def aconnect(self) -> None:
+    async def __aenter__(self) -> None:
         self.connected = True
         self._inqueue = asyncio.Queue()
         self.connection_task = asyncio.create_task(self.resolving())
 
-    async def adisconnect(self) -> None:
+    async def __aexit__(self, *args, **kwargs) -> None:
         self.connected = False
         self.connection_task.cancel()
 
