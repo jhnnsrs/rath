@@ -22,42 +22,41 @@ class SplitLink(TerminatingLink):
         self.left(rath)
         self.right(rath)
 
-    async def aquery(self, operation: Operation) -> Operation:
+    async def aquery(self, operation: Operation, **kwargs) -> Operation:
         future = (
-            self.left.aquery(operation)
+            self.left.aquery(operation, **kwargs)
             if self.split(operation)
-            else self.right.aquery(operation)
+            else self.right.aquery(operation, **kwargs)
         )
         return await future
 
-    async def asubscribe(self, operation: Operation) -> Operation:
+    async def asubscribe(self, operation: Operation, **kwargs) -> Operation:
         iterator = (
-            self.left.asubscribe(operation)
+            self.left.asubscribe(operation, **kwargs)
             if self.split(operation)
-            else self.right.asubscribe(operation)
+            else self.right.asubscribe(operation, **kwargs)
         )
 
         async for res in iterator:
             yield res
 
-    def query(self, operation: Operation) -> Operation:
+    def query(self, operation: Operation, **kwargs) -> Operation:
         future = (
-            self.left.aquery(operation)
+            self.left.query(operation, **kwargs)
             if self.split(operation)
-            else self.right.aquery(operation)
+            else self.right.query(operation, **kwargs)
         )
 
-        return koil(future)
+        return future
 
-    def subscribe(self, operation: Operation) -> Operation:
+    def subscribe(self, operation: Operation, **kwargs) -> Operation:
         iterator = (
-            self.left.asubscribe(operation)
+            self.left.subscribe(operation, **kwargs)
             if self.split(operation)
-            else self.right.asubscribe(operation)
+            else self.right.subscribe(operation, **kwargs)
         )
 
-        for res in koil_gen(iterator):
-            yield res
+        return iterator
 
     async def __aenter__(self):
         await self.left.__aenter__()

@@ -11,7 +11,7 @@ from websockets.exceptions import (
 )
 import logging
 import uuid
-from rath.links.errors import TerminatingLinkError
+from rath.links.errors import LinkNotConnectedError, TerminatingLinkError
 
 from rath.operation import GraphQLException, GraphQLResult, Operation
 from rath.links.base import AsyncTerminatingLink
@@ -76,6 +76,7 @@ class WebSocketLink(AsyncTerminatingLink):
         await self.send_queue.put(message)
 
     async def __aenter__(self):
+        print("Connecting Websockets")
         self.send_queue = asyncio.Queue()
         self.connection_task = asyncio.create_task(self.websocket_loop())
         self.connected = True
@@ -198,12 +199,8 @@ class WebSocketLink(AsyncTerminatingLink):
             await self.ongoing_subscriptions[id].put(message)
 
     async def asubscribe(self, operation: Operation):
-        if not self._lock:
-            self._lock = asyncio.Lock()
-
-        async with self._lock:
-            if not self.connected:
-                await self.aconnect()
+        if self.connected == False:
+            raise LinkNotConnectedError("Websocket_link is not connected")
 
         assert (
             operation.node.operation == OperationType.SUBSCRIPTION

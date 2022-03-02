@@ -1,6 +1,6 @@
 import asyncio
 from pydantic import BaseModel
-from fakts.fakts import Fakts, get_current_fakts
+from fakts.fakts import Fakts, current_fakts
 from rath.links.aiohttp import AIOHttpLink
 from rath.operation import Operation
 
@@ -13,7 +13,7 @@ class FaktsAioHttpLink(AIOHttpLink):
     def __init__(self, *args, fakts: Fakts = None, fakts_key="rath", **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._lock = None
-        self.fakts = fakts or get_current_fakts()
+        self.fakts = fakts or current_fakts.get()
         self.fakts_key = fakts_key
         self.config = None
 

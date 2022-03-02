@@ -1,4 +1,5 @@
 import asyncio
+from koil.decorators import koilable
 from rath.links.base import TerminatingLink
 from typing import (
     AsyncIterator,
@@ -15,6 +16,7 @@ from rath.operation import GraphQLResult, opify
 from contextvars import ContextVar
 
 
+@koilable(add_connectors=True)
 class Rath:
     def __init__(
         self,
@@ -54,9 +56,7 @@ class Rath:
         if timeout:
             return await asyncio.wait_for(self.link.aquery(op), timeout)
 
-        return await self.link.aquery(
-            op,
-        )
+        return await self.link.aquery(op, **kwargs)
 
     def execute(
         self,
@@ -68,9 +68,7 @@ class Rath:
     ) -> GraphQLResult:
         op = opify(query, variables, headers, operation_name, **kwargs)
 
-        return self.link.query(
-            op,
-        )
+        return self.link.query(op, **kwargs)
 
     def subscribe(
         self,
@@ -82,8 +80,8 @@ class Rath:
     ) -> Iterator[GraphQLResult]:
 
         op = opify(query, variables, headers, operation_name, **kwargs)
-        for res in self.link.subscribe(op):
-            yield res
+        print("subscribe here")
+        return self.link.subscribe(op, **kwargs)
 
     async def asubscribe(
         self,
@@ -95,28 +93,16 @@ class Rath:
     ) -> AsyncIterator[GraphQLResult]:
 
         op = opify(query, variables, headers, operation_name, **kwargs)
-        async for res in self.link.asubscribe(op):
+        async for res in self.link.asubscribe(op, **kwargs):
             yield res
 
     async def __aenter__(self):
+        print("Entering Rath")
         await self.link.__aenter__()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.link.__aexit__(exc_type, exc_val, exc_tb)
-
-    def __enter__(self):
-        self.link.__enter__()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.link.__exit__(exc_type, exc_val, exc_tb)
-
-    def connect(self):
-        return self.__enter__()
-
-    def disconnect(self):
-        return self.__exit__(None, None, None)
 
 
 CURRENT_RATH = None

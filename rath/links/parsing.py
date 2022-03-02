@@ -9,20 +9,19 @@ class ParsingLink(ContinuationLink):
     def aparse(self, operation: Operation) -> Operation:
         raise NotImplementedError("Please implement this method")
 
-    async def aquery(self, operation: Operation) -> Operation:
+    async def aquery(self, operation: Operation, **kwargs) -> Operation:
         operation = await self.aparse(operation)
-        return await self.next.aquery(operation)
+        return await self.next.aquery(operation, **kwargs)
 
-    async def asubscribe(self, operation: Operation) -> Operation:
+    async def asubscribe(self, operation: Operation, **kwargs) -> Operation:
         operation = await self.aparse(operation)
-        async for result in self.next.asubscribe(operation):
+        async for result in self.next.asubscribe(operation, **kwargs):
             yield result
 
-    def query(self, operation: Operation) -> Operation:
+    def query(self, operation: Operation, **kwargs) -> Operation:
         operation = self.parse(operation)
-        return self.next.query(operation)
+        return self.next.query(operation, **kwargs)
 
-    def subscribe(self, operation: Operation) -> Operation:
+    def subscribe(self, operation: Operation, **kwargs) -> Operation:
         operation = self.parse(operation)
-        for result in self.next.subscribe(operation):
-            yield result
+        return self.next.subscribe(operation, **kwargs)

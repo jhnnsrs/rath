@@ -76,32 +76,33 @@ class ValidatingLink(ContinuationLink):
                 + "\n".join([e.message for e in errors])
             )
 
-    async def aquery(self, operation: Operation) -> GraphQLResult:
+    async def aquery(self, operation: Operation, **kwargs) -> GraphQLResult:
         if not self.schema:
             await self.aload_schema(operation)
 
         self.validate(operation)
-        return await self.next.aquery(operation)
+        return await self.next.aquery(operation, **kwargs)
 
-    async def asubscribe(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
+    async def asubscribe(
+        self, operation: Operation, **kwargs
+    ) -> AsyncIterator[GraphQLResult]:
         if not self.schema:
             await self.aload_schema(operation)
 
         self.validate(operation)
-        async for result in self.next.asubscribe(operation):
+        async for result in self.next.asubscribe(operation, **kwargs):
             yield result
 
-    def query(self, operation: Operation) -> GraphQLResult:
+    def query(self, operation: Operation, **kwargs) -> GraphQLResult:
         if not self.schema:
             self.load_schema(operation)
 
         self.validate(operation)
-        return self.next.query(operation)
+        return self.next.query(operation, **kwargs)
 
-    def subscribe(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
+    def subscribe(self, operation: Operation, **kwargs) -> AsyncIterator[GraphQLResult]:
         if not self.schema:
             self.load_schema(operation)
 
         self.validate(operation)
-        for result in self.next.subscribe(operation):
-            yield result
+        return self.next.subscribe(operation, **kwargs)

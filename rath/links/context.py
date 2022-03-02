@@ -3,6 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 from rath.links.base import ContinuationLink
 from rath.operation import GraphQLResult, Operation
 from koil import unkoil, unkoil_gen, Koil
+from koil.helpers import unkoil_gen
 
 
 class SwitchAsyncLink(ContinuationLink):
@@ -27,29 +28,20 @@ class SwitchAsyncLink(ContinuationLink):
 
     def __init__(self, **koilparams):
         super().__init__()
-        self.__koil = Koil(**koilparams)
 
-    async def aquery(self, operation: Operation) -> GraphQLResult:
+    async def aquery(self, operation: Operation, **kwargs) -> GraphQLResult:
         return await self.next.aquery(operation)
 
-    async def asubscribe(self, operation: Operation) -> GraphQLResult:
+    async def asubscribe(self, operation: Operation, **kwargs) -> GraphQLResult:
         async for result in self.next.asubscribe(operation):
             yield result
 
-    def query(self, operation: Operation) -> GraphQLResult:
-        return unkoil(self.next.aquery, operation)
+    def query(self, operation: Operation, **kwargs) -> GraphQLResult:
+        return unkoil(self.next.aquery, operation, **kwargs)
 
-    def subscribe(self, operation: Operation) -> GraphQLResult:
-        for result in unkoil_gen(self.next.asubscribe, operation):
-            yield result
-
-    def __enter__(self) -> None:
-        self.__koil.__enter__()  # spin up a new thread if needed (if we are already in a koiled environment, use that one)
-        unkoil(self.next.__aenter__)
-
-    def __exit__(self, *args, **kwargs) -> None:
-        unkoil(self.next.__aexit__, *args, **kwargs)
-        self.__koil.__exit__(None, None, None)  # cleanup thread if we had to spin it up
+    def subscribe(self, operation: Operation, **kwargs) -> GraphQLResult:
+        t = unkoil_gen(self.next.asubscribe, operation, **kwargs)
+        return t
 
 
 class SwitchSyncLink(ContinuationLink):
@@ -80,8 +72,7 @@ class SwitchSyncLink(ContinuationLink):
         return self.next.query(operation)
 
     def subscribe(self, operation: Operation) -> GraphQLResult:
-        for result in self.next.subscribe(operation):
-            yield result
+        return self.next.subscribe(operation)
 
     async def __aexit__(self, *args, **kwargs) -> None:
         self.e = self.excecutor.__exit__()

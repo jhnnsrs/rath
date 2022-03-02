@@ -15,22 +15,24 @@ class Link:
     def __exit__(self, *args, **kwargs) -> None:
         pass
 
-    async def aquery(self, operation: Operation) -> GraphQLResult:
+    async def aquery(self, operation: Operation, **kwargs) -> GraphQLResult:
         raise NotImplementedError(
             f"Please overwrite the aquery method in {self.__class__.__name__}"
         )
 
-    async def asubscribe(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
+    async def asubscribe(
+        self, operation: Operation, **kwargs
+    ) -> AsyncIterator[GraphQLResult]:
         raise NotImplementedError(
             f"Please overwrite the asubscribe method in {self.__class__.__name__}"
         )
 
-    def query(self, operation: Operation) -> GraphQLResult:
+    def query(self, operation: Operation, **kwargs) -> GraphQLResult:
         raise NotImplementedError(
             f"Please overwrite the query method in {self.__class__.__name__}"
         )
 
-    def subscribe(self, operation: Operation) -> Iterator[GraphQLResult]:
+    def subscribe(self, operation: Operation, **kwargs) -> Iterator[GraphQLResult]:
         raise NotImplementedError(
             f"Please overwrite the subscribe method in {self.__class__.__name__}"
         )
@@ -84,7 +86,21 @@ class ContinuationLink(Link):
         self.next = next
         return self
 
+    async def aquery(self, operation: Operation, **kwargs) -> GraphQLResult:
+        return await self.next.aquery(operation, **kwargs)
+
+    async def asubscribe(self, operation: Operation, **kwargs) -> GraphQLResult:
+        async for x in self.next.asubscribe(operation, **kwargs):
+            yield x
+
+    def query(self, operation: Operation, **kwargs) -> GraphQLResult:
+        return self.next.query(operation, **kwargs)
+
+    def subscribe(self, operation: Operation, **kwargs) -> GraphQLResult:
+        return self.next.subscribe(operation, **kwargs)
+
     async def __aenter__(self) -> None:
+        print(f"Entering next on {self.__class__.__name__}")
         return await self.next.__aenter__()
 
     async def __aexit__(self, *args, **kwargs) -> None:

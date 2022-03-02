@@ -24,36 +24,38 @@ class AuthTokenLink(AsyncContinuationLink):
         if self.load_token_on_connect:
             await self.reload_token()
 
+        return await self.next.__aenter__()
+
     async def reload_token(self) -> None:
         self.token = await self.token_loader()
         return self.token
 
-    async def aquery(self, operation: Operation, retry=0) -> GraphQLResult:
+    async def aquery(self, operation: Operation, retry=0, **kwargs) -> GraphQLResult:
         operation.context.headers["Authorization"] = f"Bearer {self.token}"
         if not self.token:
             await self.reload_token()
         try:
 
-            return await self.next.aquery(operation)
+            return await self.next.aquery(operation, **kwargs)
         except AuthenticationError as e:
             retry = retry + 1
             if retry > self.maximum_refresh_attempts:
                 raise AuthenticationError("Maximum refresh attempts reached") from e
 
             self.token = await self.reload_token()
-            return await self.aquery(operation, retry=retry)
+            return await self.aquery(operation, retry=retry, **kwargs)
 
     async def asubscribe(
-        self, operation: Operation, retry=0
+        self, operation: Operation, retry=0, **kwargs
     ) -> AsyncIterator[GraphQLResult]:
         if retry >= self.maximum_refresh_attempts:
             raise AuthenticationError("Maximum refresh attempts reached")
 
         operation.context.headers["Authorization"] = f"Bearer {self.token}"
         try:
-            async for result in self.next.asubscribe(operation):
+            async for result in self.next.asubscribe(operation, **kwargs):
                 yield result
 
         except AuthenticationError as e:
-            async for result in self.asubscribe(operation, retry=retry + 1):
+            async for result in self.asubscribe(operation, retry=retry + 1, **kwargs):
                 yield result
