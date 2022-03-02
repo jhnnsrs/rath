@@ -8,7 +8,7 @@ packages = [{include = "rath"}]
 
 [tool.poetry.dependencies]
 python = "^3.7"
-koil = "0.1.77"
+koil = "0.1.80"
 aiohttp = "^3.8.1"
 graphql-core = "^3.2.0"
 pydantic = "^1.9.0"
