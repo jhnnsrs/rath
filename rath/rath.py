@@ -36,10 +36,6 @@ class Rath:
         """
         self.link = link
         self.autoconnect = autoconnect
-        self.link(self)
-
-        if register:
-            set_current_rath(self)
 
     async def aexecute(
         self,
@@ -97,23 +93,9 @@ class Rath:
             yield res
 
     async def __aenter__(self):
-        print("Entering Rath")
+        self.link(self)
         await self.link.__aenter__()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.link.__aexit__(exc_type, exc_val, exc_tb)
-
-
-CURRENT_RATH = None
-
-
-def get_current_rath(**kwargs):
-    global CURRENT_RATH
-    assert CURRENT_RATH is not None, "No current rath set"
-    return CURRENT_RATH
-
-
-def set_current_rath(rath):
-    global CURRENT_RATH
-    CURRENT_RATH = rath
