@@ -24,8 +24,6 @@ class AuthTokenLink(AsyncContinuationLink):
         if self.load_token_on_connect:
             await self.reload_token()
 
-        return await self.next.__aenter__()
-
     async def reload_token(self) -> None:
         self.token = await self.token_loader()
         return self.token

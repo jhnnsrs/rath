@@ -66,14 +66,6 @@ class SplitLink(TerminatingLink):
         await self.left.__aexit__(*args, **kwargs)
         await self.right.__aexit__(*args, **kwargs)
 
-    def __exit__(self, *args, **kwargs):
-        self.left.__exit__(*args, **kwargs)
-        self.right.__axit__(*args, **kwargs)
-
-    def __enter__(self, *args, **kwargs):
-        self.left.__enter__(*args, **kwargs)
-        self.right.__enter__(*args, **kwargs)
-
 
 def split(
     left: TerminatingLink, right: TerminatingLink, split: Callable[[Operation], bool]

@@ -1,4 +1,5 @@
 from typing import AsyncIterator, Iterator
+from rath.links.errors import LinkNotConnectedError
 from rath.operation import GraphQLResult, Operation
 
 
@@ -7,12 +8,6 @@ class Link:
         pass
 
     async def __aexit__(self, *args, **kwargs) -> None:
-        pass
-
-    def __enter__(self) -> None:
-        pass
-
-    def __exit__(self, *args, **kwargs) -> None:
         pass
 
     async def aquery(self, operation: Operation, **kwargs) -> GraphQLResult:
@@ -43,18 +38,6 @@ class TerminatingLink(Link):
         self.rath = rath
         return self
 
-    async def __aenter__(self) -> None:
-        pass
-
-    async def __aexit__(self, *args, **kwargs) -> None:
-        pass
-
-    def __enter__(self) -> None:
-        pass
-
-    def __exit__(self, *args, **kwargs) -> None:
-        pass
-
 
 class AsyncTerminatingLink(TerminatingLink):
     def query(self, operation: Operation) -> GraphQLResult:
@@ -81,10 +64,22 @@ class SyncTerminatingLink(TerminatingLink):
 
 
 class ContinuationLink(Link):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._next = None
+
     def __call__(self, rath, next: Link):
         self.rath = rath
-        self.next = next
+        self._next = next
         return self
+
+    @property
+    def next(self):
+        if self._next is None:
+            raise LinkNotConnectedError(
+                "Next link is not set. This means we were never connected. Please use rath in an async context"
+            )
+        return self._next
 
     async def aquery(self, operation: Operation, **kwargs) -> GraphQLResult:
         return await self.next.aquery(operation, **kwargs)
@@ -98,19 +93,6 @@ class ContinuationLink(Link):
 
     def subscribe(self, operation: Operation, **kwargs) -> GraphQLResult:
         return self.next.subscribe(operation, **kwargs)
-
-    async def __aenter__(self) -> None:
-        print(f"Entering next on {self.__class__.__name__}")
-        return await self.next.__aenter__()
-
-    async def __aexit__(self, *args, **kwargs) -> None:
-        return await self.next.__aexit__(*args, **kwargs)
-
-    def __enter__(self) -> None:
-        self.next.__enter__()
-
-    def __exit__(self, *args, **kwargs) -> None:
-        self.next.__exit__(*args, **kwargs)
 
 
 class AsyncContinuationLink(ContinuationLink):

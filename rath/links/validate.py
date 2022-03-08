@@ -43,11 +43,19 @@ class ValidatingLink(ContinuationLink):
         schema_dsl: str = None,
         schema_glob: str = None,
         allow_introspection=True,
+        introspect_on_connect=True,
     ) -> None:
         if schema_dsl or schema_glob:
             self.schema = schemify(schema_dsl, schema_glob)
 
         self.allow_introspection = allow_introspection
+        self.introspect_on_connect = introspect_on_connect
+
+    async def __aenter__(self) -> None:
+        if not self.schema and self.introspect_on_connect:
+            introspect_operation = opify(get_introspection_query())
+            schema_result = await self.next.aquery(introspect_operation)
+            self.schema = build_schema(schema_result.data)
 
     async def aload_schema(self, operation: Operation) -> None:
         if self.allow_introspection:

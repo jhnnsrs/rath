@@ -62,8 +62,8 @@ class Rath:
         operation_name=None,
         **kwargs,
     ) -> GraphQLResult:
-        op = opify(query, variables, headers, operation_name, **kwargs)
 
+        op = opify(query, variables, headers, operation_name, **kwargs)
         return self.link.query(op, **kwargs)
 
     def subscribe(
@@ -76,7 +76,6 @@ class Rath:
     ) -> Iterator[GraphQLResult]:
 
         op = opify(query, variables, headers, operation_name, **kwargs)
-        print("subscribe here")
         return self.link.subscribe(op, **kwargs)
 
     async def asubscribe(
@@ -97,5 +96,6 @@ class Rath:
         await self.link.__aenter__()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self.link.__aexit__(exc_type, exc_val, exc_tb)
+    async def __aexit__(self, *args, **kwargs):
+        await self.link.__aexit__(*args, **kwargs)
+        self.link(None)

@@ -41,16 +41,17 @@ def stateful_rath(stateful_mocklink):
 
 async def test_bypass(simple_rath):
 
-    x = await simple_rath.aexecute(
-        """
-        query {
-            beast(id: "1") {
-                binomial
+    async with simple_rath:
+        x = await simple_rath.aexecute(
+            """
+            query {
+                beast(id: "1") {
+                    binomial
+                }
             }
-        }
-    """
-    )
-    assert x.data, "No data"
+        """
+        )
+        assert x.data, "No data"
 
 
 async def test_link_not_connected_exception(stateful_rath):
@@ -248,29 +249,29 @@ def test_stateful_link_subscription_sync_same_koil(stateful_rath):
 
 def test_query_sinc(mock_link):
 
-    rath = Rath(compose(SwitchAsyncLink(), mock_link))
+    with Rath(compose(SwitchAsyncLink(), mock_link)) as rath:
 
-    rath.execute(
-        """
-        query {
-            beast(id: "1") {
-                binomial
+        rath.execute(
+            """
+            query {
+                beast(id: "1") {
+                    binomial
+                }
             }
-        }
-    """
-    )
+        """
+        )
 
 
 def test_switch_sync(mock_link):
 
-    rath = Rath(compose(SwitchAsyncLink(), mock_link))
+    with Rath(compose(SwitchAsyncLink(), mock_link)) as rath:
 
-    rath.execute(
-        """
-        query {
-            beast(id: "1") {
-                binomial
+        rath.execute(
+            """
+            query {
+                beast(id: "1") {
+                    binomial
+                }
             }
-        }
-    """
-    )
+        """
+        )

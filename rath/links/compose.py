@@ -24,16 +24,12 @@ class ComposedLink(TerminatingLink):
         self.links[-1](rath)  # last one gets only rath
 
     async def __aenter__(self):
-        await self.first_link.__aenter__()
+        for link in self.links:
+            await link.__aenter__()
 
     async def __aexit__(self, *args, **kwargs):
-        await self.first_link.__aexit__(*args, **kwargs)
-
-    def __enter__(self):
-        self.first_link.__enter__()
-
-    def __exit__(self, *args, **kwargs):
-        self.first_link.__exit__(*args, **kwargs)
+        for link in self.links:
+            await link.__aexit__(*args, **kwargs)
 
     async def aquery(self, operation: Operation, **kwargs):
         return await self.first_link.aquery(operation)
