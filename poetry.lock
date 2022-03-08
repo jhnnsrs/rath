@@ -325,8 +325,8 @@ python-versions = "*"
 
 [[package]]
 name = "koil"
-version = "0.1.80"
-description = "An abstract event loop to run in an async and sync context (especially jupyter and qt), with utility functions to allow both accesses"
+version = "0.1.96"
+description = "Async for a sync world"
 category = "main"
 optional = false
 python-versions = ">=3.7,<4.0"
@@ -785,7 +785,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "7d6c9e08cb60a2a1b079b3dfd09b2bbc4678c58347b639b42da737c38c3b22c8"
+content-hash = "c2c7d4ef9236b5112e12ff74417816e873da08acf5e6e82dd09f85343fe6872a"
 
 [metadata.files]
 aiohttp = [
@@ -1062,8 +1062,8 @@ iniconfig = [
     {file = "iniconfig-1.1.1.tar.gz", hash = "sha256:bc3af051d7d14b2ee5ef9969666def0cd1a000e121eaea580d4a313df4b37f32"},
 ]
 koil = [
-    {file = "koil-0.1.80-py3-none-any.whl", hash = "sha256:1f795b020e8fd2ad6f3ad2d2a9a1e7b195df3d52d5e60614604fdfbd0afd669c"},
-    {file = "koil-0.1.80.tar.gz", hash = "sha256:2ece37ac81ac474170fd7f6ab2c729593f9836ea546d34cd3ef0ca60852e142a"},
+    {file = "koil-0.1.96-py3-none-any.whl", hash = "sha256:e40bb2ccc1f8797fcfc0230b5d95ca049cc2195c38d1046ad64597058f804708"},
+    {file = "koil-0.1.96.tar.gz", hash = "sha256:a4fe1b79b7d593ff2d873e4db3698a95a853f165905b1c91363d675bed76bfa6"},
 ]
 multidict = [
     {file = "multidict-6.0.2-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:0b9e95a740109c6047602f4db4da9949e6c5945cefbad34a1299775ddc9a62e2"},
