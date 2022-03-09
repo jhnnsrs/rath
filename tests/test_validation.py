@@ -45,7 +45,7 @@ class QueryAsync(AsyncMockResolver):
 class MutationAsync(AsyncMockResolver):
     pass
 
-    async def resoplve_createBeast(self, operation: Operation):
+    async def resolve_createBeast(self, operation: Operation):
         return {
             "id": operation.variables["id"],
             "name": "John Doe",
