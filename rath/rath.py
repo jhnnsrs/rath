@@ -6,14 +6,12 @@ from typing import (
     Dict,
     Any,
     Iterator,
-    Optional,
-    List,
-    Union,
-    Callable,
-    Awaitable,
 )
 from rath.operation import GraphQLResult, opify
 from contextvars import ContextVar
+
+
+current_rath = ContextVar("current_rath")
 
 
 @koilable(add_connectors=True)
@@ -21,8 +19,7 @@ class Rath:
     def __init__(
         self,
         link: TerminatingLink,
-        register=False,
-        autoconnect=True,
+        set_context=True,
     ) -> None:
         """Initialize a Rath client
 
@@ -31,11 +28,10 @@ class Rath:
 
         Args:
             link (TerminatingLink): A terminating link or a composed link.
-            register (bool, optional): Register as a global rath (knowing the risks). Defaults to False.
             autoconnect (bool, optional): [description]. Defaults to True.
         """
         self.link = link
-        self.autoconnect = autoconnect
+        self.set_context = set_context
 
     async def aexecute(
         self,
@@ -46,7 +42,6 @@ class Rath:
         timeout=None,
         **kwargs,
     ) -> GraphQLResult:
-
         op = opify(query, variables, headers, operation_name, **kwargs)
 
         if timeout:
@@ -62,7 +57,6 @@ class Rath:
         operation_name=None,
         **kwargs,
     ) -> GraphQLResult:
-
         op = opify(query, variables, headers, operation_name, **kwargs)
         return self.link.query(op, **kwargs)
 
@@ -74,7 +68,6 @@ class Rath:
         operation_name=None,
         **kwargs,
     ) -> Iterator[GraphQLResult]:
-
         op = opify(query, variables, headers, operation_name, **kwargs)
         return self.link.subscribe(op, **kwargs)
 
@@ -86,16 +79,22 @@ class Rath:
         operation_name=None,
         **kwargs,
     ) -> AsyncIterator[GraphQLResult]:
-
         op = opify(query, variables, headers, operation_name, **kwargs)
         async for res in self.link.asubscribe(op, **kwargs):
             yield res
 
     async def __aenter__(self):
         self.link(self)
+        if self.set_context:
+            current_rath.set(self)
         await self.link.__aenter__()
         return self
 
     async def __aexit__(self, *args, **kwargs):
         await self.link.__aexit__(*args, **kwargs)
         self.link(None)
+        if self.set_context:
+            current_rath.set(None)
+
+    def __enter__(self) -> "Rath":
+        ...

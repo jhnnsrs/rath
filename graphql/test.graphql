@@ -1,27 +1,10 @@
-query User {
-  users {
-    ...User
-  }
+fragment Beast on Beast {
+  commonName
+  taxClass
 }
 
-fragment User on users {
-  id
-}
-
-query get_capsules {
-  capsules {
-    id
-    missions {
-      flight
-      name
-    }
-  }
-}
-
-mutation inset_user($id: uuid) {
-  insert_users(objects: { id: $id }) {
-    returning {
-      id
-    }
+query get_beasts {
+  beasts {
+    ...Beast
   }
 }

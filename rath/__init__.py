@@ -1,2 +1,2 @@
-from .utils import compose
 from .rath import Rath
+import rath.links

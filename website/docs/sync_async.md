@@ -1,9 +1,9 @@
 ---
-sidebar_position: 1
-sidebar_label: "Sync vs Async"
+sidebar_position: 3
+sidebar_label: "Sync, Async and Qt"
 ---
 
-# Sync vs Async
+# Sync and Async Api
 
 Rath tries to faciliate the usage of async and sync consumers alike and hide implementation details under a coverning api that
 should feel natural for both type of scenarios. No matter which Terminating Link **async** or **sync** you are choosing. The Api i
@@ -21,7 +21,7 @@ async with Rath(...) as rath:
 
 ```
 
-```python title="async.api"
+```python title="sync.api"
 
 with Rath(...) as rath:
 
@@ -31,21 +31,6 @@ with Rath(...) as rath:
         print(result)
 
 
-```
-
-If your terminating link does not involve any connection logic that needs to facilitate subscriptions, you can generally omit the
-context manager eg:
-
-```python title="sync.api"
-rath = Rath(...)
-
-result = rath.execute("query")
-```
-
-```python title="sync.api"
-rath = Rath(...)
-
-result = await rath.aexecute("query")
 ```
 
 :::tip
@@ -74,22 +59,29 @@ connected. Choose this wisely!
 
 ### How this is done...
 
-Rath uses the koil library to facilitate this "context switch". In short when using koil _and_ running under a sync context, rath
-will either spin up a new event loop in another thread on connect (or entering the context manager). No you are allow you to interact with
-that event loop through a synchronous api. This means you can even create asyncio.like Tasks synchronously in the other event loop (using as_task),
+Rath uses the **koil library** to facilitate this "context switch". In short when using koil **and** running under a sync context, rath
+will either spin up a new event loop in another thread on connect (or entering the context manager). You now interact threadsafe with
+that event loop through a synchronous api. This means you can even create asyncio.like Tasks in the other event loop (using as_task),
 or iterate over results in the other loop. On closing the context manager or disconnect, that event loop gets closed and all tasks cancelled.
 
-Koil can be also run globally (for example in a pyqt app) and will return, task classes with signals that you can connect to. E.g.
+# QT
+
+Koil can be also run globally (for example in a pyqt app) and can overwrite the task classes that are being returned, so that you can easily integrate
+rath in a qt app and use signals.
 
 ```python
+from koil.qt import QtKoil
+
+
 class QWidget(qtpy.QtWidget):
 
     def __init__(*args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.koil = QtKoil(auto_create=True) # WIll automaticalll create a threaded eventloop
+        self.koil = QtKoil(auto_connect=True) # WIll automaticalll create a threaded eventloop and destroy it on application close
         self.rath = Rath(...)
         self.text = QLineEdit()
-        self.rath.connect() # disconnecting will automatically happen on application close
+
+        self.rath.connect() # disconnecting will automatically happen on application close or on call to disconnect
         self.subscribe_to_events()
 
     def subscribe_to_events(self):
@@ -113,7 +105,7 @@ class QWidget(qtpy.QtWidget):
 
 ```
 
-#### However
+### However
 
 Using async libraries in a sync environment is not an easy undertaking and comes with a lot of pitfalls, and performance penalties.
 So when you start out your project make sure you understand what you are dealing with.

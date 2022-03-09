@@ -60,7 +60,7 @@ def mock_link():
 
 async def test_validation(mock_link):
 
-    link = ValidatingLink(schema_dsl=schema)
+    link = ValidatingLink(schema_glob="tests/schema.graphl")
 
     rath = Rath(compose(link, mock_link))
 
