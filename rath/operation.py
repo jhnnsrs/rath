@@ -4,11 +4,8 @@ from typing import Optional, Dict, Any
 from graphql.language import OperationDefinitionNode, parse
 from graphql import (
     DocumentNode,
-    GraphQLSchema,
-    get_introspection_query,
     get_operation_ast,
     parse,
-    build_ast_schema,
 )
 
 

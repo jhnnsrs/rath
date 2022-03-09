@@ -97,9 +97,3 @@ class AIOHttpLink(AsyncTerminatingLink):
                 raise NotImplementedError(
                     "If you didn't specify a pollInterval you cannot use subscribe to this query"
                 )
-
-    def query(self, operation: Operation) -> GraphQLResult:
-        raise NotImplementedError()
-
-    def subscribe(self, operation: Operation) -> GraphQLResult:
-        raise NotImplementedError()

@@ -37,15 +37,16 @@ async def test_aquery(mock_link_left, mock_link_right):
         )
     )
 
-    await rath.aexecute(
-        """
-        query {
-            beast(id: "1") {
-                binomial
+    async with rath as r:
+        await r.aexecute(
+            """
+            query {
+                beast(id: "1") {
+                    binomial
+                }
             }
-        }
-    """
-    )
+        """
+        )
 
 
 async def test_stateful_mock(stateful_mock_link):
@@ -93,15 +94,17 @@ async def test_asubscribe(mock_link_left, mock_link_right):
         )
     )
 
-    async for ev in rath.asubscribe(
-        """
-        subscription {
-            watchBeast(id: "1") {
-                legs
-            }
-        }
-        """
-    ):
-        x = ev
+    async with rath as r:
 
-    assert x.data["watchBeast"]["legs"] == 9
+        async for ev in r.asubscribe(
+            """
+            subscription {
+                watchBeast(id: "1") {
+                    legs
+                }
+            }
+            """
+        ):
+            x = ev
+
+        assert x.data["watchBeast"]["legs"] == 9

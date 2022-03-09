@@ -1,6 +1,7 @@
 from typing import AsyncIterator, Iterator
 from rath.links.errors import LinkNotConnectedError
 from rath.operation import GraphQLResult, Operation
+from koil import unkoil, unkoil_gen
 
 
 class Link:
@@ -40,15 +41,17 @@ class TerminatingLink(Link):
 
 
 class AsyncTerminatingLink(TerminatingLink):
-    def query(self, operation: Operation) -> GraphQLResult:
-        raise NotImplementedError(
-            "Async Terminating link does not support syncrhonous queries. Please compose together with a context switch link"
-        )
+    def aquery(self, operation: Operation) -> GraphQLResult:
+        raise NotImplementedError("Your Async Transport needs to overwrite this method")
 
-    def subscribe(self, operation: Operation) -> Iterator[GraphQLResult]:
-        raise NotImplementedError(
-            "Async Terminating link does not support syncrhonous queries. Please compose together with a context switch link"
-        )
+    def asubscribe(self, operation: Operation) -> Iterator[GraphQLResult]:
+        raise NotImplementedError("Your Async Transport needs to overwrite this method")
+
+    def query(self, operation: Operation, **kwargs) -> GraphQLResult:
+        return unkoil(self.aquery, operation, **kwargs)
+
+    def subscribe(self, operation: Operation, **kwargs) -> GraphQLResult:
+        return unkoil_gen(self.asubscribe, operation, **kwargs)
 
 
 class SyncTerminatingLink(TerminatingLink):

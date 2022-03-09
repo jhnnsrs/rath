@@ -84,9 +84,3 @@ class AsyncMockLink(AsyncTerminatingLink):
 
         else:
             raise NotImplementedError("Only subscription are mocked")
-
-    def query(self, operation: Operation) -> GraphQLResult:
-        raise NotImplementedError("This is a async Terminating Link")
-
-    def subscribe(self, operation: Operation) -> GraphQLResult:
-        raise NotImplementedError("This is a async Terminating Link")

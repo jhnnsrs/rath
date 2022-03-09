@@ -45,7 +45,7 @@ class QueryAsync(AsyncMockResolver):
 class MutationAsync(AsyncMockResolver):
     pass
 
-    async def resoplve_createBeast(self, operation: Operation):
+    async def resolve_createBeast(self, operation: Operation):
         return {
             "id": operation.variables["id"],
             "name": "John Doe",
@@ -60,7 +60,7 @@ def mock_link():
 
 async def test_validation(mock_link):
 
-    link = ValidatingLink(schema_dsl=schema)
+    link = ValidatingLink(schema_glob="tests/schema.graphl")
 
     rath = Rath(compose(link, mock_link))
 
