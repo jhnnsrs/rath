@@ -6,7 +6,7 @@ from rath.links.parsing import ParsingLink
 class DictingLink(ParsingLink):
     def parse(self, operation: Operation) -> Operation:
         shrinked_variables = {
-            key: dict(var)
+            key: var.dict()
             for key, var in operation.variables.items()
             if isinstance(var, BaseModel)
         }
@@ -15,7 +15,7 @@ class DictingLink(ParsingLink):
 
     async def aparse(self, operation: Operation) -> Operation:
         shrinked_variables = {
-            key: dict(var)
+            key: var.dict()
             for key, var in operation.variables.items()
             if isinstance(var, BaseModel)
         }

@@ -1,5 +1,4 @@
 from typing import Callable, List
-from koil.loop import koil, koil_gen
 from rath.operation import Operation
 from rath.links.base import TerminatingLink
 

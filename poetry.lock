@@ -317,6 +317,17 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "janus"
+version = "1.0.0"
+description = "Mixed sync-async queue to interoperate between asyncio tasks and classic threads"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+typing-extensions = ">=3.7.4.3"
+
+[[package]]
 name = "jinja2"
 version = "3.0.3"
 description = "A very fast and expressive template engine."
@@ -332,13 +343,14 @@ i18n = ["Babel (>=2.7)"]
 
 [[package]]
 name = "koil"
-version = "0.1.96"
+version = "0.1.99"
 description = "Async for a sync world"
 category = "main"
 optional = false
 python-versions = ">=3.7,<4.0"
 
 [package.dependencies]
+janus = ">=1.0.0,<2.0.0"
 qtpy = ">1"
 
 [package.extras]
@@ -612,6 +624,7 @@ python-versions = ">=3.6.2,<4.0.0"
 colorama = ">=0.4.0,<0.5.0"
 commonmark = ">=0.9.0,<0.10.0"
 pygments = ">=2.6.0,<3.0.0"
+typing-extensions = {version = ">=3.7.4,<5.0", markers = "python_version < \"3.8\""}
 
 [package.extras]
 jupyter = ["ipywidgets (>=7.5.1,<8.0.0)"]
@@ -793,7 +806,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "f95bfdd742ead12092ab0cdd67a345207f53a24e716c8e0f3cfe603c340a5fbd"
+content-hash = "d4468a274df979c71c2bf975d08d6271efb59ab16416e0127fa67b0d4f0876ad"
 
 [metadata.files]
 aiohttp = [
@@ -1090,13 +1103,17 @@ iniconfig = [
     {file = "iniconfig-1.1.1-py2.py3-none-any.whl", hash = "sha256:011e24c64b7f47f6ebd835bb12a743f2fbe9a26d4cecaa7f53bc4f35ee9da8b3"},
     {file = "iniconfig-1.1.1.tar.gz", hash = "sha256:bc3af051d7d14b2ee5ef9969666def0cd1a000e121eaea580d4a313df4b37f32"},
 ]
+janus = [
+    {file = "janus-1.0.0-py3-none-any.whl", hash = "sha256:2596ea5482711c1ee3ef2df6c290aaf370a13c55a007826e8f7c32d696d1d00a"},
+    {file = "janus-1.0.0.tar.gz", hash = "sha256:df976f2cdcfb034b147a2d51edfc34ff6bfb12d4e2643d3ad0e10de058cb1612"},
+]
 jinja2 = [
     {file = "Jinja2-3.0.3-py3-none-any.whl", hash = "sha256:077ce6014f7b40d03b47d1f1ca4b0fc8328a692bd284016f806ed0eaca390ad8"},
     {file = "Jinja2-3.0.3.tar.gz", hash = "sha256:611bb273cd68f3b993fabdc4064fc858c5b47a973cb5aa7999ec1ba405c87cd7"},
 ]
 koil = [
-    {file = "koil-0.1.96-py3-none-any.whl", hash = "sha256:e40bb2ccc1f8797fcfc0230b5d95ca049cc2195c38d1046ad64597058f804708"},
-    {file = "koil-0.1.96.tar.gz", hash = "sha256:a4fe1b79b7d593ff2d873e4db3698a95a853f165905b1c91363d675bed76bfa6"},
+    {file = "koil-0.1.99-py3-none-any.whl", hash = "sha256:ba2b40babb3adc58402598822a55bfc18ee5ad1dad2ab5545fc9c49aea04bb6b"},
+    {file = "koil-0.1.99.tar.gz", hash = "sha256:b5e93a7a6c3d17600588a521cd64ace33e77856cf826c2a7ee2afd703b82e785"},
 ]
 markupsafe = [
     {file = "MarkupSafe-2.1.0-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:3028252424c72b2602a323f70fbf50aa80a5d3aa616ea6add4ba21ae9cc9da4c"},
