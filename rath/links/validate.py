@@ -2,6 +2,7 @@ from typing import AsyncIterator
 from graphql import (
     GraphQLSchema,
     build_ast_schema,
+    build_client_schema,
     build_schema,
     get_introspection_query,
     validate,
@@ -47,15 +48,10 @@ class ValidatingLink(ContinuationLink):
     ) -> None:
         if schema_dsl or schema_glob:
             self.schema = schemify(schema_dsl, schema_glob)
+        else:
+            self.schema = None
 
         self.allow_introspection = allow_introspection
-        self.introspect_on_connect = introspect_on_connect
-
-    async def __aenter__(self) -> None:
-        if not self.schema and self.introspect_on_connect:
-            introspect_operation = opify(get_introspection_query())
-            schema_result = await self.next.aquery(introspect_operation)
-            self.schema = build_schema(schema_result.data)
 
     async def aload_schema(self, operation: Operation) -> None:
         if self.allow_introspection:
@@ -64,7 +60,8 @@ class ValidatingLink(ContinuationLink):
             introspect_operation.extensions = operation.extensions
 
             schema_result = await self.next.aquery(introspect_operation)
-            self.schema = build_schema(schema_result.data)
+            print(schema_result)
+            self.schema = build_client_schema(schema_result.data)
 
     def load_schema(self, operation: Operation) -> None:
         if self.allow_introspection:
@@ -73,7 +70,8 @@ class ValidatingLink(ContinuationLink):
             introspect_operation.extensions = operation.extensions
 
             schema_result = self.next.query(introspect_operation)
-            self.schema = build_schema(schema_result.data)
+            print(schema_result)
+            self.schema = build_client_schema(schema_result.data)
 
     def validate(self, operation: Operation):
         errors = validate(self.schema, operation.document_node)

@@ -1,5 +1,6 @@
+from http.client import NotConnected
 from rath.links.context import SwitchAsyncLink
-from rath.links.errors import LinkNotConnectedError
+from rath.errors import NotConnectedError
 from rath.links.validate import ValidatingLink, ValidationError
 from rath.operation import Operation, opify
 import pytest
@@ -56,7 +57,7 @@ async def test_bypass(simple_rath):
 
 async def test_link_not_connected_exception(stateful_rath):
 
-    with pytest.raises(LinkNotConnectedError):
+    with pytest.raises(NotConnectedError):
         x = await stateful_rath.aexecute(
             """
             query {

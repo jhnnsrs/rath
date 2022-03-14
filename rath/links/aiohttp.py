@@ -16,6 +16,14 @@ class AIOHttpLink(AsyncTerminatingLink):
 
     def __init__(self, url: str = "") -> None:
         self.url = url
+        self.session = None
+
+    async def __aenter__(self) -> None:
+        self.session = await aiohttp.ClientSession().__aenter__()
+
+    async def __aexit__(self, *args, **kwargs) -> None:
+        print("CLosing session")
+        await self.session.__aexit__(*args, **kwargs)
 
     async def aquery(self, operation: Operation) -> GraphQLResult:
         payload = {"query": operation.document}
@@ -52,35 +60,30 @@ class AIOHttpLink(AsyncTerminatingLink):
             payload["variables"] = operation.variables
             post_kwargs = {"json": payload}
 
-        async with aiohttp.ClientSession(headers=operation.context.headers) as session:
-            try:
-                async with session.post(self.url, **post_kwargs) as response:
+        async with self.session.post(
+            self.url, headers=operation.context.headers, **post_kwargs
+        ) as response:
 
-                    if response.status == HTTPStatus.OK:
-                        result = await response.json()
+            if response.status == HTTPStatus.OK:
+                result = await response.json()
 
-                    if response.status in self.auth_errors:
-                        raise AuthenticationError(
-                            f"Token Expired Error {operation.context.headers}"
-                        )
+            if response.status in self.auth_errors:
+                raise AuthenticationError(
+                    f"Token Expired Error {operation.context.headers}"
+                )
 
-                    json_response = await response.json()
+            json_response = await response.json()
 
-                    if "errors" in json_response:
-                        raise GraphQLException(
-                            "\n".join([e["message"] for e in json_response["errors"]])
-                        )
+            if "errors" in json_response:
+                raise GraphQLException(
+                    "\n".join([e["message"] for e in json_response["errors"]])
+                )
 
-                    if "data" not in json_response:
+            if "data" not in json_response:
 
-                        raise Exception(
-                            f"Response does not contain data {json_response}"
-                        )
+                raise Exception(f"Response does not contain data {json_response}")
 
-                    return GraphQLResult(data=json_response["data"])
-
-            except aiohttp.client_exceptions.InvalidURL as e:
-                raise Exception(f"Invalid URL {self.url}") from e
+            return GraphQLResult(data=json_response["data"])
 
     async def asubscribe(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
         if operation.node.operation == OperationType.SUBSCRIPTION:

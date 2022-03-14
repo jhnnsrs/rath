@@ -1,5 +1,6 @@
 import asyncio
 from koil.decorators import koilable
+from rath.errors import NotConnectedError
 from rath.links.base import TerminatingLink
 from typing import (
     AsyncIterator,
@@ -28,10 +29,10 @@ class Rath:
 
         Args:
             link (TerminatingLink): A terminating link or a composed link.
-            autoconnect (bool, optional): [description]. Defaults to True.
         """
         self.link = link
         self.set_context = set_context
+        self._connected = False
 
     async def aexecute(
         self,
@@ -42,6 +43,10 @@ class Rath:
         timeout=None,
         **kwargs,
     ) -> GraphQLResult:
+        if not self._connected:
+            raise NotConnectedError(
+                "Rath is not connected. Please use `async with Rath(...) as rath` or use `await rath.aconnect() before`"
+            )
         op = opify(query, variables, headers, operation_name, **kwargs)
 
         if timeout:
@@ -57,6 +62,10 @@ class Rath:
         operation_name=None,
         **kwargs,
     ) -> GraphQLResult:
+        if not self._connected:
+            raise NotConnectedError(
+                "Rath is not connected. Please use `with Rath(...) as rath` or use `rath.connect() before`"
+            )
         op = opify(query, variables, headers, operation_name, **kwargs)
         return self.link.query(op, **kwargs)
 
@@ -68,6 +77,10 @@ class Rath:
         operation_name=None,
         **kwargs,
     ) -> Iterator[GraphQLResult]:
+        if not self._connected:
+            raise NotConnectedError(
+                "Rath is not connected. Please use `with Rath(...) as rath` or use `rath.connect() before`"
+            )
         op = opify(query, variables, headers, operation_name, **kwargs)
         return self.link.subscribe(op, **kwargs)
 
@@ -79,6 +92,10 @@ class Rath:
         operation_name=None,
         **kwargs,
     ) -> AsyncIterator[GraphQLResult]:
+        if not self._connected:
+            raise NotConnectedError(
+                "Rath is not connected. Please use `async with Rath(...) as rath` or use `await rath.aconnect() before`"
+            )
         op = opify(query, variables, headers, operation_name, **kwargs)
         async for res in self.link.asubscribe(op, **kwargs):
             yield res
@@ -88,10 +105,12 @@ class Rath:
         if self.set_context:
             current_rath.set(self)
         await self.link.__aenter__()
+        self._connected = True
         return self
 
     async def __aexit__(self, *args, **kwargs):
         await self.link.__aexit__(*args, **kwargs)
+        self._connected = False
         self.link(None)
         if self.set_context:
             current_rath.set(None)

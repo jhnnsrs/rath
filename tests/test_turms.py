@@ -3,7 +3,7 @@ from rath.operation import Operation, opify
 import pytest
 from rath.links import compose
 from rath.links.testing.mock import AsyncMockLink, AsyncMockResolver
-from tests.api.schema import get_beasts, aget_beasts
+from tests.apis.tests import get_beasts, aget_beasts
 from rath import Rath
 from tests.mocks import QueryAsync, MutationAsync, SubscriptionAsync
 
@@ -32,4 +32,4 @@ def test_query_sync(mock_link):
 
         assert isinstance(beasts, list), "Not a list"
         for be in beasts:
-            assert be.commonName is not None, "Common Name should be resolved"
+            assert be.common_name is not None, "Common Name should be resolved"

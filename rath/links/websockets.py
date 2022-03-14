@@ -76,7 +76,7 @@ class WebSocketLink(AsyncTerminatingLink):
         await self.send_queue.put(message)
 
     async def __aenter__(self):
-        print("Connecting Websockets")
+        logger.info("Connecting Websockets")
         self.send_queue = asyncio.Queue()
         self.connection_task = asyncio.create_task(self.websocket_loop())
         self.connected = True
@@ -121,12 +121,11 @@ class WebSocketLink(AsyncTerminatingLink):
                         raise task.exception()
 
             except ConnectionClosedError as e:
-                logger.exception(e)
-                print(e)
+                logger.warning("Websocket was closed", exc_info=True)
                 raise CorrectableConnectionFail from e
 
             except Exception as e:
-                print(e)
+                logger.warning("Websocket excepted. Trying to recover", exc_info=True)
                 raise CorrectableConnectionFail from e
 
         except CorrectableConnectionFail as e:
@@ -139,11 +138,12 @@ class WebSocketLink(AsyncTerminatingLink):
             await self.websocket_loop(retry=retry + 1)
 
         except DefiniteConnectionFail as e:
+            logger.error("Websocket excepted closed definetely", exc_info=True)
             self.connection_dead = False
             raise e
 
         except asyncio.CancelledError as e:
-            print("Websocket got cancelled")
+            logger.info("Websocket got cancelled. Trying to shutdown graceully")
             if send_task and receive_task:
                 send_task.cancel()
                 receive_task.cancel()
