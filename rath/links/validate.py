@@ -1,4 +1,4 @@
-from typing import AsyncIterator
+from typing import AsyncIterator, Optional
 from graphql import (
     GraphQLSchema,
     build_ast_schema,
@@ -39,12 +39,15 @@ class ValidationError(ContinuationLinkError):
 
 
 class ValidatingLink(ContinuationLink):
+    schema_dsl: Optional[str] = None
+    schema_glob: Optional[str] = None
+    allow_introspection: bool = True
+
     def __init__(
         self,
         schema_dsl: str = None,
         schema_glob: str = None,
         allow_introspection=True,
-        introspect_on_connect=True,
     ) -> None:
         if schema_dsl or schema_glob:
             self.schema = schemify(schema_dsl, schema_glob)

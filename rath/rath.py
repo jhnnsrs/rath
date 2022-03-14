@@ -1,4 +1,7 @@
 import asyncio
+from dataclasses import dataclass
+
+from pydantic import BaseModel
 from koil.decorators import koilable
 from rath.errors import NotConnectedError
 from rath.links.base import TerminatingLink
@@ -7,6 +10,7 @@ from typing import (
     Dict,
     Any,
     Iterator,
+    Optional,
 )
 from rath.operation import GraphQLResult, opify
 from contextvars import ContextVar
@@ -16,23 +20,12 @@ current_rath = ContextVar("current_rath")
 
 
 @koilable(add_connectors=True)
+@dataclass
 class Rath:
-    def __init__(
-        self,
-        link: TerminatingLink,
-        set_context=True,
-    ) -> None:
-        """Initialize a Rath client
+    link: Optional[TerminatingLink] = None
+    set_context: bool = True
 
-        Rath takes a instance of TerminatingLink and creates an interface around it
-        to enable easy usage of the GraphQL API.
-
-        Args:
-            link (TerminatingLink): A terminating link or a composed link.
-        """
-        self.link = link
-        self.set_context = set_context
-        self._connected = False
+    _connected = False
 
     async def aexecute(
         self,
@@ -82,6 +75,7 @@ class Rath:
                 "Rath is not connected. Please use `with Rath(...) as rath` or use `rath.connect() before`"
             )
         op = opify(query, variables, headers, operation_name, **kwargs)
+        print(kwargs)
         return self.link.subscribe(op, **kwargs)
 
     async def asubscribe(

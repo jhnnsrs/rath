@@ -1,5 +1,5 @@
 from asyncio.tasks import create_task
-from typing import Dict
+from typing import Awaitable, Callable, Dict
 from graphql import OperationType
 import websockets
 import json
@@ -15,6 +15,8 @@ from rath.links.errors import LinkNotConnectedError, TerminatingLinkError
 
 from rath.operation import GraphQLException, GraphQLResult, Operation
 from rath.links.base import AsyncTerminatingLink
+
+from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
 
@@ -47,46 +49,40 @@ class InvalidPayload(TerminatingLinkError):
 
 
 async def none_token_loader():
-    print("Fake token")
     return None
 
 
+@dataclass
 class WebSocketLink(AsyncTerminatingLink):
-    def __init__(
-        self,
-        url="",
-        allow_reconnect=False,
-        token_loader=none_token_loader,
-        time_between_retries=1,
-        retries=3,
-    ) -> None:
-        self.connection_initialized = False
-        self.ongoing_subscriptions: Dict[str, asyncio.Queue] = {}
-        self.url = url
-        self.retries = retries
-        self.allow_reconnect = allow_reconnect
-        self.token_loader = token_loader
-        self.time_between_retries = time_between_retries
-        self.connected = False
-        self._lock = None
-        self.connection_task = None
-        pass
+    url: str
+    allow_reconnect: bool = False
+    time_between_retries = 1
+    max_retries = 3
+    token_loader: Callable[[], Awaitable[str]] = field(
+        default_factory=lambda: none_token_loader
+    )
+
+    _send_queue: asyncio.Queue = None
+    _connection_task: asyncio.Task = None
+    _ongoing_subscriptions: Dict[str, asyncio.Queue] = field(
+        default_factory=dict, init=False
+    )
 
     async def aforward(self, message):
-        await self.send_queue.put(message)
+        await self._send_queue.put(message)
 
     async def __aenter__(self):
         logger.info("Connecting Websockets")
-        self.send_queue = asyncio.Queue()
-        self.connection_task = asyncio.create_task(self.websocket_loop())
-        self.connected = True
+        self._send_queue = asyncio.Queue()
+        self._connection_task = asyncio.create_task(self.websocket_loop())
+        self._connected = True
 
     async def __aexit__(self, *args, **kwargs):
-        if self.connection_task:
-            self.connection_task.cancel()
+        if self._connection_task:
+            self._connection_task.cancel()
 
             try:
-                await self.connection_task
+                await self._connection_task
             except asyncio.CancelledError:
                 logger.info(f"Websocket Transport {self} succesfully disconnected")
 
@@ -130,7 +126,7 @@ class WebSocketLink(AsyncTerminatingLink):
 
         except CorrectableConnectionFail as e:
             logger.info(f"Trying to Recover from Exception {e}")
-            if retry > self.retries or not self.allow_reconnect:
+            if retry > self.max_retries or not self.allow_reconnect:
                 raise DefiniteConnectionFail("Exceeded Number of Retries")
 
             await asyncio.sleep(self.time_between_retries)
@@ -159,10 +155,10 @@ class WebSocketLink(AsyncTerminatingLink):
 
         try:
             while True:
-                message = await self.send_queue.get()
+                message = await self._send_queue.get()
                 logger.debug("GraphQL Websocket: >>>>>> " + message)
                 await client.send(message)
-                self.send_queue.task_done()
+                self._send_queue.task_done()
         except asyncio.CancelledError as e:
             logger.debug("Sending Task sucessfully Cancelled")
 
@@ -194,12 +190,12 @@ class WebSocketLink(AsyncTerminatingLink):
 
             id = message["id"]
             assert (
-                id in self.ongoing_subscriptions
+                id in self._ongoing_subscriptions
             ), "Received Result for subscription that is no longer or was never active"
-            await self.ongoing_subscriptions[id].put(message)
+            await self._ongoing_subscriptions[id].put(message)
 
     async def asubscribe(self, operation: Operation):
-        if self.connected == False:
+        if self._connection_task == False:
             raise LinkNotConnectedError("Websocket_link is not connected")
 
         assert (
@@ -209,7 +205,7 @@ class WebSocketLink(AsyncTerminatingLink):
 
         id = str(uuid.uuid4())
         subscribe_queue = asyncio.Queue()
-        self.ongoing_subscriptions[id] = subscribe_queue
+        self._ongoing_subscriptions[id] = subscribe_queue
 
         payload = {
             "headers": operation.context.headers,
@@ -238,10 +234,6 @@ class WebSocketLink(AsyncTerminatingLink):
                 return
 
     async def aquery(self, operation: Operation):
-        async with self._lock:
-            if not self.connected:
-                await self.aconnect()
-
         assert (
             operation.node.operation != OperationType.SUBSCRIPTION
         ), "Operation is a subscription. Only queries are allowed on 'aquery'"
@@ -251,7 +243,7 @@ class WebSocketLink(AsyncTerminatingLink):
 
         id = str(uuid.uuid4())
         subscribe_queue = asyncio.Queue()
-        self.ongoing_subscriptions[id] = subscribe_queue
+        self._ongoing_subscriptions[id] = subscribe_queue
 
         payload = {
             "headers": operation.context.headers,
@@ -269,7 +261,7 @@ class WebSocketLink(AsyncTerminatingLink):
 
                 if "data" in payload:
                     subscribe_queue.task_done()
-                    del self.ongoing_subscriptions[id]
+                    del self._ongoing_subscriptions[id]
                     return GraphQLResult(data=payload["data"])
 
             if answer["type"] == GQL_COMPLETE:

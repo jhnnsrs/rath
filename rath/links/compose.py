@@ -1,11 +1,15 @@
 import asyncio
+from dataclasses import dataclass
 from os import link
 from typing import List
 from rath.links.base import ContinuationLink, Link, TerminatingLink
 from rath.operation import Operation
 
 
+@dataclass
 class ComposedLink(TerminatingLink):
+    links: List[Link]
+
     def __init__(self, links: List[Link]):
         assert isinstance(
             links[-1], TerminatingLink

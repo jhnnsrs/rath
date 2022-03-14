@@ -1,4 +1,5 @@
-from typing import Any, AsyncIterator, Coroutine
+from dataclasses import dataclass, field
+from typing import Any, AsyncIterator, Awaitable, Callable, Coroutine
 from rath.links.base import AsyncContinuationLink
 from rath.operation import GraphQLResult, Operation
 from rath.links.errors import AuthenticationError
@@ -8,17 +9,16 @@ async def fake_loader():
     raise Exception("No Token loader specified")
 
 
+@dataclass
 class AuthTokenLink(AsyncContinuationLink):
-    def __init__(
-        self,
-        token_loader: Coroutine[Any, Any, str] = fake_loader,
-        maximum_refresh_attempts=2,
-        load_token_on_connect=True,
-    ) -> None:
-        self.token_loader = token_loader
-        self.load_token_on_connect = load_token_on_connect
-        self.maximum_refresh_attempts = maximum_refresh_attempts
-        self.token = None
+
+    token_loader: Callable[[], Awaitable[str]] = field(
+        default_factory=lambda: fake_loader
+    )
+    maximum_refresh_attempts: int = 2
+    load_token_on_connect: bool = True
+
+    _token = None
 
     async def __aenter__(self):
         if self.load_token_on_connect:

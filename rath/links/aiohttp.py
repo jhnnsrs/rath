@@ -1,29 +1,32 @@
 import asyncio
+from dataclasses import dataclass, field
 from http import HTTPStatus
 import json
-from typing import Any, AsyncIterator, Dict
+from typing import Any, AsyncIterator, Dict, List
 
 import aiohttp
 from graphql import OperationType
 from rath.operation import GraphQLException, GraphQLResult, Operation
 from rath.links.base import AsyncTerminatingLink
 from rath.links.errors import AuthenticationError
+import logging
+
+logger = logging.getLogger(__name__)
 
 
+@dataclass
 class AIOHttpLink(AsyncTerminatingLink):
-
-    auth_errors = [HTTPStatus.FORBIDDEN]
-
-    def __init__(self, url: str = "") -> None:
-        self.url = url
-        self.session = None
+    url: str
+    auth_errors: List[HTTPStatus] = field(
+        default_factory=lambda: (HTTPStatus.FORBIDDEN,)
+    )
+    _session = None
 
     async def __aenter__(self) -> None:
-        self.session = await aiohttp.ClientSession().__aenter__()
+        self._session = await aiohttp.ClientSession().__aenter__()
 
     async def __aexit__(self, *args, **kwargs) -> None:
-        print("CLosing session")
-        await self.session.__aexit__(*args, **kwargs)
+        await self._session.__aexit__(*args, **kwargs)
 
     async def aquery(self, operation: Operation) -> GraphQLResult:
         payload = {"query": operation.document}
@@ -60,7 +63,7 @@ class AIOHttpLink(AsyncTerminatingLink):
             payload["variables"] = operation.variables
             post_kwargs = {"json": payload}
 
-        async with self.session.post(
+        async with self._session.post(
             self.url, headers=operation.context.headers, **post_kwargs
         ) as response:
 

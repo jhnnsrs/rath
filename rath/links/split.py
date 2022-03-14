@@ -1,21 +1,14 @@
+from dataclasses import dataclass
 from typing import Callable, List
 from rath.operation import Operation
 from rath.links.base import TerminatingLink
 
 
+@dataclass
 class SplitLink(TerminatingLink):
-    def __init__(
-        self,
-        left: TerminatingLink,
-        right: TerminatingLink,
-        split: Callable[[Operation], bool],
-    ) -> None:
-        super().__init__()
-        assert isinstance(left, TerminatingLink), "left must be a TerminatingLink"
-        assert isinstance(right, TerminatingLink), "right must be a TerminatingLink"
-        self.left = left
-        self.right = right
-        self.split = split
+    left: TerminatingLink
+    right: TerminatingLink
+    split: Callable[[Operation], bool]
 
     def __call__(self, rath):
         self.left(rath)
@@ -30,6 +23,7 @@ class SplitLink(TerminatingLink):
         return await future
 
     async def asubscribe(self, operation: Operation, **kwargs) -> Operation:
+        print(kwargs)
         iterator = (
             self.left.asubscribe(operation, **kwargs)
             if self.split(operation)

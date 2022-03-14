@@ -56,9 +56,6 @@ def parse_variables(
 
 
 class FileExtraction(ContinuationLink):
-    def __init__(self) -> None:
-        super().__init__()
-
     async def aquery(self, operation: Operation) -> Operation:
         operation.variables, operation.context.files = parse_variables(
             operation.variables
