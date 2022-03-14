@@ -60,7 +60,7 @@ def mock_link():
 
 async def test_validation(mock_link):
 
-    link = ValidatingLink(schema_glob="tests/schema.graphl")
+    link = ValidatingLink(schema_glob="schema.graphl")
 
     rath = Rath(compose(link, mock_link))
 
@@ -97,6 +97,7 @@ async def test_validation(mock_link):
     link = ValidatingLink(schema_dsl=schema)
 
     rath = Rath(compose(link, mock_link))
+    r = await rath.aconnect()
 
     with pytest.raises(ValidationError):
         await rath.aexecute(

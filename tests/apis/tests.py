@@ -6,9 +6,9 @@ from pydantic import Field, BaseModel
 
 class Beast(BaseModel):
     typename: Optional[Literal["Beast"]] = Field(alias="__typename")
-    commonName: Optional[str]
+    common_name: Optional[str] = Field(alias="commonName")
     "a beast's name to you and I"
-    taxClass: Optional[str]
+    tax_class: Optional[str] = Field(alias="taxClass")
     "taxonomy grouping"
 
 
@@ -20,7 +20,7 @@ class Get_beasts(BaseModel):
         document = "fragment Beast on Beast {\n  commonName\n  taxClass\n}\n\nquery get_beasts {\n  beasts {\n    ...Beast\n  }\n}"
 
 
-def get_beasts() -> List[Beast]:
+def get_beasts() -> Optional[List[Beast]]:
     """get_beasts
 
 
@@ -28,11 +28,11 @@ def get_beasts() -> List[Beast]:
     Arguments:
 
     Returns:
-        Beast: The returned Mutation"""
+        Beast"""
     return execute(Get_beasts, {}).beasts
 
 
-async def aget_beasts() -> List[Beast]:
+async def aget_beasts() -> Optional[List[Beast]]:
     """get_beasts
 
 
@@ -40,5 +40,5 @@ async def aget_beasts() -> List[Beast]:
     Arguments:
 
     Returns:
-        Beast: The returned Mutation"""
+        Beast"""
     return (await aexecute(Get_beasts, {})).beasts

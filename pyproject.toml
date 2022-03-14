@@ -8,7 +8,7 @@ packages = [{include = "rath"}]
 
 [tool.poetry.dependencies]
 python = "^3.7"
-koil = "0.1.99"
+koil = "0.1.100"
 aiohttp = "^3.8.1"
 graphql-core = "^3.2.0"
 pydantic = "^1.9.0"
@@ -21,7 +21,7 @@ tox = "^3.24.5"
 pytest-cov = "^3.0.0"
 black = "^22.1.0"
 pydoc-markdown = "^4.6.1"
-turms = {version = "^0.1.55", python = "^3.9"}
+turms = {version = "^0.1.56", python = "^3.9"}
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
