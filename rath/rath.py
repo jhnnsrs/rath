@@ -1,6 +1,6 @@
 import asyncio
 from dataclasses import dataclass
-
+from koil.composition import KoiledModel
 from pydantic import BaseModel
 from koil.decorators import koilable
 from rath.errors import NotConnectedError
@@ -19,9 +19,7 @@ from contextvars import ContextVar
 current_rath = ContextVar("current_rath")
 
 
-@koilable(add_connectors=True)
-@dataclass
-class Rath:
+class Rath(KoiledModel):
     link: Optional[TerminatingLink] = None
     set_context: bool = True
 
@@ -75,7 +73,6 @@ class Rath:
                 "Rath is not connected. Please use `with Rath(...) as rath` or use `rath.connect() before`"
             )
         op = opify(query, variables, headers, operation_name, **kwargs)
-        print(kwargs)
         return self.link.subscribe(op, **kwargs)
 
     async def asubscribe(
@@ -109,5 +106,5 @@ class Rath:
         if self.set_context:
             current_rath.set(None)
 
-    def __enter__(self) -> "Rath":
-        ...
+    class Config:
+        underscore_attrs_are_private = True

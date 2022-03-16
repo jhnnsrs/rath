@@ -16,7 +16,7 @@ def real_world_link():
 
 async def test_query_async(real_world_link):
 
-    rath = Rath(real_world_link)
+    rath = Rath(link=real_world_link)
 
     async with rath:
         countries = await acountries()
@@ -26,7 +26,7 @@ async def test_query_async(real_world_link):
 
 def test_query_sync(real_world_link):
 
-    rath = Rath(real_world_link)
+    rath = Rath(link=real_world_link)
 
     with rath:
         xcountries = countries()
@@ -38,7 +38,7 @@ async def test_validation(real_world_link):
 
     link = ValidatingLink()
 
-    rath = Rath(compose(link, real_world_link))
+    rath = Rath(link=compose(link, real_world_link))
     r = await rath.aconnect()
 
     with pytest.raises(ValidationError):

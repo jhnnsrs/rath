@@ -25,7 +25,7 @@ async def test_validation(mock_link):
     class DictableX(BaseModel):
         a: int
 
-    rath = Rath(compose(link, mock_link))
+    rath = Rath(link=compose(link, mock_link))
     async with rath:
         await rath.aexecute(
             """

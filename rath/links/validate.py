@@ -21,9 +21,9 @@ def schemify(
     if schema_dsl:
         return build_ast_schema(parse(schema_dsl))
     if schema_glob:
-        schema_glob = glob(schema_glob, recursive=True)
+        files = glob(schema_glob, recursive=True)
         dsl_string = ""
-        for file in schema_glob:
+        for file in files:
             with open(file, "r") as f:
                 if file.endswith(".graphql"):
                     dsl_string += f.read()
@@ -63,7 +63,6 @@ class ValidatingLink(ContinuationLink):
             introspect_operation.extensions = operation.extensions
 
             schema_result = await self.next.aquery(introspect_operation)
-            print(schema_result)
             self.schema = build_client_schema(schema_result.data)
 
     def load_schema(self, operation: Operation) -> None:
@@ -73,7 +72,6 @@ class ValidatingLink(ContinuationLink):
             introspect_operation.extensions = operation.extensions
 
             schema_result = self.next.query(introspect_operation)
-            print(schema_result)
             self.schema = build_client_schema(schema_result.data)
 
     def validate(self, operation: Operation):

@@ -230,7 +230,7 @@ class WebSocketLink(AsyncTerminatingLink):
                     yield GraphQLResult(data=payload["data"])
 
             if answer["type"] == GQL_COMPLETE:
-                print("Subcription done")
+                logger.info(f"Subcription done {operation}")
                 return
 
     async def aquery(self, operation: Operation):

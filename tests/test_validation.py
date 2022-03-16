@@ -60,26 +60,9 @@ def mock_link():
 
 async def test_validation(mock_link):
 
-    link = ValidatingLink(schema_glob="schema.graphl")
+    link = ValidatingLink(schema_glob="schema.graphql")
 
-    rath = Rath(compose(link, mock_link))
-
-    await rath.aexecute(
-        """
-        query {
-            beast(id: "1") {
-                binomial
-            }
-        }
-    """
-    )
-
-
-async def test_validation(mock_link):
-
-    link = ValidatingLink(schema_dsl=schema)
-
-    rath = Rath(compose(link, mock_link))
+    rath = Rath(link=compose(link, mock_link))
 
     await rath.aexecute(
         """
@@ -96,7 +79,24 @@ async def test_validation(mock_link):
 
     link = ValidatingLink(schema_dsl=schema)
 
-    rath = Rath(compose(link, mock_link))
+    rath = Rath(link=compose(link, mock_link))
+
+    await rath.aexecute(
+        """
+        query {
+            beast(id: "1") {
+                binomial
+            }
+        }
+    """
+    )
+
+
+async def test_validation(mock_link):
+
+    link = ValidatingLink(schema_dsl=schema)
+
+    rath = Rath(link=compose(link, mock_link))
     r = await rath.aconnect()
 
     with pytest.raises(ValidationError):

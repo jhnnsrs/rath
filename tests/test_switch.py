@@ -32,12 +32,12 @@ def stateful_mocklink():
 
 @pytest.fixture()
 def simple_rath(mock_link):
-    return Rath(compose(SwitchAsyncLink(), mock_link))
+    return Rath(link=compose(SwitchAsyncLink(), mock_link))
 
 
 @pytest.fixture()
 def stateful_rath(stateful_mocklink):
-    return Rath(compose(SwitchAsyncLink(), stateful_mocklink))
+    return Rath(link=compose(SwitchAsyncLink(), stateful_mocklink))
 
 
 async def test_bypass(simple_rath):
@@ -250,7 +250,7 @@ def test_stateful_link_subscription_sync_same_koil(stateful_rath):
 
 def test_query_sinc(mock_link):
 
-    with Rath(compose(SwitchAsyncLink(), mock_link)) as rath:
+    with Rath(link=compose(SwitchAsyncLink(), mock_link)) as rath:
 
         rath.execute(
             """
@@ -265,7 +265,7 @@ def test_query_sinc(mock_link):
 
 def test_switch_sync(mock_link):
 
-    with Rath(compose(SwitchAsyncLink(), mock_link)) as rath:
+    with Rath(link=compose(SwitchAsyncLink(), mock_link)) as rath:
 
         rath.execute(
             """

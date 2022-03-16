@@ -20,5 +20,4 @@ class DictingLink(ParsingLink):
             if isinstance(var, BaseModel)
         }
         operation.variables.update(shrinked_variables)
-        print(operation.variables)
         return operation

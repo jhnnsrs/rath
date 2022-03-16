@@ -23,7 +23,6 @@ class SplitLink(TerminatingLink):
         return await future
 
     async def asubscribe(self, operation: Operation, **kwargs) -> Operation:
-        print(kwargs)
         iterator = (
             self.left.asubscribe(operation, **kwargs)
             if self.split(operation)
