@@ -1,7 +1,8 @@
-from typing import Literal, Optional, List
+from typing_extensions import Literal
+from typing import List, Optional
+from rath.turms.funcs import execute, aexecute
 from enum import Enum
-from rath.turms.funcs import aexecute, execute
-from pydantic import Field, BaseModel
+from pydantic import BaseModel, Field
 
 
 class Beast(BaseModel):

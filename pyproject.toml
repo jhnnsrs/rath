@@ -21,7 +21,7 @@ tox = "^3.24.5"
 pytest-cov = "^3.0.0"
 black = "^22.1.0"
 pydoc-markdown = "^4.6.1"
-turms = {version = "^0.1.56", python = "^3.9"}
+turms = {version = "^0.2.3", python = "^3.9"}
 pytest-qt = "^4.0.2"
 PyQt5 = "^5.15.6"
 

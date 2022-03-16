@@ -1,15 +1,16 @@
 from typing import List
 
 from graphql import OperationType
+from pydantic import Field
 from turms.plugins.funcs import (
     FunctionDefinition,
     Kwarg,
-    OperationsFuncPluginConfig,
-    OperationsFuncPlugin,
+    FuncsPlugin,
+    FuncsPluginConfig,
 )
 
 
-class RathPluginConfig(OperationsFuncPluginConfig):
+class RathPluginConfig(FuncsPluginConfig):
     definitions: List[FunctionDefinition] = [
         FunctionDefinition(type=OperationType.MUTATION, use="rath.turms.funcs.execute"),
         FunctionDefinition(
@@ -42,6 +43,5 @@ class RathPluginConfig(OperationsFuncPluginConfig):
     ]
 
 
-class RathFuncsPlugin(OperationsFuncPlugin):
-    def __init__(self, config=None, **data):
-        self.plugin_config = config or RathPluginConfig(**data)
+class RathFuncsPlugin(FuncsPlugin):
+    config: RathPluginConfig = Field(default_factory=RathPluginConfig)
