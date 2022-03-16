@@ -1,18 +1,23 @@
 projects:
   default:
-    schema: tests/schema.graphql
+    schema: schema.graphql
     documents: graphql/test/**.graphql
     extensions:
       turms:
         out_dir: tests/apis
         generated_name: tests.py
+        stylers:
+          - type: turms.stylers.default.DefaultStyler
+        parsers:
+          - type: turms.parsers.polyfill.PolyfillParser
+            python_version: "3.7"
         plugins:
           - type: turms.plugins.enums.EnumsPlugin
           - type: turms.plugins.fragments.FragmentsPlugin
-          - type: turms.plugins.operation.OperationsPlugin
+          - type: turms.plugins.operations.OperationsPlugin
           - type: rath.turms.plugins.funcs.RathFuncsPlugin
         processors:
-          - type: turms.processor.black.BlackProcessor
+          - type: turms.processors.black.BlackProcessor
         scalar_definitions:
           uuid: str
   countries:
@@ -22,12 +27,17 @@ projects:
       turms:
         out_dir: tests/apis/
         generated_name: countries.py
+        stylers:
+          - type: turms.stylers.default.DefaultStyler
+        parsers:
+          - type: turms.parsers.polyfill.PolyfillParser
+            python_version: "3.7"
         plugins:
           - type: turms.plugins.enums.EnumsPlugin
           - type: turms.plugins.fragments.FragmentsPlugin
-          - type: turms.plugins.operation.OperationsPlugin
+          - type: turms.plugins.operations.OperationsPlugin
           - type: rath.turms.plugins.funcs.RathFuncsPlugin
         processors:
-          - type: turms.processor.black.BlackProcessor
+          - type: turms.processors.black.BlackProcessor
         scalar_definitions:
           uuid: str

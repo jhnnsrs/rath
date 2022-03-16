@@ -1,13 +1,15 @@
+from typing_extensions import Literal
+from typing import List, Optional
+from rath.turms.funcs import execute, aexecute
 from enum import Enum
-from typing import Literal, Optional, List
-from rath.turms.funcs import aexecute, execute
-from pydantic import Field, BaseModel
+from pydantic import BaseModel, Field
 
 
 class CountriesCountries(BaseModel):
     typename: Optional[Literal["Country"]] = Field(alias="__typename")
     phone: str
     capital: Optional[str]
+    code: str
 
 
 class Countries(BaseModel):
@@ -15,7 +17,9 @@ class Countries(BaseModel):
 
     class Meta:
         domain = "countries"
-        document = "query Countries {\n  countries {\n    phone\n    capital\n  }\n}"
+        document = (
+            "query Countries {\n  countries {\n    phone\n    capital\n    code\n  }\n}"
+        )
 
 
 def countries() -> List[CountriesCountries]:
