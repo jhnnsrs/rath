@@ -1,4 +1,4 @@
-from rath.links.base import ContinuationLink, SyncContinuationLink
+from rath.links.base import ContinuationLink
 from rath.operation import Operation
 from rath.operation import Operation
 
@@ -12,7 +12,7 @@ FILE_CLASSES = (
     aiohttp.StreamReader,
     AsyncGenerator,
 )
-from typing import Any, Callable, Dict, Tuple, Type
+from typing import Any, Dict, Tuple, Type
 
 
 def parse_variables(

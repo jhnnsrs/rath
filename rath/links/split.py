@@ -1,18 +1,12 @@
-from dataclasses import dataclass
-from typing import Callable, List
+from typing import Callable
 from rath.operation import Operation
 from rath.links.base import TerminatingLink
 
 
-@dataclass
 class SplitLink(TerminatingLink):
     left: TerminatingLink
     right: TerminatingLink
     split: Callable[[Operation], bool]
-
-    def __call__(self, rath):
-        self.left(rath)
-        self.right(rath)
 
     async def aquery(self, operation: Operation, **kwargs) -> Operation:
         future = (
@@ -66,4 +60,4 @@ def split(
     Splits a Link into two paths. Acording to a predicate function. If predicate returns
     true, the operation is sent to the left path, otherwise to the right path.
     """
-    return SplitLink(left, right, split)
+    return SplitLink(left=left, right=right, split=split)

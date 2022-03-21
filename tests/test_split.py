@@ -1,29 +1,31 @@
 from graphql import OperationType
 from rath.links.context import SwitchAsyncLink
+from rath.links.testing.mock import AsyncMockLink
 from rath.links.testing.statefulmock import AsyncStatefulMockLink
-from rath.links.validate import ValidatingLink, ValidationError
-from rath.operation import Operation, opify
 import pytest
 from rath.links import compose, split
 from tests.mocks import *
 from rath import Rath
-import asyncio
 
 
 @pytest.fixture()
 def mock_link_left():
-    return AsyncMockLink(query_resolver=QueryAsync(), mutation_resolver=MutationAsync())
+    return AsyncMockLink(
+        query_resolver=QueryAsync().to_dict(),
+        mutation_resolver=MutationAsync().to_dict(),
+    )
 
 
 @pytest.fixture()
 def mock_link_right():
-    return AsyncMockLink(subscription_resolver=SubscriptionAsync())
+    return AsyncMockLink(subscription_resolver=SubscriptionAsync().to_dict())
 
 
 @pytest.fixture()
 def stateful_mock_link():
     return AsyncStatefulMockLink(
-        query_resolver=QueryAsync(), mutation_resolver=MutationAsync()
+        query_resolver=QueryAsync().to_dict(),
+        mutation_resolver=MutationAsync().to_dict(),
     )
 
 

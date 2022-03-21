@@ -1,10 +1,10 @@
-from typing import AsyncIterator, Iterator
-from rath.links.errors import LinkNotConnectedError
+from typing import AsyncIterator, Iterator, Optional
+from koil.composition import KoiledModel
 from rath.operation import GraphQLResult, Operation
 from koil import unkoil, unkoil_gen
 
 
-class Link:
+class Link(KoiledModel):
     async def __aenter__(self) -> None:
         pass
 
@@ -35,9 +35,7 @@ class Link:
 
 
 class TerminatingLink(Link):
-    def __call__(self, rath):
-        self.rath = rath
-        return self
+    pass
 
 
 class AsyncTerminatingLink(TerminatingLink):
@@ -67,22 +65,10 @@ class SyncTerminatingLink(TerminatingLink):
 
 
 class ContinuationLink(Link):
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        self._next = None
+    next: Optional[Link] = None
 
-    def __call__(self, rath, next: Link):
-        self.rath = rath
-        self._next = next
-        return self
-
-    @property
-    def next(self):
-        if self._next is None:
-            raise LinkNotConnectedError(
-                "Next link is not set. This means we were never connected. Please use rath in an async context"
-            )
-        return self._next
+    def set_next(self, next: Link):
+        self.next = next
 
     async def aquery(self, operation: Operation, **kwargs) -> GraphQLResult:
         return await self.next.aquery(operation, **kwargs)

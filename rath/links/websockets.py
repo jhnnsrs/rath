@@ -1,13 +1,10 @@
-from asyncio.tasks import create_task
 from typing import Awaitable, Callable, Dict
 from graphql import OperationType
 import websockets
 import json
 import asyncio
 from websockets.exceptions import (
-    ConnectionClosed,
     ConnectionClosedError,
-    ConnectionClosedOK,
 )
 import logging
 import uuid
@@ -16,7 +13,7 @@ from rath.links.errors import LinkNotConnectedError, TerminatingLinkError
 from rath.operation import GraphQLException, GraphQLResult, Operation
 from rath.links.base import AsyncTerminatingLink
 
-from dataclasses import dataclass, field
+from dataclasses import field
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +49,6 @@ async def none_token_loader():
     return None
 
 
-@dataclass
 class WebSocketLink(AsyncTerminatingLink):
     url: str
     allow_reconnect: bool = False

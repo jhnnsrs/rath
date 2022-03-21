@@ -1,11 +1,8 @@
-from http.client import NotConnected
 from rath.links.context import SwitchAsyncLink
 from rath.errors import NotConnectedError
-from rath.links.validate import ValidatingLink, ValidationError
-from rath.operation import Operation, opify
 import pytest
 from rath.links import compose
-from rath.links.testing.mock import AsyncMockLink, AsyncMockResolver
+from rath.links.testing.mock import AsyncMockLink
 from rath.links.testing.statefulmock import AsyncStatefulMockLink
 from rath import Rath
 from tests.mocks import MutationAsync, QueryAsync, SubscriptionAsync
@@ -15,18 +12,18 @@ from koil import Koil
 @pytest.fixture()
 def mock_link():
     return AsyncMockLink(
-        query_resolver=QueryAsync(),
-        mutation_resolver=MutationAsync(),
-        subscription_resolver=SubscriptionAsync(),
+        query_resolver=QueryAsync().to_dict(),
+        mutation_resolver=MutationAsync().to_dict(),
+        subscription_resolver=SubscriptionAsync().to_dict(),
     )
 
 
 @pytest.fixture()
 def stateful_mocklink():
     return AsyncStatefulMockLink(
-        query_resolver=QueryAsync(),
-        mutation_resolver=MutationAsync(),
-        subscription_resolver=SubscriptionAsync(),
+        query_resolver=QueryAsync().to_dict(),
+        mutation_resolver=MutationAsync().to_dict(),
+        subscription_resolver=SubscriptionAsync().to_dict(),
     )
 
 

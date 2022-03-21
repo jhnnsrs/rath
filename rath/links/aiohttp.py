@@ -1,11 +1,11 @@
 import asyncio
-from dataclasses import dataclass, field
 from http import HTTPStatus
 import json
 from typing import Any, AsyncIterator, Dict, List
 
 import aiohttp
 from graphql import OperationType
+from pydantic import Field
 from rath.operation import GraphQLException, GraphQLResult, Operation
 from rath.links.base import AsyncTerminatingLink
 from rath.links.errors import AuthenticationError
@@ -14,12 +14,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-@dataclass
 class AIOHttpLink(AsyncTerminatingLink):
     url: str
-    auth_errors: List[HTTPStatus] = field(
+    auth_errors: List[HTTPStatus] = Field(
         default_factory=lambda: (HTTPStatus.FORBIDDEN,)
     )
+
     _session = None
 
     async def __aenter__(self) -> None:
@@ -103,3 +103,7 @@ class AIOHttpLink(AsyncTerminatingLink):
                 raise NotImplementedError(
                     "If you didn't specify a pollInterval you cannot use subscribe to this query"
                 )
+
+    class Config:
+        arbitrary_types_allowed = True
+        underscore_attrs_are_private = True

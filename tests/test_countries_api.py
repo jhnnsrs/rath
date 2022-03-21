@@ -1,11 +1,8 @@
 from rath.links.validate import ValidatingLink, ValidationError
-from rath.operation import Operation, opify
 import pytest
 from rath.links import compose
-from rath.links.testing.mock import AsyncMockLink, AsyncMockResolver
 from tests.apis.countries import acountries, countries
 from rath import Rath
-from tests.mocks import QueryAsync, MutationAsync, SubscriptionAsync
 from rath.links.aiohttp import AIOHttpLink
 
 
@@ -36,7 +33,7 @@ def test_query_sync(real_world_link):
 
 async def test_validation(real_world_link):
 
-    link = ValidatingLink()
+    link = ValidatingLink(allow_introspection=True)
 
     rath = Rath(link=compose(link, real_world_link))
     r = await rath.aconnect()

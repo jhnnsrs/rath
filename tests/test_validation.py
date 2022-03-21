@@ -1,5 +1,5 @@
 from rath.links.validate import ValidatingLink, ValidationError
-from rath.operation import Operation, opify
+from rath.operation import Operation
 import pytest
 from rath.links import compose
 from rath.links.testing.mock import AsyncMockLink, AsyncMockResolver
@@ -38,14 +38,16 @@ type Mutation {
 
 
 class QueryAsync(AsyncMockResolver):
-    async def resolve_beast(self, operation: Operation):
+    @staticmethod
+    async def resolve_beast(operation: Operation):
         return {"id": "1", "legs": 1}
 
 
 class MutationAsync(AsyncMockResolver):
     pass
 
-    async def resolve_createBeast(self, operation: Operation):
+    @staticmethod
+    async def resolve_createBeast(operation: Operation):
         return {
             "id": operation.variables["id"],
             "name": "John Doe",

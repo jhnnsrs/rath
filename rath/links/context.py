@@ -1,8 +1,6 @@
-import asyncio
-from concurrent.futures import ThreadPoolExecutor
 from rath.links.base import ContinuationLink
 from rath.operation import GraphQLResult, Operation
-from koil import unkoil, unkoil_gen, Koil
+from koil import unkoil, unkoil_gen
 from koil.helpers import unkoil_gen
 
 
@@ -25,9 +23,6 @@ class SwitchAsyncLink(ContinuationLink):
     Args:
         ContinuationLink (_type_): _description_
     """
-
-    def __init__(self, **koilparams):
-        super().__init__()
 
     async def aquery(self, operation: Operation, **kwargs) -> GraphQLResult:
         return await self.next.aquery(operation)

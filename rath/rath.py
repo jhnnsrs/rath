@@ -1,8 +1,5 @@
 import asyncio
-from dataclasses import dataclass
 from koil.composition import KoiledModel
-from pydantic import BaseModel
-from koil.decorators import koilable
 from rath.errors import NotConnectedError
 from rath.links.base import TerminatingLink
 from typing import (
@@ -92,7 +89,6 @@ class Rath(KoiledModel):
             yield res
 
     async def __aenter__(self):
-        self.link(self)
         if self.set_context:
             current_rath.set(self)
         await self.link.__aenter__()
@@ -102,7 +98,6 @@ class Rath(KoiledModel):
     async def __aexit__(self, *args, **kwargs):
         await self.link.__aexit__(*args, **kwargs)
         self._connected = False
-        self.link(None)
         if self.set_context:
             current_rath.set(None)
 

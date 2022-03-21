@@ -1,12 +1,9 @@
 from rath.links.aiohttp import AIOHttpLink
-from rath.links.validate import ValidatingLink, ValidationError
-from rath.operation import Operation, opify
-import pytest
+from rath.links.validate import ValidatingLink
 from rath.links import compose
-from rath.links.testing.mock import AsyncMockLink, AsyncMockResolver
 from rath import Rath
 from PyQt5 import QtWidgets, QtCore
-from koil.qt import QtKoil, QtTask, QtFuture
+from koil.qt import QtKoil, QtTask
 from tests.apis.countries import acountries
 
 
@@ -16,7 +13,7 @@ class QtRathWidget(QtWidgets.QWidget):
         self.koil = QtKoil()
 
         public_link = AIOHttpLink(url="https://countries.trevorblades.com/")
-        validating_link = ValidatingLink()
+        validating_link = ValidatingLink(allow_introspection=True)
 
         self.rath = Rath(link=compose(validating_link, public_link))
         self.rath.connect()

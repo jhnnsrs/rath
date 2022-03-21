@@ -14,15 +14,4 @@ class QueryAsync(AsyncMockResolver):
         ]
 
 
-class MutationAsync(AsyncMockResolver):
-    pass
-
-    async def resolve_createBeast(self, operation: Operation):
-        return {"id": "1", "legs": 1}
-
-
-class SubscriptionAsync(AsyncMockResolver):
-    async def resolve_watchBeast(self, operation: Operation):
-        for i in range(0, 10):
-            await asyncio.sleep(0.001)
-            yield {"id": "1", "legs": i}
+print(QueryAsync().to_dict())

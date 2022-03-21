@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "rath"
-version = "0.1.27"
+version = "0.1.28"
 description = "aiohttp powered apollo like graphql client"
 authors = ["jhnnsrs <jhnnsrs@gmail.com>"]
 readme = "README.md"
@@ -24,6 +24,8 @@ pydoc-markdown = "^4.6.1"
 turms = {version = "^0.2.3", python = "^3.9"}
 pytest-qt = "^4.0.2"
 PyQt5 = "^5.15.6"
+autoflake = "^1.4"
+pylint = "^2.12.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

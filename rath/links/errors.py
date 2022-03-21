@@ -1,7 +1,6 @@
 class LinkError(Exception):
     """Base class for all transport errors."""
 
-    pass
 
 
 class LinkNotConnectedError(Exception):
@@ -17,7 +16,6 @@ class LinkNotConnectedError(Exception):
 class TerminatingLinkError(LinkError):
     """Raised when a terminating link is called."""
 
-    pass
 
 
 class ContinuationLinkError(LinkError):
