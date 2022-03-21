@@ -1,5 +1,5 @@
 import asyncio
-from typing import AsyncIterator, Awaitable, Callable, Dict, Optional, Union
+from typing import AsyncIterator, Awaitable, Callable, Dict, Optional
 
 from pydantic import Field
 from rath.links.base import AsyncTerminatingLink
