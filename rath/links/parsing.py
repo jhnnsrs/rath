@@ -6,7 +6,7 @@ class ParsingLink(ContinuationLink):
     def parse(self, operation: Operation) -> Operation:
         raise NotImplementedError("Please implement this method")
 
-    def aparse(self, operation: Operation) -> Operation:
+    async def aparse(self, operation: Operation) -> Operation:
         raise NotImplementedError("Please implement this method")
 
     async def aquery(self, operation: Operation, **kwargs) -> Operation:
