@@ -30,16 +30,16 @@ class ConfigurationError(TerminatingLinkError):
 
 class AsyncStatefulMockLink(AsyncTerminatingLink):
     query_resolver: Dict[str, Callable[[Operation], Awaitable[Dict]]] = Field(
-        default_factory=dict
+        default_factory=dict, exclude=True
     )
     mutation_resolver: Dict[str, Callable[[Operation], Awaitable[Dict]]] = Field(
-        default_factory=dict
+        default_factory=dict, exclude=True
     )
     subscription_resolver: Dict[str, Callable[[Operation], Awaitable[Dict]]] = Field(
-        default_factory=dict
+        default_factory=dict, exclude=True
     )
     resolver: Dict[str, Callable[[Operation], Awaitable[Dict]]] = Field(
-        default_factory=dict
+        default_factory=dict, exclude=True
     )
 
     _connected: bool = False

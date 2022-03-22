@@ -1,5 +1,7 @@
-from typing import Awaitable, Callable, Dict
+from typing import Awaitable, Callable, Dict, Optional
 from graphql import OperationType
+from inflection import underscore
+from pydantic import Field
 import websockets
 import json
 import asyncio
@@ -54,21 +56,22 @@ class WebSocketLink(AsyncTerminatingLink):
     allow_reconnect: bool = False
     time_between_retries = 1
     max_retries = 3
-    token_loader: Callable[[], Awaitable[str]] = field(
-        default_factory=lambda: none_token_loader
+    token_loader: Callable[[], Awaitable[str]] = Field(
+        default_factory=lambda: none_token_loader, exclude=True
     )
 
+    _connected: bool = False
+    _alive: bool = False
     _send_queue: asyncio.Queue = None
     _connection_task: asyncio.Task = None
-    _ongoing_subscriptions: Dict[str, asyncio.Queue] = field(
-        default_factory=dict, init=False
-    )
+    _ongoing_subscriptions: Optional[Dict[str, asyncio.Queue]] = None
 
     async def aforward(self, message):
         await self._send_queue.put(message)
 
     async def __aenter__(self):
         logger.info("Connecting Websockets")
+        self._ongoing_subscriptions = {}
         self._send_queue = asyncio.Queue()
         self._connection_task = asyncio.create_task(self.websocket_loop())
         self._connected = True
@@ -85,7 +88,6 @@ class WebSocketLink(AsyncTerminatingLink):
     async def websocket_loop(self, retry=0):
         send_task = None
         receive_task = None
-        self.connection_initialized = False
         try:
             try:
                 token = await self.token_loader()
@@ -98,13 +100,12 @@ class WebSocketLink(AsyncTerminatingLink):
                     send_task = asyncio.create_task(self.sending(client))
                     receive_task = asyncio.create_task(self.receiving(client))
 
-                    self.connection_alive = True
-                    self.connection_dead = False
+                    self._alive = True
                     done, pending = await asyncio.wait(
                         [send_task, receive_task],
                         return_when=asyncio.FIRST_EXCEPTION,
                     )
-                    self.connection_alive = True
+                    self._alive = False
 
                     for task in pending:
                         task.cancel()
@@ -264,3 +265,7 @@ class WebSocketLink(AsyncTerminatingLink):
                 raise InvalidPayload(
                     "Subcription done before yielding data. This shouldnt happen for queries"
                 )
+
+    class Config:
+        arbitrary_types_allowed = True
+        underscore_attrs_are_private = True

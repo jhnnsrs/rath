@@ -1,4 +1,5 @@
 from typing import AsyncIterator, Awaitable, Callable
+from inflection import underscore
 
 from pydantic import Field
 from rath.links.base import AsyncContinuationLink
@@ -13,24 +14,24 @@ async def fake_loader():
 class AuthTokenLink(AsyncContinuationLink):
 
     token_loader: Callable[[], Awaitable[str]] = Field(
-        default_factory=lambda: fake_loader
+        default_factory=lambda: fake_loader, exclude=True
     )
     maximum_refresh_attempts: int = 2
     load_token_on_connect: bool = True
 
-    _token = None
+    _token: str = None
 
     async def __aenter__(self):
         if self.load_token_on_connect:
             await self.reload_token()
 
     async def reload_token(self) -> None:
-        self.token = await self.token_loader()
-        return self.token
+        self._token = await self.token_loader()
+        return self._token
 
     async def aquery(self, operation: Operation, retry=0, **kwargs) -> GraphQLResult:
-        operation.context.headers["Authorization"] = f"Bearer {self.token}"
-        if not self.token:
+        operation.context.headers["Authorization"] = f"Bearer {self._token}"
+        if not self._token:
             await self.reload_token()
         try:
 
@@ -46,14 +47,23 @@ class AuthTokenLink(AsyncContinuationLink):
     async def asubscribe(
         self, operation: Operation, retry=0, **kwargs
     ) -> AsyncIterator[GraphQLResult]:
-        if retry >= self.maximum_refresh_attempts:
-            raise AuthenticationError("Maximum refresh attempts reached")
 
-        operation.context.headers["Authorization"] = f"Bearer {self.token}"
+        operation.context.headers["Authorization"] = f"Bearer {self._token}"
+        if not self._token:
+            await self.reload_token()
         try:
+
             async for result in self.next.asubscribe(operation, **kwargs):
                 yield result
 
         except AuthenticationError as e:
+            retry = retry + 1
+            if retry > self.maximum_refresh_attempts:
+                raise AuthenticationError("Maximum refresh attempts reached") from e
+
             async for result in self.asubscribe(operation, retry=retry + 1, **kwargs):
                 yield result
+
+    class Config:
+        underscore_attrs_are_private = True
+        arbitary_types_allowed = True

@@ -1,4 +1,6 @@
 from typing import Callable
+
+from pydantic import Field
 from rath.operation import Operation
 from rath.links.base import TerminatingLink
 
@@ -6,7 +8,7 @@ from rath.links.base import TerminatingLink
 class SplitLink(TerminatingLink):
     left: TerminatingLink
     right: TerminatingLink
-    split: Callable[[Operation], bool]
+    split: Callable[[Operation], bool] = Field(exclude=True)
 
     async def aquery(self, operation: Operation, **kwargs) -> Operation:
         future = (
