@@ -141,9 +141,9 @@ class WebSocketLink(AsyncTerminatingLink):
                 send_task.cancel()
                 receive_task.cancel()
 
-            cancellation = await asyncio.gather(
-                send_task, receive_task, return_exceptions=True
-            )
+                cancellation = await asyncio.gather(
+                    send_task, receive_task, return_exceptions=True
+                )
             raise e
 
     async def sending(self, client, headers=None):
