@@ -7,15 +7,32 @@ from rath.operation import GraphQLResult, Operation
 from graphql import FieldNode, OperationType
 import uuid
 from rath.links.errors import TerminatingLinkError
+import abc
 
 
 def target_from_node(node: FieldNode) -> str:
+    """Extract the target aka. the aliased name from a FieldNode.
+
+    Args:
+        node (FieldNode): A GraphQL FieldNode.
+
+    Returns:
+        str: The target
+    """
     return (
         node.alias.value if hasattr(node, "alias") and node.alias else node.name.value
     )
 
 
-class AsyncMockResolver:
+class AsyncMockResolver(abc.ABC):
+    """Async Mock Resolver
+
+    Mimiks to a resolver that can be used in a GraphQL StatefulMockLink.
+    You need to subclass this and implement the resolve_* methods.
+
+
+    """
+
     def __getitem__(self, key):
         return getattr(self, f"resolve_{key}")
 
@@ -25,10 +42,21 @@ class AsyncMockResolver:
 
 
 class ConfigurationError(TerminatingLinkError):
-    pass
+    """A Configuration Error"""
+
 
 
 class AsyncStatefulMockLink(AsyncTerminatingLink):
+    """A Stateful Mocklink
+
+    This is a mocklink that can be used to mock a GraphQL server.
+    You need to pass resolvers to the constructor.
+
+    In addition to AsyncMockLink this class also supports Subscription,
+    and has internal state that needs to be handled.
+
+    """
+
     query_resolver: Dict[str, Callable[[Operation], Awaitable[Dict]]] = Field(
         default_factory=dict, exclude=True
     )
@@ -63,6 +91,12 @@ class AsyncStatefulMockLink(AsyncTerminatingLink):
             pass
 
     async def resolving(self):
+        """A coroutine that resolves the incoming operations in
+        an inifite Loop
+
+        Raises:
+            NotImplementedError: If the operation is not supported (aka not implemented)
+        """
         while True:
             operation, id = await self._inqueue.get()
 

@@ -382,7 +382,7 @@ i18n = ["Babel (>=2.7)"]
 
 [[package]]
 name = "koil"
-version = "0.1.103"
+version = "0.1.106"
 description = "Async for a sync world"
 category = "main"
 optional = false
@@ -438,7 +438,7 @@ python-versions = "*"
 
 [[package]]
 name = "nr.util"
-version = "0.8.5"
+version = "0.8.7"
 description = "General purpose Python utility library."
 category = "dev"
 optional = false
@@ -747,7 +747,6 @@ python-versions = ">=3.6.2,<4.0.0"
 colorama = ">=0.4.0,<0.5.0"
 commonmark = ">=0.9.0,<0.10.0"
 pygments = ">=2.6.0,<3.0.0"
-typing-extensions = {version = ">=3.7.4,<5.0", markers = "python_version < \"3.8\""}
 
 [package.extras]
 jupyter = ["ipywidgets (>=7.5.1,<8.0.0)"]
@@ -857,7 +856,7 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 
 [[package]]
 name = "virtualenv"
-version = "20.13.3"
+version = "20.13.4"
 description = "Virtual Python Environment builder"
 category = "dev"
 optional = false
@@ -929,7 +928,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "d1afb94135a92f906489ad47278922385dc0727b035981ebfe9808609413018a"
+content-hash = "13bf2601cf0198c011e6ac4f75b013300dd64dd5bd9dfbca56444f86c03735ee"
 
 [metadata.files]
 aiohttp = [
@@ -1246,8 +1245,8 @@ jinja2 = [
     {file = "Jinja2-3.0.3.tar.gz", hash = "sha256:611bb273cd68f3b993fabdc4064fc858c5b47a973cb5aa7999ec1ba405c87cd7"},
 ]
 koil = [
-    {file = "koil-0.1.103-py3-none-any.whl", hash = "sha256:ddf26034c5f0ea415e540d6f283517818180a88f1c5d4348bfdb622cdb82cdf7"},
-    {file = "koil-0.1.103.tar.gz", hash = "sha256:6124281c8fae60e1f1e5b4132b4b91c9d1a9be518b715dfd55315301274a464f"},
+    {file = "koil-0.1.106-py3-none-any.whl", hash = "sha256:53fe8d6faa6a4d304262f7057470272f2ffad59c1a1265ea5bd827f5e0360c00"},
+    {file = "koil-0.1.106.tar.gz", hash = "sha256:3042f2a99b96e99befa5d8c724eb504103f4631247acb337ddeb842e58f4ac43"},
 ]
 lazy-object-proxy = [
     {file = "lazy-object-proxy-1.7.1.tar.gz", hash = "sha256:d609c75b986def706743cdebe5e47553f4a5a1da9c5ff66d76013ef396b5a8a4"},
@@ -1400,8 +1399,8 @@ mypy-extensions = [
     {file = "mypy_extensions-0.4.3.tar.gz", hash = "sha256:2d82818f5bb3e369420cb3c4060a7970edba416647068eb4c5343488a6c604a8"},
 ]
 "nr.util" = [
-    {file = "nr.util-0.8.5-py3-none-any.whl", hash = "sha256:ba4f5a2d9d6c0c171646011f0f0b69fee1f8e3ce44b5b384ae30c12d90a25020"},
-    {file = "nr.util-0.8.5.tar.gz", hash = "sha256:b380e59c3ba909f75b3bf2e08ad2d67a8877a335b3628a14e33b9aceaf9b2178"},
+    {file = "nr.util-0.8.7-py3-none-any.whl", hash = "sha256:882123edc0b3275d2c6132e96bf8ef554b3c204ae4b37736f5f78da8d80b0592"},
+    {file = "nr.util-0.8.7.tar.gz", hash = "sha256:d27e07755d7bc4c3adc042c9e792cdd1b03b9b85cde55a95068ebd4c37729f9b"},
 ]
 packaging = [
     {file = "packaging-21.3-py3-none-any.whl", hash = "sha256:ef103e05f519cdc783ae24ea4e2e0f508a9c99b2d4969652eed6a2e1ea5bd522"},
@@ -1639,8 +1638,8 @@ urllib3 = [
     {file = "urllib3-1.26.9.tar.gz", hash = "sha256:aabaf16477806a5e1dd19aa41f8c2b7950dd3c746362d7e3223dbe6de6ac448e"},
 ]
 virtualenv = [
-    {file = "virtualenv-20.13.3-py2.py3-none-any.whl", hash = "sha256:dd448d1ded9f14d1a4bfa6bfc0c5b96ae3be3f2d6c6c159b23ddcfd701baa021"},
-    {file = "virtualenv-20.13.3.tar.gz", hash = "sha256:e9dd1a1359d70137559034c0f5433b34caf504af2dc756367be86a5a32967134"},
+    {file = "virtualenv-20.13.4-py2.py3-none-any.whl", hash = "sha256:c3e01300fb8495bc00ed70741f5271fc95fed067eb7106297be73d30879af60c"},
+    {file = "virtualenv-20.13.4.tar.gz", hash = "sha256:ce8901d3bbf3b90393498187f2d56797a8a452fb2d0d7efc6fd837554d6f679c"},
 ]
 watchdog = [
     {file = "watchdog-2.1.6-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:9693f35162dc6208d10b10ddf0458cc09ad70c30ba689d9206e02cd836ce28a3"},

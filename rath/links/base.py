@@ -39,10 +39,21 @@ class TerminatingLink(Link):
 
 
 class AsyncTerminatingLink(TerminatingLink):
-    def aquery(self, operation: Operation) -> GraphQLResult:
+    """An Async Termination Link
+
+    This is a link that terminates the query or subscription, aka
+    it is a link that does not have a next link. It normally
+    is used to make network requests with the already parsed
+    operations
+
+    Args:
+        TerminatingLink (_type_): _description_
+    """
+
+    async def aquery(self, operation: Operation) -> GraphQLResult:
         raise NotImplementedError("Your Async Transport needs to overwrite this method")
 
-    def asubscribe(self, operation: Operation) -> Iterator[GraphQLResult]:
+    async def asubscribe(self, operation: Operation) -> Iterator[GraphQLResult]:
         raise NotImplementedError("Your Async Transport needs to overwrite this method")
 
     def query(self, operation: Operation, **kwargs) -> GraphQLResult:
@@ -53,6 +64,15 @@ class AsyncTerminatingLink(TerminatingLink):
 
 
 class SyncTerminatingLink(TerminatingLink):
+    """A Sync Terminating Link
+
+    This is a link that terminates the query or subscription, aka
+    it is a link that does not have a next link. It normally
+    is used to make network requests with the already parsed
+    operations
+
+    """
+
     async def aquery(self, operation: Operation) -> GraphQLResult:
         raise NotImplementedError(
             "Sync Terminating link does not support asynchronous queries. Please compose together with a context switch link"

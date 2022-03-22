@@ -1,6 +1,5 @@
 from typing import Awaitable, Callable, Dict, Optional
 from graphql import OperationType
-from inflection import underscore
 from pydantic import Field
 import websockets
 import json
@@ -15,7 +14,6 @@ from rath.links.errors import LinkNotConnectedError, TerminatingLinkError
 from rath.operation import GraphQLException, GraphQLResult, Operation
 from rath.links.base import AsyncTerminatingLink
 
-from dataclasses import field
 
 logger = logging.getLogger(__name__)
 

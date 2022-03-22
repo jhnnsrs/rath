@@ -1,5 +1,4 @@
 from typing import AsyncIterator, Awaitable, Callable
-from inflection import underscore
 
 from pydantic import Field
 from rath.links.base import AsyncContinuationLink
