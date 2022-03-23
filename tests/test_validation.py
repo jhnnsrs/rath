@@ -44,8 +44,6 @@ class QueryAsync(AsyncMockResolver):
 
 
 class MutationAsync(AsyncMockResolver):
-    pass
-
     @staticmethod
     async def resolve_createBeast(operation: Operation):
         return {
@@ -57,44 +55,30 @@ class MutationAsync(AsyncMockResolver):
 
 @pytest.fixture()
 def mock_link():
-    return AsyncMockLink(query_resolver=QueryAsync(), mutation_resolver=MutationAsync())
+    return AsyncMockLink(
+        query_resolver=QueryAsync().to_dict(),
+        mutation_resolver=MutationAsync().to_dict(),
+    )
 
 
 async def test_validation(mock_link):
 
     link = ValidatingLink(schema_glob="schema.graphql")
 
-    rath = Rath(link=compose(link, mock_link))
+    async with Rath(link=compose(link, mock_link)) as r:
 
-    await rath.aexecute(
-        """
-        query {
-            beast(id: "1") {
-                binomial
+        await r.aexecute(
+            """
+            query {
+                beast(id: "1") {
+                    binomial
+                }
             }
-        }
-    """
-    )
-
-
-async def test_validation(mock_link):
-
-    link = ValidatingLink(schema_dsl=schema)
-
-    rath = Rath(link=compose(link, mock_link))
-
-    await rath.aexecute(
         """
-        query {
-            beast(id: "1") {
-                binomial
-            }
-        }
-    """
-    )
+        )
 
 
-async def test_validation(mock_link):
+async def test_validation_error(mock_link):
 
     link = ValidatingLink(schema_dsl=schema)
 
@@ -102,7 +86,7 @@ async def test_validation(mock_link):
     r = await rath.aconnect()
 
     with pytest.raises(ValidationError):
-        await rath.aexecute(
+        await r.aexecute(
             """
             query {
                 beast(leg: 1) {

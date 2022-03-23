@@ -1,0 +1,17 @@
+mutation createBeast($nested: [[String!]!], $nonOptionalParameter: String!) {
+  createBeast(nested: $nested, nonOptionalParameter: $nonOptionalParameter) {
+    binomial
+  }
+}
+
+mutation createTranspiledBeast(
+  $vectors: [BeastVector]
+  $nonOptionalParameter: Int!
+) {
+  createTranspiledBeast(
+    vectors: $vectors
+    nonOptionalParameter: $nonOptionalParameter
+  ) {
+    binomial
+  }
+}

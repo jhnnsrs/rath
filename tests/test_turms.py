@@ -7,7 +7,10 @@ from tests.mocks import MutationAsync, QueryAsync
 
 @pytest.fixture()
 def mock_link():
-    return AsyncMockLink(query_resolver=QueryAsync(), mutation_resolver=MutationAsync())
+    return AsyncMockLink(
+        query_resolver=QueryAsync().to_dict(),
+        mutation_resolver=MutationAsync().to_dict(),
+    )
 
 
 async def test_query_async(mock_link):

@@ -1,7 +1,7 @@
 import asyncio
 from typing import AsyncIterator, Awaitable, Callable, Dict, Optional
 
-from pydantic import Field
+from pydantic import Field, validator
 from rath.links.base import AsyncTerminatingLink
 from rath.operation import GraphQLResult, Operation
 from graphql import FieldNode, OperationType
@@ -45,7 +45,6 @@ class ConfigurationError(TerminatingLinkError):
     """A Configuration Error"""
 
 
-
 class AsyncStatefulMockLink(AsyncTerminatingLink):
     """A Stateful Mocklink
 
@@ -74,6 +73,19 @@ class AsyncStatefulMockLink(AsyncTerminatingLink):
     _futures: Optional[Dict[str, asyncio.Future]] = None
     _inqueue: Optional[asyncio.Queue] = None
     _connection_task: Optional[asyncio.Task] = None
+
+    @validator(
+        "query_resolver",
+        "mutation_resolver",
+        "subscription_resolver",
+        "resolver",
+        pre=True,
+    )
+    @classmethod
+    def coerce_resolver(cls, v):
+        if isinstance(v, AsyncMockResolver):
+            return v.to_dict()
+        return v
 
     async def __aenter__(self) -> None:
         self._connected = True

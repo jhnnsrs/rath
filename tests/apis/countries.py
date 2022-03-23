@@ -1,7 +1,7 @@
 from typing_extensions import Literal
 from typing import List, Optional
 from rath.turms.funcs import execute, aexecute
-from pydantic import BaseModel, Field
+from pydantic import Field, BaseModel
 
 
 class CountriesCountries(BaseModel):

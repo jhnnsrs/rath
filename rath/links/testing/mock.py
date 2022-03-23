@@ -42,6 +42,7 @@ class AsyncMockLink(AsyncTerminatingLink):
         "resolver",
         pre=True,
     )
+    @classmethod
     def coerce_resolver(cls, v):
         if isinstance(v, AsyncMockResolver):
             return v.to_dict()
