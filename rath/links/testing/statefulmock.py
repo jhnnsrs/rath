@@ -3,11 +3,11 @@ from typing import AsyncIterator, Awaitable, Callable, Dict, Optional
 
 from pydantic import Field, validator
 from rath.links.base import AsyncTerminatingLink
+from rath.links.testing.mock import AsyncMockResolver
 from rath.operation import GraphQLResult, Operation
 from graphql import FieldNode, OperationType
 import uuid
 from rath.links.errors import TerminatingLinkError
-import abc
 
 
 def target_from_node(node: FieldNode) -> str:
@@ -22,23 +22,6 @@ def target_from_node(node: FieldNode) -> str:
     return (
         node.alias.value if hasattr(node, "alias") and node.alias else node.name.value
     )
-
-
-class AsyncMockResolver(abc.ABC):
-    """Async Mock Resolver
-
-    Mimiks to a resolver that can be used in a GraphQL StatefulMockLink.
-    You need to subclass this and implement the resolve_* methods.
-
-
-    """
-
-    def __getitem__(self, key):
-        return getattr(self, f"resolve_{key}")
-
-    def __contains__(self, key):
-        return hasattr(self, f"resolve_{key}")
-        #
 
 
 class ConfigurationError(TerminatingLinkError):

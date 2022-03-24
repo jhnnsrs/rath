@@ -192,11 +192,9 @@ def recurse_transpile(
             key, var.type, value, registry, in_list=in_list + 1, strict=strict
         )
     if isinstance(var, NamedTypeNode):
-        print(var.name.value, value, in_list)
         try:
             if in_list > 0:
                 if var.name.value in registry.list_handlers:
-                    print("in list handler found")
                     for k, handler in registry.list_handlers[var.name.value].items():
                         try:
                             predicate = handler.predicate(value, in_list)

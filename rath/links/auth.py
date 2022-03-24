@@ -40,7 +40,7 @@ class AuthTokenLink(AsyncContinuationLink):
             if retry > self.maximum_refresh_attempts:
                 raise AuthenticationError("Maximum refresh attempts reached") from e
 
-            self.token = await self.reload_token()
+            self._token = await self.reload_token()
             return await self.aquery(operation, retry=retry, **kwargs)
 
     async def asubscribe(

@@ -15,7 +15,7 @@ def recurse_parse_variables(
 
     Args:
         variables (Dict): The dictionary to parse.
-        predicate (Callable[[str, Any], bool]): _description_
+        predicate (Callable[[str, Any], bool]):The path this is in
         apply (Callable[[Any], Any]): _description_
 
     Returns:
