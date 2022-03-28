@@ -3,7 +3,7 @@ from rath.links.transpile import TranspileLink, TranspileRegistry
 from rath.links import compose
 from rath import Rath
 from rath.operation import Operation
-from tests.apis.nested_inputs import (
+from .apis.nested_inputs import (
     BeastVector,
     acreate_transpiled_beast,
     create_transpiled_beast,
@@ -44,7 +44,7 @@ async def test_transpile_async():
         x = await acreate_transpiled_beast(non_optional_parameter=1, vectors=[[2, 3]])
 
 
-async def test_transpile_sync():
+def test_transpile_sync():
     """Tests transpilation"""
 
     registry = TranspileRegistry()

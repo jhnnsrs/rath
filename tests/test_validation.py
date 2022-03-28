@@ -4,6 +4,7 @@ import pytest
 from rath.links import compose
 from rath.links.testing.mock import AsyncMockLink, AsyncMockResolver
 from rath import Rath
+from tests.turmstest.utils import build_relative_glob
 
 schema = """
 type Beast {
@@ -63,7 +64,7 @@ def mock_link():
 
 async def test_validation(mock_link):
 
-    link = ValidatingLink(schema_glob="schema.graphql")
+    link = ValidatingLink(schema_glob=build_relative_glob("/schemas/beasts.graphql"))
 
     async with Rath(link=compose(link, mock_link)) as r:
 

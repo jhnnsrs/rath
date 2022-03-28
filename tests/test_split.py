@@ -4,7 +4,7 @@ from rath.links.testing.mock import AsyncMockLink
 from rath.links.testing.statefulmock import AsyncStatefulMockLink
 import pytest
 from rath.links import compose, split
-from tests.mocks import *
+from .mocks import *
 from rath import Rath
 
 

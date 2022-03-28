@@ -1,7 +1,7 @@
 from rath.links.validate import ValidatingLink, ValidationError
 import pytest
 from rath.links import compose
-from tests.apis.countries import acountries, countries
+from .apis.countries import acountries, countries
 from rath import Rath
 from rath.links.aiohttp import AIOHttpLink
 

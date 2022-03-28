@@ -5,7 +5,7 @@ from rath.links import compose
 from rath.links.testing.mock import AsyncMockLink
 from rath.links.testing.statefulmock import AsyncStatefulMockLink
 from rath import Rath
-from tests.mocks import MutationAsync, QueryAsync, SubscriptionAsync
+from .mocks import MutationAsync, QueryAsync, SubscriptionAsync
 from koil import Koil
 
 

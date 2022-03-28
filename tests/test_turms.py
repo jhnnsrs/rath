@@ -1,8 +1,8 @@
 import pytest
 from rath.links.testing.mock import AsyncMockLink
-from tests.apis.tests import get_beasts, aget_beasts
+from .apis.tests import get_beasts, aget_beasts
 from rath import Rath
-from tests.mocks import MutationAsync, QueryAsync
+from .mocks import MutationAsync, QueryAsync
 
 
 @pytest.fixture()
