@@ -32,6 +32,14 @@ def test_json_dumps(example_input):
     dumps(example_input)
 
 
+def test_json_dumps_throws_for_unknown_type():
+    """
+    Tests that extended json dumps() method still raises TypeError for unknown type
+    """
+    with pytest.raises(TypeError):
+        dumps(bytes([0x01, 0x02, 0x03, 0x04, 0x05, 0x06]))
+
+
 def test_json_roundtrip(example_input):
     """
     Tests that extended json dumps() method produces output
