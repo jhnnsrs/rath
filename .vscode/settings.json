@@ -36,5 +36,6 @@
 
   "python.linting.pylintEnabled": true,
   "python.linting.pylintArgs": ["--enable=W0614"],
-  "errorLens.enabledDiagnosticLevels": ["error"]
+  "errorLens.enabledDiagnosticLevels": ["error"],
+  "python.linting.enabled": false
 }

@@ -29,7 +29,8 @@
         "-i",
         "--remove-all-unused-imports",
         "-r",
-        "tests"
+        "tests",
+        "rath"
       ],
       "problemMatcher": []
     }

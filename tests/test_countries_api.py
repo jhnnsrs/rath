@@ -39,7 +39,7 @@ async def test_validation(real_world_link):
     r = await rath.aconnect()
 
     with pytest.raises(ValidationError):
-        await rath.aexecute(
+        await rath.aquery(
             """
             query {
                 beast(leg: 1) {
@@ -49,7 +49,7 @@ async def test_validation(real_world_link):
             """
         )
 
-    await rath.aexecute(
+    await rath.aquery(
         """
             query {
                 countries {

@@ -1,7 +1,5 @@
-from argparse import RawTextHelpFormatter
 from typing import Generic, Type, TypeVar
 
-from pydantic import BaseModel
 from koil.qt import QtRunner
 from qtpy import QtCore
 from rath import Rath
@@ -20,7 +18,7 @@ class QtRathQuery(QtRunner, Generic[T]):
             assert rath is not None, "No rath found"
             print("RUnning")
 
-            result = await rath.aexecute(operation.Meta.document, *args, **kwargs)
+            result = await rath.aquery(operation.Meta.document, *args, **kwargs)
             return operation(**result.data)
 
         super().__init__(coro)

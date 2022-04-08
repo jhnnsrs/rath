@@ -1,4 +1,3 @@
-import asyncio
 from koil.composition import KoiledModel
 from rath.errors import NotConnectedError
 from rath.links.base import TerminatingLink
@@ -11,6 +10,7 @@ from typing import (
 )
 from rath.operation import GraphQLResult, opify
 from contextvars import ContextVar
+from koil import unkoil_gen, unkoil
 
 
 current_rath = ContextVar("current_rath")
@@ -22,13 +22,12 @@ class Rath(KoiledModel):
 
     _connected = False
 
-    async def aexecute(
+    async def aquery(
         self,
         query: str,
         variables: Dict[str, Any] = None,
         headers: Dict[str, Any] = {},
         operation_name=None,
-        timeout=None,
         **kwargs,
     ) -> GraphQLResult:
         if not self._connected:
@@ -37,12 +36,10 @@ class Rath(KoiledModel):
             )
         op = opify(query, variables, headers, operation_name, **kwargs)
 
-        if timeout:
-            return await asyncio.wait_for(self.link.aquery(op), timeout)
+        async for data in self.link.aexecute(op):
+            return data
 
-        return await self.link.aquery(op, **kwargs)
-
-    def execute(
+    def query(
         self,
         query: str,
         variables: Dict[str, Any] = None,
@@ -50,12 +47,7 @@ class Rath(KoiledModel):
         operation_name=None,
         **kwargs,
     ) -> GraphQLResult:
-        if not self._connected:
-            raise NotConnectedError(
-                "Rath is not connected. Please use `with Rath(...) as rath` or use `rath.connect() before`"
-            )
-        op = opify(query, variables, headers, operation_name, **kwargs)
-        return self.link.query(op, **kwargs)
+        return unkoil(self.aquery, query, variables, headers, operation_name, **kwargs)
 
     def subscribe(
         self,
@@ -65,12 +57,9 @@ class Rath(KoiledModel):
         operation_name=None,
         **kwargs,
     ) -> Iterator[GraphQLResult]:
-        if not self._connected:
-            raise NotConnectedError(
-                "Rath is not connected. Please use `with Rath(...) as rath` or use `rath.connect() before`"
-            )
-        op = opify(query, variables, headers, operation_name, **kwargs)
-        return self.link.subscribe(op, **kwargs)
+        return unkoil_gen(
+            self.asubscribe, query, variables, headers, operation_name, **kwargs
+        )
 
     async def asubscribe(
         self,
@@ -85,8 +74,8 @@ class Rath(KoiledModel):
                 "Rath is not connected. Please use `async with Rath(...) as rath` or use `await rath.aconnect() before`"
             )
         op = opify(query, variables, headers, operation_name, **kwargs)
-        async for res in self.link.asubscribe(op, **kwargs):
-            yield res
+        async for data in self.link.aexecute(op):
+            yield data
 
     async def __aenter__(self):
         if self.set_context:

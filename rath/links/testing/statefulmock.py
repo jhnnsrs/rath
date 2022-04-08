@@ -150,13 +150,17 @@ class AsyncStatefulMockLink(AsyncTerminatingLink):
     async def submit(self, o, id):
         await self._inqueue.put((o, id))
 
-    async def aquery(self, operation: Operation) -> GraphQLResult:
-        uniqueid = uuid.uuid4()
-        self._futures[uniqueid] = asyncio.Future()
-        await self.submit(operation, uniqueid)
-        return await self._futures[uniqueid]
+    async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
 
-    async def asubscribe(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
+        if (
+            operation.node.operation == OperationType.QUERY
+            or operation.node.operation == OperationType.MUTATION
+        ):
+            uniqueid = uuid.uuid4()
+            self._futures[uniqueid] = asyncio.Future()
+            await self.submit(operation, uniqueid)
+            yield await self._futures[uniqueid]
+
         if operation.node.operation == OperationType.SUBSCRIPTION:
             assert (
                 len(operation.node.selection_set.selections) == 1

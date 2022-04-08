@@ -1,7 +1,6 @@
-import asyncio
 from http import HTTPStatus
 import json
-from typing import Any, AsyncIterator, Dict, List
+from typing import Any, Dict, List
 
 import aiohttp
 from graphql import OperationType
@@ -28,8 +27,13 @@ class AIOHttpLink(AsyncTerminatingLink):
     async def __aexit__(self, *args, **kwargs) -> None:
         await self._session.__aexit__(*args, **kwargs)
 
-    async def aquery(self, operation: Operation) -> GraphQLResult:
+    async def aexecute(self, operation: Operation) -> GraphQLResult:
         payload = {"query": operation.document}
+
+        if operation.node.operation == OperationType.SUBSCRIPTION:
+            raise NotImplementedError(
+                "Aiohttp Transport does not support subscriptions"
+            )
 
         if len(operation.context.files.items()) > 0:
             payload["variables"] = operation.variables
@@ -86,23 +90,7 @@ class AIOHttpLink(AsyncTerminatingLink):
 
                 raise Exception(f"Response does not contain data {json_response}")
 
-            return GraphQLResult(data=json_response["data"])
-
-    async def asubscribe(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
-        if operation.node.operation == OperationType.SUBSCRIPTION:
-            raise NotImplementedError(
-                "Aiohttp Transport does not support subscriptions"
-            )
-
-        if operation.node.operation == OperationType.QUERY:
-            if operation.extensions.pollInterval:
-                while True:
-                    yield await self.aquery(operation)
-                    await asyncio.sleep(operation.extensions.pollInterval)
-            else:
-                raise NotImplementedError(
-                    "If you didn't specify a pollInterval you cannot use subscribe to this query"
-                )
+            yield GraphQLResult(data=json_response["data"])
 
     class Config:
         arbitrary_types_allowed = True

@@ -38,11 +38,6 @@ def parse_variables(
 
 
 class DictingLink(ParsingLink):
-    def parse(self, operation: Operation) -> Operation:
-        shrinked_variables = parse_variables(operation.variables)
-        operation.variables.update(shrinked_variables)
-        return operation
-
     async def aparse(self, operation: Operation) -> Operation:
         shrinked_variables = parse_variables(operation.variables)
         operation.variables.update(shrinked_variables)

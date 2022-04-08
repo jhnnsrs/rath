@@ -56,30 +56,10 @@ def parse_variables(
 
 
 class FileExtraction(ContinuationLink):
-    async def aquery(self, operation: Operation) -> Operation:
-        operation.variables, operation.context.files = parse_variables(
-            operation.variables
-        )
-        return await self.next.aquery(operation)
-
-    async def asubscribe(self, operation: Operation) -> Operation:
+    async def aexecute(self, operation: Operation) -> Operation:
         operation.variables, operation.context.files = parse_variables(
             operation.variables
         )
 
-        async for result in self.next.asubscribe(operation):
-            yield result
-
-    def query(self, operation: Operation) -> Operation:
-        operation.variables, operation.context.files = parse_variables(
-            operation.variables
-        )
-        return self.next.query(operation)
-
-    def subscribe(self, operation: Operation) -> Operation:
-        operation.variables, operation.context.files = parse_variables(
-            operation.variables
-        )
-
-        for result in self.next.subscribe(operation):
+        async for result in self.next.aexecute(operation):
             yield result

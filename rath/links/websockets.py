@@ -189,7 +189,7 @@ class WebSocketLink(AsyncTerminatingLink):
             ), "Received Result for subscription that is no longer or was never active"
             await self._ongoing_subscriptions[id].put(message)
 
-    async def asubscribe(self, operation: Operation):
+    async def aexecute(self, operation: Operation):
         if self._connection_task == False:
             raise LinkNotConnectedError("Websocket_link is not connected")
 
@@ -227,42 +227,6 @@ class WebSocketLink(AsyncTerminatingLink):
             if answer["type"] == GQL_COMPLETE:
                 logger.info(f"Subcription done {operation}")
                 return
-
-    async def aquery(self, operation: Operation):
-        assert (
-            operation.node.operation != OperationType.SUBSCRIPTION
-        ), "Operation is a subscription. Only queries are allowed on 'aquery'"
-        assert (
-            operation.context.files is None
-        ), "We cannot send files through websockets"
-
-        id = str(uuid.uuid4())
-        subscribe_queue = asyncio.Queue()
-        self._ongoing_subscriptions[id] = subscribe_queue
-
-        payload = {
-            "headers": operation.context.headers,
-            "query": operation.document,
-            "variables": operation.variables,
-        }
-        frame = {"id": id, "type": GQL_START, "payload": payload}
-        await self.aforward(json.dumps(frame))
-
-        while True:
-            answer = await subscribe_queue.get()
-
-            if answer["type"] == GQL_DATA:
-                payload = answer["payload"]
-
-                if "data" in payload:
-                    subscribe_queue.task_done()
-                    del self._ongoing_subscriptions[id]
-                    return GraphQLResult(data=payload["data"])
-
-            if answer["type"] == GQL_COMPLETE:
-                raise InvalidPayload(
-                    "Subcription done before yielding data. This shouldnt happen for queries"
-                )
 
     class Config:
         arbitrary_types_allowed = True

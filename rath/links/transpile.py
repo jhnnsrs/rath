@@ -293,12 +293,6 @@ class TranspileLink(ParsingLink):
     registry: TranspileRegistry
     strict: bool = False
 
-    def parse(self, operation: Operation) -> Operation:
-        operation.variables = transpile(
-            operation.node, operation.variables, self.registry, self.strict
-        )
-        return operation
-
     async def aparse(self, operation: Operation) -> Operation:
         operation.variables = transpile(
             operation.node, operation.variables, self.registry, self.strict

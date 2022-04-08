@@ -1,9 +1,8 @@
 from graphql import OperationType
-from rath.links.context import SwitchAsyncLink
 from rath.links.testing.mock import AsyncMockLink
 from rath.links.testing.statefulmock import AsyncStatefulMockLink
 import pytest
-from rath.links import compose, split
+from rath.links import split
 from .mocks import *
 from rath import Rath
 
@@ -40,7 +39,7 @@ async def test_aquery(mock_link_left, mock_link_right):
     )
 
     async with rath as r:
-        await r.aexecute(
+        await r.aquery(
             """
             query {
                 beast(id: "1") {
@@ -54,7 +53,7 @@ async def test_aquery(mock_link_left, mock_link_right):
 async def test_stateful_mock(stateful_mock_link):
 
     async with Rath(link=stateful_mock_link) as rath:
-        await rath.aexecute(
+        await rath.aquery(
             """
             query {
                 beast(id: "1") {
@@ -68,14 +67,9 @@ async def test_stateful_mock(stateful_mock_link):
 
 def test_stateful_mock_sync(stateful_mock_link):
 
-    with Rath(
-        link=compose(
-            SwitchAsyncLink(),
-            stateful_mock_link,
-        )
-    ) as rath:
+    with Rath(link=stateful_mock_link) as rath:
 
-        rath.execute(
+        rath.query(
             """
                     query {
                         beast(id: "1") {

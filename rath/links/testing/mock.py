@@ -48,7 +48,7 @@ class AsyncMockLink(AsyncTerminatingLink):
             return v.to_dict()
         return v
 
-    async def aquery(self, operation: Operation) -> GraphQLResult:
+    async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
 
         if operation.node.operation == OperationType.QUERY:
             futures = []
@@ -64,7 +64,7 @@ class AsyncMockLink(AsyncTerminatingLink):
                     )
 
             resolved = await asyncio.gather(*futures)
-            return GraphQLResult(
+            yield GraphQLResult(
                 data={
                     target_from_node(op): resolved[i]
                     for i, op in enumerate(operation.node.selection_set.selections)
@@ -85,14 +85,13 @@ class AsyncMockLink(AsyncTerminatingLink):
                     )
 
             resolved = await asyncio.gather(*futures)
-            return GraphQLResult(
+            yield GraphQLResult(
                 data={
                     target_from_node(op): resolved[i]
                     for i, op in enumerate(operation.node.selection_set.selections)
                 }
             )
 
-    async def asubscribe(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
         if operation.node.operation == OperationType.SUBSCRIPTION:
             futures = []
             assert (

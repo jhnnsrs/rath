@@ -4,7 +4,7 @@ import pytest
 from rath.links import compose
 from rath.links.testing.mock import AsyncMockLink, AsyncMockResolver
 from rath import Rath
-from tests.turmstest.utils import build_relative_glob
+from .utils import build_relative_glob
 
 schema = """
 type Beast {
@@ -68,7 +68,7 @@ async def test_validation(mock_link):
 
     async with Rath(link=compose(link, mock_link)) as r:
 
-        await r.aexecute(
+        await r.aquery(
             """
             query {
                 beast(id: "1") {
@@ -87,7 +87,7 @@ async def test_validation_error(mock_link):
     r = await rath.aconnect()
 
     with pytest.raises(ValidationError):
-        await r.aexecute(
+        await r.aquery(
             """
             query {
                 beast(leg: 1) {

@@ -26,7 +26,7 @@ async def test_dicting(mock_link):
 
     rath = Rath(link=compose(link, mock_link))
     async with rath:
-        await rath.aexecute(
+        await rath.aquery(
             """
             mutation beaste($name: String!, $email: String!) {
                 createBeast(id: "1") {

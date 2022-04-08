@@ -45,6 +45,7 @@ class ValidatingLink(ContinuationLink):
     graphql_schema: Optional[GraphQLSchema] = None
 
     @root_validator(allow_reuse=True)
+    @classmethod
     def check_schema_dsl_or_schema_glob(cls, values):
         if not values.get("schema_dsl") and not values.get("schema_glob"):
             if not values.get("allow_introspection"):
@@ -60,25 +61,15 @@ class ValidatingLink(ContinuationLink):
 
         return values
 
-        return values
-
     async def aload_schema(self, operation: Operation) -> None:
         assert self.allow_introspection, "Introspection is not allowed"
         introspect_operation = opify(get_introspection_query())
         introspect_operation.context = operation.context
         introspect_operation.extensions = operation.extensions
 
-        schema_result = await self.next.aquery(introspect_operation)
-        self.graphql_schema = build_client_schema(schema_result.data)
-
-    def load_schema(self, operation: Operation) -> None:
-        assert self.allow_introspection, "Introspection is not allowed"
-        introspect_operation = opify(get_introspection_query())
-        introspect_operation.context = operation.context
-        introspect_operation.extensions = operation.extensions
-
-        schema_result = self.next.query(introspect_operation)
-        self.graphql_schema = build_client_schema(schema_result.data)
+        async for e in self.next.aexecute(introspect_operation):
+            self.graphql_schema = build_client_schema(e.data)
+            return
 
     def validate(self, operation: Operation):
         errors = validate(self.graphql_schema, operation.document_node)
@@ -89,36 +80,15 @@ class ValidatingLink(ContinuationLink):
                 + "\n".join([e.message for e in errors])
             )
 
-    async def aquery(self, operation: Operation, **kwargs) -> GraphQLResult:
-        if not self.graphql_schema:
-            await self.aload_schema(operation)
-
-        self.validate(operation)
-        return await self.next.aquery(operation, **kwargs)
-
-    async def asubscribe(
+    async def aexecute(
         self, operation: Operation, **kwargs
     ) -> AsyncIterator[GraphQLResult]:
         if not self.graphql_schema:
             await self.aload_schema(operation)
 
         self.validate(operation)
-        async for result in self.next.asubscribe(operation, **kwargs):
+        async for result in self.next.aexecute(operation, **kwargs):
             yield result
-
-    def query(self, operation: Operation, **kwargs) -> GraphQLResult:
-        if not self.graphql_schema:
-            self.load_schema(operation)
-
-        self.validate(operation)
-        return self.next.query(operation, **kwargs)
-
-    def subscribe(self, operation: Operation, **kwargs) -> AsyncIterator[GraphQLResult]:
-        if not self.graphql_schema:
-            self.load_schema(operation)
-
-        self.validate(operation)
-        return self.next.subscribe(operation, **kwargs)
 
     class Config:
         arbitrary_types_allowed = True

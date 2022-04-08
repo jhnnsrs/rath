@@ -37,18 +37,9 @@ class ComposedLink(TerminatingLink):
         for link in self.links:
             await link.__aexit__(*args, **kwargs)
 
-    async def aquery(self, operation: Operation, **kwargs):
-        return await self.links[0].aquery(operation)
-
-    async def asubscribe(self, operation: Operation, **kwargs):
-        async for result in self.links[0].asubscribe(operation):
+    async def aexecute(self, operation: Operation, **kwargs):
+        async for result in self.links[0].aexecute(operation):
             yield result
-
-    def query(self, operation: Operation, **kwargs):
-        return self.links[0].query(operation, **kwargs)
-
-    def subscribe(self, operation: Operation, **kwargs):
-        return self.links[0].subscribe(operation, **kwargs)
 
 
 def compose(*links: List[Link]) -> ComposedLink:

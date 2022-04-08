@@ -1,4 +1,3 @@
-from rath.links.context import SwitchAsyncLink
 from rath.errors import NotConnectedError
 import pytest
 from rath.links import compose
@@ -29,18 +28,18 @@ def stateful_mocklink():
 
 @pytest.fixture()
 def simple_rath(mock_link):
-    return Rath(link=compose(SwitchAsyncLink(), mock_link))
+    return Rath(link=mock_link)
 
 
 @pytest.fixture()
 def stateful_rath(stateful_mocklink):
-    return Rath(link=compose(SwitchAsyncLink(), stateful_mocklink))
+    return Rath(link=stateful_mocklink)
 
 
 async def test_bypass(simple_rath):
 
     async with simple_rath:
-        x = await simple_rath.aexecute(
+        x = await simple_rath.aquery(
             """
             query {
                 beast(id: "1") {
@@ -55,7 +54,7 @@ async def test_bypass(simple_rath):
 async def test_link_not_connected_exception(stateful_rath):
 
     with pytest.raises(NotConnectedError):
-        x = await stateful_rath.aexecute(
+        x = await stateful_rath.aquery(
             """
             query {
                 beast(id: "1") {
@@ -69,7 +68,7 @@ async def test_link_not_connected_exception(stateful_rath):
 async def test_stateful_link_execution(stateful_rath):
 
     async with stateful_rath:
-        x = await stateful_rath.aexecute(
+        x = await stateful_rath.aquery(
             """
             query {
                 beast(id: "1") {
@@ -85,7 +84,7 @@ async def test_stateful_link_execution(stateful_rath):
 def test_stateful_link_execution_sync(stateful_rath):
 
     with stateful_rath:
-        x = stateful_rath.execute(
+        x = stateful_rath.query(
             """
             query {
                 beast(id: "1") {
@@ -101,7 +100,7 @@ def test_stateful_link_execution_sync(stateful_rath):
 def test_stateful_link_execution_sync_no_sideffects(stateful_rath):
 
     with stateful_rath:
-        x = stateful_rath.execute(
+        x = stateful_rath.query(
             """
             query {
                 beast(id: "1") {
@@ -114,7 +113,7 @@ def test_stateful_link_execution_sync_no_sideffects(stateful_rath):
         assert x.data, "No data received"
 
     with stateful_rath:
-        x = stateful_rath.execute(
+        x = stateful_rath.query(
             """
             query {
                 beast(id: "1") {
@@ -159,7 +158,7 @@ def test_stateful_link_execution_sync_same_koil(stateful_rath):
     with Koil():
 
         with stateful_rath:
-            x = stateful_rath.execute(
+            x = stateful_rath.query(
                 """
                 query {
                     beast(id: "1") {
@@ -172,7 +171,7 @@ def test_stateful_link_execution_sync_same_koil(stateful_rath):
             assert x.data, "No data received"
 
         with stateful_rath:
-            x = stateful_rath.execute(
+            x = stateful_rath.query(
                 """
                 query {
                     beast(id: "1") {
@@ -189,7 +188,7 @@ def test_stateful_link_execution_sync_unsafe_connect(stateful_rath):
 
     stateful_rath.connect()
 
-    x = stateful_rath.execute(
+    x = stateful_rath.query(
         """
             query {
                 beast(id: "1") {
@@ -201,7 +200,7 @@ def test_stateful_link_execution_sync_unsafe_connect(stateful_rath):
 
     assert x.data, "No data received"
 
-    x = stateful_rath.execute(
+    x = stateful_rath.query(
         """
             query {
                 beast(id: "1") {
@@ -247,9 +246,9 @@ def test_stateful_link_subscription_sync_same_koil(stateful_rath):
 
 def test_query_sinc(mock_link):
 
-    with Rath(link=compose(SwitchAsyncLink(), mock_link)) as rath:
+    with Rath(link=mock_link) as rath:
 
-        rath.execute(
+        rath.query(
             """
             query {
                 beast(id: "1") {
@@ -262,9 +261,9 @@ def test_query_sinc(mock_link):
 
 def test_switch_sync(mock_link):
 
-    with Rath(link=compose(SwitchAsyncLink(), mock_link)) as rath:
+    with Rath(link=compose(mock_link)) as rath:
 
-        rath.execute(
+        rath.query(
             """
             query {
                 beast(id: "1") {

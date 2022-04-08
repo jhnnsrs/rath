@@ -3,12 +3,12 @@ from rath.rath import Rath, current_rath
 
 def execute(operation, variables, rath: Rath = None):
     rath = rath or current_rath.get()
-    return operation(**rath.execute(operation.Meta.document, variables).data)
+    return operation(**rath.query(operation.Meta.document, variables).data)
 
 
 async def aexecute(operation, variables, rath: Rath = None):
     rath = rath or current_rath.get()
-    x = await rath.aexecute(operation.Meta.document, variables)
+    x = await rath.aquery(operation.Meta.document, variables)
     return operation(**x.data)
 
 
