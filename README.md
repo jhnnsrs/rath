@@ -37,21 +37,18 @@ auth = AuthTokenLink(token_loader=aload_token)
 link = AioHttpLink(url="https://api.spacex.land/graphql/")
 
 
-rath = Rath(links=compose(auth,link))
-rath.connect()
-
-
-query = """query TestQuery {
-  capsules {
-    id
-    missions {
-      flight
+with Rath(links=compose(auth,link)) as rath:
+    query = """query TestQuery {
+      capsules {
+        id
+        missions {
+          flight
+        }
+      }
     }
-  }
-}
-"""
+    """
 
-result = rath.execute(query)
+    result = rath.query(query)
 ```
 
 This example composes both the AuthToken and AioHttp link: During each query the Bearer headers are set to the retrieved token, on authentication fail (for example if Token Expired) the
@@ -59,7 +56,7 @@ AuthToken automatically refetches the token and retries the query.
 
 ## Async Usage
 
-Rath is build with koil, for async/sync compatibility but also exposed a complete asynhronous api, also it is completely threadsafe
+Rath is build for async usage but uses koil, for async/sync compatibility
 
 ```python
 from rath.links.auth import AuthTokenLink
@@ -76,42 +73,29 @@ link = AioHttpLink(url="https://api.spacex.land/graphql/")
 
 
 async def main():
-  rath = Rath(links=compose(auth,link))
-  await rath.aconnect()
 
-
-  query = """query TestQuery {
-    capsules {
-      id
-      missions {
-        flight
+  async with Rath(links=compose(auth,link)) as rath:
+      query = """query TestQuery {
+        capsules {
+          id
+          missions {
+            flight
+          }
+        }
       }
-    }
-  }
-  """
+      """
 
-  result = await rath.aexecute(query)
+      result = await rath.query(query)
 
 asyncio.run(main())
 ```
 
-## Usage of Async Links in Sync Environments
-
-Links can either have a synchronous or asynchronous interface (inheriting from SyncLink or AsyncLink). Using an Async Link from a Sync
-context however is not possible without switching context. For this purpose exist SwitchLinks that can either switch from sync to async
-or back.
-
-```python
-
-upload_files = UploadFilesSyncLink(bucket="lala")
-switch = SwitchAsyncLink()
-link = AioHttpLink(url="https://api.spacex.land/graphql/")
-
-rath = Rath(link=compose(upload_files, switch, link))
-
-```
-
 ## Example Transport Switch
+
+Links allow the composition of additional logic based on your graphql operation. For example you might want
+to use different grapqhl transports for different kind of operations (e.g using websockets for subscriptions,
+but using standard http requests for potential caching on queries and mutations). This can be easily
+accomplished by providing a split link.
 
 ```python
 link = SplitLink(
@@ -130,11 +114,7 @@ rath = Rath(link=link)
 - Reconnecting WebsocketLink
 - AioHttpLink (supports multipart uploads)
 - SplitLink (allows to split the terminating link - Subscription into WebsocketLink, Query, Mutation into Aiohttp)
-- AuthTokenLink (Token insertion with automatic refresh)
-
-## Dynamic Configuration
-
-rath follows some design principles of fakts for asynchronous configuration retrieval, and provides some examplary links
+- AuthTokenLink (Token insertion with automatic refres
 
 ## Authentication
 
@@ -167,15 +147,17 @@ link = compose(
 )
 
 
-RATH = Rath(
+rath = Rath(
     link=link,
     register=True, # allows global access (singleton-antipattern, but rath has no state)
 )
 
 
 async def main():
-    capsules = await aget_capsules() # fully typed pydantic powered dataclasses generated through turms
-    print(capsules)
+
+    async with rath:
+        capsules = await aget_capsules() # fully typed pydantic powered dataclasses generated through turms
+        print(capsules)
 
 
 asyncio.run(main())
