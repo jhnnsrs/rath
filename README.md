@@ -8,7 +8,7 @@
 [![PyPI status](https://img.shields.io/pypi/status/rath.svg)](https://pypi.python.org/pypi/rath/)
 [![PyPI download month](https://img.shields.io/pypi/dm/rath.svg)](https://pypi.python.org/pypi/rath/)
 
-### DEVELOPMENT
+### BETA
 
 ## Inspiration
 
