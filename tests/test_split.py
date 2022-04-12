@@ -1,29 +1,30 @@
 from graphql import OperationType
-from rath.links.context import SwitchAsyncLink
+from rath.links.testing.mock import AsyncMockLink
 from rath.links.testing.statefulmock import AsyncStatefulMockLink
-from rath.links.validate import ValidatingLink, ValidationError
-from rath.operation import Operation, opify
 import pytest
-from rath.links import compose, split
-from tests.mocks import *
+from rath.links import split
+from .mocks import *
 from rath import Rath
-import asyncio
 
 
 @pytest.fixture()
 def mock_link_left():
-    return AsyncMockLink(query_resolver=QueryAsync(), mutation_resolver=MutationAsync())
+    return AsyncMockLink(
+        query_resolver=QueryAsync().to_dict(),
+        mutation_resolver=MutationAsync().to_dict(),
+    )
 
 
 @pytest.fixture()
 def mock_link_right():
-    return AsyncMockLink(subscription_resolver=SubscriptionAsync())
+    return AsyncMockLink(subscription_resolver=SubscriptionAsync().to_dict())
 
 
 @pytest.fixture()
 def stateful_mock_link():
     return AsyncStatefulMockLink(
-        query_resolver=QueryAsync(), mutation_resolver=MutationAsync()
+        query_resolver=QueryAsync().to_dict(),
+        mutation_resolver=MutationAsync().to_dict(),
     )
 
 
@@ -38,7 +39,7 @@ async def test_aquery(mock_link_left, mock_link_right):
     )
 
     async with rath as r:
-        await r.aexecute(
+        await r.aquery(
             """
             query {
                 beast(id: "1") {
@@ -52,7 +53,7 @@ async def test_aquery(mock_link_left, mock_link_right):
 async def test_stateful_mock(stateful_mock_link):
 
     async with Rath(link=stateful_mock_link) as rath:
-        await rath.aexecute(
+        await rath.aquery(
             """
             query {
                 beast(id: "1") {
@@ -66,14 +67,9 @@ async def test_stateful_mock(stateful_mock_link):
 
 def test_stateful_mock_sync(stateful_mock_link):
 
-    with Rath(
-        link=compose(
-            SwitchAsyncLink(),
-            stateful_mock_link,
-        )
-    ) as rath:
+    with Rath(link=stateful_mock_link) as rath:
 
-        rath.execute(
+        rath.query(
             """
                     query {
                         beast(id: "1") {

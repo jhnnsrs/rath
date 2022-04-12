@@ -3,7 +3,6 @@ from rath.links.compose import compose
 from rath.links.dictinglink import DictingLink
 from rath.links.testing.mock import AsyncMockLink, AsyncMockResolver
 from rath.rath import Rath
-from tests.mocks import QueryAsync, MutationAsync
 import pytest
 
 
@@ -15,10 +14,10 @@ class MutationAsync(AsyncMockResolver):
 
 @pytest.fixture()
 def mock_link():
-    return AsyncMockLink(query_resolver=QueryAsync(), mutation_resolver=MutationAsync())
+    return AsyncMockLink(mutation_resolver=MutationAsync().to_dict())
 
 
-async def test_validation(mock_link):
+async def test_dicting(mock_link):
 
     link = DictingLink()
 
@@ -27,7 +26,7 @@ async def test_validation(mock_link):
 
     rath = Rath(link=compose(link, mock_link))
     async with rath:
-        await rath.aexecute(
+        await rath.aquery(
             """
             mutation beaste($name: String!, $email: String!) {
                 createBeast(id: "1") {

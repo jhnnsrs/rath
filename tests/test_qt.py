@@ -1,27 +1,26 @@
-from rath.links.aiohttp import AIOHttpLink
-from rath.links.validate import ValidatingLink, ValidationError
-from rath.operation import Operation, opify
 import pytest
+from rath.links.aiohttp import AIOHttpLink
+from rath.links.validate import ValidatingLink
 from rath.links import compose
-from rath.links.testing.mock import AsyncMockLink, AsyncMockResolver
 from rath import Rath
 from PyQt5 import QtWidgets, QtCore
-from koil.qt import QtKoil, QtTask, QtFuture
-from tests.apis.countries import acountries
+from koil.qt import QtKoil, QtRunner
+from .apis.countries import acountries
 
 
 class QtRathWidget(QtWidgets.QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.koil = QtKoil()
+        self.koil = QtKoil(parent=self)
+        self.koil.connect()
 
         public_link = AIOHttpLink(url="https://countries.trevorblades.com/")
-        validating_link = ValidatingLink()
+        validating_link = ValidatingLink(allow_introspection=True)
 
         self.rath = Rath(link=compose(validating_link, public_link))
         self.rath.connect()
 
-        self.countries_query = QtTask(acountries)
+        self.countries_query = QtRunner(acountries)
 
         self.button_greet = QtWidgets.QPushButton("Greet")
         self.greet_label = QtWidgets.QLabel("")
@@ -41,7 +40,7 @@ class QtRathWidget(QtWidgets.QWidget):
 class QtFuncWidget(QtWidgets.QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.koil = QtKoil()
+        self.koil = QtKoil(parent=self)
 
         self.button_greet = QtWidgets.QPushButton("Greet")
         self.greet_label = QtWidgets.QLabel("")
@@ -58,6 +57,7 @@ class QtFuncWidget(QtWidgets.QWidget):
         self.greet_label.setText("Hello!")
 
 
+@pytest.mark.qt
 def test_no_interference(qtbot):
     """Tests if just adding koil interferes with normal
     qtpy widgets.
@@ -74,6 +74,7 @@ def test_no_interference(qtbot):
     assert widget.greet_label.text() == "Hello!"
 
 
+@pytest.mark.qt
 def test_call_query(qtbot):
     """Tests if we can call a task from a koil widget."""
     widget = QtRathWidget()

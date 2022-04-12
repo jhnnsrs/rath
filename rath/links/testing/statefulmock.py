@@ -1,57 +1,97 @@
 import asyncio
-from typing import AsyncIterator, Union
+from typing import AsyncIterator, Awaitable, Callable, Dict, Optional
+
+from pydantic import Field, validator
 from rath.links.base import AsyncTerminatingLink
+from rath.links.testing.mock import AsyncMockResolver
 from rath.operation import GraphQLResult, Operation
-from graphql import FieldNode, GraphQLSchema, OperationType, validate
+from graphql import FieldNode, OperationType
 import uuid
-from rath.links.errors import LinkNotConnectedError
+from rath.links.errors import TerminatingLinkError
 
 
 def target_from_node(node: FieldNode) -> str:
+    """Extract the target aka. the aliased name from a FieldNode.
+
+    Args:
+        node (FieldNode): A GraphQL FieldNode.
+
+    Returns:
+        str: The target
+    """
     return (
         node.alias.value if hasattr(node, "alias") and node.alias else node.name.value
     )
 
 
-class AsyncMockResolver:
-    def __getitem__(self, key):
-        return getattr(self, f"resolve_{key}")
-
-    def __contains__(self, key):
-        return hasattr(self, f"resolve_{key}")
+class ConfigurationError(TerminatingLinkError):
+    """A Configuration Error"""
 
 
 class AsyncStatefulMockLink(AsyncTerminatingLink):
-    def __init__(
-        self,
-        resolver: Union[AsyncMockResolver, dict] = {},
-        query_resolver: Union[AsyncMockResolver, dict] = None,
-        mutation_resolver: Union[AsyncMockResolver, dict] = None,
-        subscription_resolver: Union[AsyncMockResolver, dict] = None,
-        schema: GraphQLSchema = None,
-    ) -> None:
-        self.query_resolver = query_resolver or resolver
-        self.mutation_resolver = mutation_resolver or resolver
-        self.subscription_resolver = subscription_resolver or resolver
-        self.schema = schema
-        self.connected = False
-        self.futures = {}
+    """A Stateful Mocklink
+
+    This is a mocklink that can be used to mock a GraphQL server.
+    You need to pass resolvers to the constructor.
+
+    In addition to AsyncMockLink this class also supports Subscription,
+    and has internal state that needs to be handled.
+
+    """
+
+    query_resolver: Dict[str, Callable[[Operation], Awaitable[Dict]]] = Field(
+        default_factory=dict, exclude=True
+    )
+    mutation_resolver: Dict[str, Callable[[Operation], Awaitable[Dict]]] = Field(
+        default_factory=dict, exclude=True
+    )
+    subscription_resolver: Dict[str, Callable[[Operation], Awaitable[Dict]]] = Field(
+        default_factory=dict, exclude=True
+    )
+    resolver: Dict[str, Callable[[Operation], Awaitable[Dict]]] = Field(
+        default_factory=dict, exclude=True
+    )
+
+    _connected: bool = False
+    _futures: Optional[Dict[str, asyncio.Future]] = None
+    _inqueue: Optional[asyncio.Queue] = None
+    _connection_task: Optional[asyncio.Task] = None
+
+    @validator(
+        "query_resolver",
+        "mutation_resolver",
+        "subscription_resolver",
+        "resolver",
+        pre=True,
+    )
+    @classmethod
+    def coerce_resolver(cls, v):
+        if isinstance(v, AsyncMockResolver):
+            return v.to_dict()
+        return v
 
     async def __aenter__(self) -> None:
-        self.connected = True
+        self._connected = True
+        self._futures = {}
         self._inqueue = asyncio.Queue()
-        self.connection_task = asyncio.create_task(self.resolving())
+        self._connection_task = asyncio.create_task(self.resolving())
 
     async def __aexit__(self, *args, **kwargs) -> None:
-        self.connected = False
-        self.connection_task.cancel()
+        self._connected = False
+        self._connection_task.cancel()
 
         try:
-            await self.connection_task
+            await self._connection_task
         except asyncio.CancelledError:
             pass
 
     async def resolving(self):
+        """A coroutine that resolves the incoming operations in
+        an inifite Loop
+
+        Raises:
+            NotImplementedError: If the operation is not supported (aka not implemented)
+        """
         while True:
             operation, id = await self._inqueue.get()
 
@@ -59,28 +99,36 @@ class AsyncStatefulMockLink(AsyncTerminatingLink):
 
             try:
                 if operation.node.operation == OperationType.QUERY:
-
                     for op in operation.node.selection_set.selections:
-                        assert (
-                            op.name.value in self.query_resolver
-                        ), f"Mocked Resolver for Query '{op.name.value}' not in resolver: {self.query_resolver}  for AsyncMockLink"
-
-                        resolve_futures.append(
-                            self.query_resolver[op.name.value](operation)
-                        )
+                        if op.name.value in self.query_resolver:
+                            resolve_futures.append(
+                                self.query_resolver[op.name.value](operation)
+                            )
+                        elif op.name.value in self.resolver:
+                            resolve_futures.append(
+                                self.resolver[op.name.value](operation)
+                            )
+                        else:
+                            raise NotImplementedError(
+                                f"Mocked Resolver for Query '{op.name.value}' not in resolvers: {self.query_resolver}, {self.resolver}  for AsyncMockLink"
+                            )
 
                 if operation.node.operation == OperationType.MUTATION:
-
                     for op in operation.node.selection_set.selections:
-                        assert (
-                            op.name.value in self.mutation_resolver
-                        ), f"Mocked Resolver for Mutation {op.name.value} not in resolver: {self.mutation_resolver} for AsyncMockLink"
-                        resolve_futures.append(
-                            self.mutation_resolver[op.name.value](operation)
-                        )
-
+                        if op.name.value in self.mutation_resolver:
+                            resolve_futures.append(
+                                self.mutation_resolver[op.name.value](operation)
+                            )
+                        elif op.name.value in self.resolver:
+                            resolve_futures.append(
+                                self.resolver[op.name.value](operation)
+                            )
+                        else:
+                            raise NotImplementedError(
+                                f"Mocked Resolver for Query '{op.name.value}' not in resolvers: {self.mutation_resolver}, {self.resolver}  for AsyncMockLink"
+                            )
                 resolved = await asyncio.gather(*resolve_futures)
-                self.futures[id].set_result(
+                self._futures[id].set_result(
                     GraphQLResult(
                         data={
                             target_from_node(op): resolved[i]
@@ -90,38 +138,50 @@ class AsyncStatefulMockLink(AsyncTerminatingLink):
                         }
                     )
                 )
+            except AttributeError as t:
+                raise ConfigurationError(f"No resolver for operation {op}") from t
 
             except Exception as e:
-                self.futures[id].set_exception(e)
+
+                self._futures[id].set_exception(e)
 
             self._inqueue.task_done()
 
     async def submit(self, o, id):
         await self._inqueue.put((o, id))
 
-    async def aquery(self, operation: Operation) -> GraphQLResult:
-        if self.connected == False:
-            raise LinkNotConnectedError("AsyncMockLink is not connected")
+    async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
 
-        uniqueid = uuid.uuid4()
-        self.futures[uniqueid] = asyncio.Future()
-        await self.submit(operation, uniqueid)
-        return await self.futures[uniqueid]
+        if (
+            operation.node.operation == OperationType.QUERY
+            or operation.node.operation == OperationType.MUTATION
+        ):
+            uniqueid = uuid.uuid4()
+            self._futures[uniqueid] = asyncio.Future()
+            await self.submit(operation, uniqueid)
+            yield await self._futures[uniqueid]
 
-    async def asubscribe(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
         if operation.node.operation == OperationType.SUBSCRIPTION:
-            futures = []
             assert (
                 len(operation.node.selection_set.selections) == 1
             ), "Only one Subscription at a time possible"
 
             op = operation.node.selection_set.selections[0]
-            assert (
-                op.name.value in self.subscription_resolver
-            ), f"Mocked Resolver for Subscription {op.name.value} not in resolver: {self.subscription_resolver} for AsyncMockLink"
+            if op.name.value in self.subscription_resolver:
+                iterator = self.subscription_resolver[op.name.value](operation)
+            elif op.name.value in self.resolver:
+                iterator = self.resolver[op.name.value](operation)
+            else:
+                raise NotImplementedError(
+                    f"Mocked Resolver for Query '{op.name.value}' not in resolvers: {self.subscription_resolver}, {self.resolver}  for AsyncMockLink"
+                )
 
-            async for event in self.subscription_resolver[op.name.value](operation):
+            async for event in iterator:
                 yield GraphQLResult(data={target_from_node(op): event})
 
         else:
             raise NotImplementedError("Only subscription are mocked")
+
+    class Config:
+        arbitrary_types_allowed = True
+        underscore_attrs_are_private = True

@@ -1,54 +1,24 @@
-from dataclasses import dataclass
-from typing import Callable, List
+from typing import Callable
+
+from pydantic import Field
 from rath.operation import Operation
 from rath.links.base import TerminatingLink
 
 
-@dataclass
 class SplitLink(TerminatingLink):
     left: TerminatingLink
     right: TerminatingLink
-    split: Callable[[Operation], bool]
+    split: Callable[[Operation], bool] = Field(exclude=True)
 
-    def __call__(self, rath):
-        self.left(rath)
-        self.right(rath)
-
-    async def aquery(self, operation: Operation, **kwargs) -> Operation:
-        future = (
-            self.left.aquery(operation, **kwargs)
-            if self.split(operation)
-            else self.right.aquery(operation, **kwargs)
-        )
-        return await future
-
-    async def asubscribe(self, operation: Operation, **kwargs) -> Operation:
+    async def aexecute(self, operation: Operation, **kwargs) -> Operation:
         iterator = (
-            self.left.asubscribe(operation, **kwargs)
+            self.left.aexecute(operation, **kwargs)
             if self.split(operation)
-            else self.right.asubscribe(operation, **kwargs)
+            else self.right.aexecute(operation, **kwargs)
         )
 
         async for res in iterator:
             yield res
-
-    def query(self, operation: Operation, **kwargs) -> Operation:
-        future = (
-            self.left.query(operation, **kwargs)
-            if self.split(operation)
-            else self.right.query(operation, **kwargs)
-        )
-
-        return future
-
-    def subscribe(self, operation: Operation, **kwargs) -> Operation:
-        iterator = (
-            self.left.subscribe(operation, **kwargs)
-            if self.split(operation)
-            else self.right.subscribe(operation, **kwargs)
-        )
-
-        return iterator
 
     async def __aenter__(self):
         await self.left.__aenter__()
@@ -66,4 +36,4 @@ def split(
     Splits a Link into two paths. Acording to a predicate function. If predicate returns
     true, the operation is sent to the left path, otherwise to the right path.
     """
-    return SplitLink(left, right, split)
+    return SplitLink(left=left, right=right, split=split)
