@@ -1,5 +1,3 @@
-from dataclasses import dataclass, field
-from glob import glob
 from typing import Optional, Dict, Any
 from graphql.language import OperationDefinitionNode, parse
 from graphql import (
@@ -7,34 +5,34 @@ from graphql import (
     get_operation_ast,
     parse,
 )
+from pydantic import BaseModel, Field
 
 
-@dataclass
-class Context:
-    headers: Optional[Dict[str, str]] = field(default_factory=dict)
-    files: Optional[Dict[str, Any]] = field(default_factory=dict)
-    kwargs: Optional[Dict[str, Any]] = field(default_factory=dict)
+class Context(BaseModel):
+    headers: Optional[Dict[str, str]] = Field(default_factory=dict)
+    files: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    kwargs: Optional[Dict[str, Any]] = Field(default_factory=dict)
 
 
-@dataclass
-class Extensions:
+class Extensions(BaseModel):
     pollInterval: Optional[int] = None
     maxPolls: Optional[int] = None
 
 
-@dataclass
-class Operation:
+class Operation(BaseModel):
     document_node: DocumentNode
     node: OperationDefinitionNode
     document: str
     variables: Dict[str, Any]
-    operation_name: str
+    operation_name: Optional[str]
     extensions: Extensions
     context: Context
 
+    class Config:
+        arbitrary_types_allowed = True
 
-@dataclass
-class GraphQLResult:
+
+class GraphQLResult(BaseModel):
     data: Dict[str, Any]
 
 

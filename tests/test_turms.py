@@ -1,16 +1,16 @@
-from rath.links.validate import ValidatingLink, ValidationError
-from rath.operation import Operation, opify
 import pytest
-from rath.links import compose
-from rath.links.testing.mock import AsyncMockLink, AsyncMockResolver
-from tests.apis.tests import get_beasts, aget_beasts
+from rath.links.testing.mock import AsyncMockLink
+from .apis.tests import get_beasts, aget_beasts
 from rath import Rath
-from tests.mocks import QueryAsync, MutationAsync, SubscriptionAsync
+from .mocks import MutationAsync, QueryAsync
 
 
 @pytest.fixture()
 def mock_link():
-    return AsyncMockLink(query_resolver=QueryAsync(), mutation_resolver=MutationAsync())
+    return AsyncMockLink(
+        query_resolver=QueryAsync().to_dict(),
+        mutation_resolver=MutationAsync().to_dict(),
+    )
 
 
 async def test_query_async(mock_link):

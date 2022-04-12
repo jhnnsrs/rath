@@ -1,2 +1,3 @@
 from .rath import Rath
-import rath.links
+
+__all__ = ["Rath"]

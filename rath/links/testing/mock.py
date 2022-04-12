@@ -1,8 +1,10 @@
 import asyncio
-from typing import AsyncIterator, Union
+from typing import AsyncIterator, Awaitable, Callable, Dict
+
+from pydantic import Field, validator
 from rath.links.base import AsyncTerminatingLink
 from rath.operation import GraphQLResult, Operation
-from graphql import FieldNode, GraphQLSchema, OperationType, validate
+from graphql import FieldNode, OperationType
 
 
 def target_from_node(node: FieldNode) -> str:
@@ -12,38 +14,57 @@ def target_from_node(node: FieldNode) -> str:
 
 
 class AsyncMockResolver:
-    def __getitem__(self, key):
-        return getattr(self, f"resolve_{key}")
-
-    def __contains__(self, key):
-        return hasattr(self, f"resolve_{key}")
+    def to_dict(self):
+        methods = [
+            i for i in self.__class__.__dict__.keys() if i.startswith("resolve_")
+        ]
+        return {i[8:]: getattr(self, i) for i in methods}
 
 
 class AsyncMockLink(AsyncTerminatingLink):
-    def __init__(
-        self,
-        resolver: Union[AsyncMockResolver, dict] = {},
-        query_resolver: Union[AsyncMockResolver, dict] = None,
-        mutation_resolver: Union[AsyncMockResolver, dict] = None,
-        subscription_resolver: Union[AsyncMockResolver, dict] = None,
-    ) -> None:
-        self.query_resolver = query_resolver or resolver
-        self.mutation_resolver = mutation_resolver or resolver
-        self.subscription_resolver = subscription_resolver or resolver
+    query_resolver: Dict[str, Callable[[Operation], Awaitable[Dict]]] = Field(
+        default_factory=dict, exclude=True
+    )
+    mutation_resolver: Dict[str, Callable[[Operation], Awaitable[Dict]]] = Field(
+        default_factory=dict, exclude=True
+    )
+    subscription_resolver: Dict[str, Callable[[Operation], Awaitable[Dict]]] = Field(
+        default_factory=dict, exclude=True
+    )
+    resolver: Dict[str, Callable[[Operation], Awaitable[Dict]]] = Field(
+        default_factory=dict, exclude=True
+    )
 
-    async def aquery(self, operation: Operation) -> GraphQLResult:
+    @validator(
+        "query_resolver",
+        "mutation_resolver",
+        "subscription_resolver",
+        "resolver",
+        pre=True,
+    )
+    @classmethod
+    def coerce_resolver(cls, v):
+        if isinstance(v, AsyncMockResolver):
+            return v.to_dict()
+        return v
+
+    async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
 
         if operation.node.operation == OperationType.QUERY:
             futures = []
 
             for op in operation.node.selection_set.selections:
-                assert (
-                    op.name.value in self.query_resolver
-                ), f"Mocked Resolver for Query '{op.name.value}' not in resolver: {self.query_resolver}  for AsyncMockLink"
-                futures.append(self.query_resolver[op.name.value](operation))
+                if op.name.value in self.query_resolver:
+                    futures.append(self.query_resolver[op.name.value](operation))
+                elif op.name.value in self.resolver:
+                    futures.append(self.resolver[op.name.value](operation))
+                else:
+                    raise NotImplementedError(
+                        f"Mocked Resolver for Query '{op.name.value}' not in resolvers: {self.query_resolver}, {self.resolver}  for AsyncMockLink"
+                    )
 
             resolved = await asyncio.gather(*futures)
-            return GraphQLResult(
+            yield GraphQLResult(
                 data={
                     target_from_node(op): resolved[i]
                     for i, op in enumerate(operation.node.selection_set.selections)
@@ -54,20 +75,23 @@ class AsyncMockLink(AsyncTerminatingLink):
             futures = []
 
             for op in operation.node.selection_set.selections:
-                assert (
-                    op.name.value in self.mutation_resolver
-                ), f"Mocked Resolver for Mutation {op.name.value} not in resolver: {self.mutation_resolver} for AsyncMockLink"
-                futures.append(self.mutation_resolver[op.name.value](operation))
+                if op.name.value in self.mutation_resolver:
+                    futures.append(self.mutation_resolver[op.name.value](operation))
+                elif op.name.value in self.resolver:
+                    futures.append(self.resolver[op.name.value](operation))
+                else:
+                    raise NotImplementedError(
+                        f"Mocked Resolver for Query '{op.name.value}' not in resolvers: {self.mutation_resolver}, {self.resolver}  for AsyncMockLink"
+                    )
 
             resolved = await asyncio.gather(*futures)
-            return GraphQLResult(
+            yield GraphQLResult(
                 data={
                     target_from_node(op): resolved[i]
                     for i, op in enumerate(operation.node.selection_set.selections)
                 }
             )
 
-    async def asubscribe(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
         if operation.node.operation == OperationType.SUBSCRIPTION:
             futures = []
             assert (
@@ -75,11 +99,16 @@ class AsyncMockLink(AsyncTerminatingLink):
             ), "Only one Subscription at a time possible"
 
             op = operation.node.selection_set.selections[0]
-            assert (
-                op.name.value in self.subscription_resolver
-            ), f"Mocked Resolver for Subscription {op.name.value} not in resolver: {self.subscription_resolver} for AsyncMockLink"
+            if op.name.value in self.subscription_resolver:
+                iterator = self.subscription_resolver[op.name.value](operation)
+            elif op.name.value in self.resolver:
+                iterator = self.resolver[op.name.value](operation)
+            else:
+                raise NotImplementedError(
+                    f"Mocked Resolver for Query '{op.name.value}' not in resolvers: {self.subscription_resolver}, {self.resolver}  for AsyncMockLink"
+                )
 
-            async for event in self.subscription_resolver[op.name.value](operation):
+            async for event in iterator:
                 yield GraphQLResult(data={target_from_node(op): event})
 
         else:

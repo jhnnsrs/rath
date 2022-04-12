@@ -1,33 +1,35 @@
-import asyncio
-from dataclasses import dataclass
-from os import link
 from typing import List
+
+from pydantic import validator
 from rath.links.base import ContinuationLink, Link, TerminatingLink
 from rath.operation import Operation
 
 
-@dataclass
 class ComposedLink(TerminatingLink):
     links: List[Link]
 
-    def __init__(self, links: List[Link]):
+    @validator("links")
+    def validate(cls, value):
+        if not value:
+            raise ValueError("ComposedLink requires at least one link")
+
+        if not all(isinstance(link, Link) for link in value):
+            raise ValueError("ComposedLink requires all links to be Links")
+
         assert isinstance(
-            links[-1], TerminatingLink
+            value[-1], TerminatingLink
         ), "Last link must be a TerminatingLink"
-        for link in links[:-1]:
+        for link in value[:-1]:
             assert isinstance(
                 link, ContinuationLink
             ), f"All but the last must be ContinuationLinks: check {link}"
-        self.links = links
-        self.first_link = links[0]
 
-    def __call__(self, rath):
-        for i in range(len(self.links) - 1):
-            self.links[i](rath, self.links[i + 1])
-
-        self.links[-1](rath)  # last one gets only rath
+        return value
 
     async def __aenter__(self):
+        for i in range(len(self.links) - 1):
+            self.links[i].set_next(self.links[i + 1])
+
         for link in self.links:
             await link.__aenter__()
 
@@ -35,18 +37,9 @@ class ComposedLink(TerminatingLink):
         for link in self.links:
             await link.__aexit__(*args, **kwargs)
 
-    async def aquery(self, operation: Operation, **kwargs):
-        return await self.first_link.aquery(operation)
-
-    async def asubscribe(self, operation: Operation, **kwargs):
-        async for result in self.first_link.asubscribe(operation):
+    async def aexecute(self, operation: Operation, **kwargs):
+        async for result in self.links[0].aexecute(operation):
             yield result
-
-    def query(self, operation: Operation, **kwargs):
-        return self.first_link.query(operation, **kwargs)
-
-    def subscribe(self, operation: Operation, **kwargs):
-        return self.first_link.subscribe(operation, **kwargs)
 
 
 def compose(*links: List[Link]) -> ComposedLink:
@@ -54,4 +47,4 @@ def compose(*links: List[Link]) -> ComposedLink:
     Composes a list of Links into a single Link.
     """
 
-    return ComposedLink(links)
+    return ComposedLink(links=links)

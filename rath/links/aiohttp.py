@@ -1,11 +1,10 @@
-import asyncio
-from dataclasses import dataclass, field
 from http import HTTPStatus
 import json
-from typing import Any, AsyncIterator, Dict, List
+from typing import Any, Dict, List
 
 import aiohttp
 from graphql import OperationType
+from pydantic import Field
 from rath.operation import GraphQLException, GraphQLResult, Operation
 from rath.links.base import AsyncTerminatingLink
 from rath.links.errors import AuthenticationError
@@ -14,12 +13,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-@dataclass
 class AIOHttpLink(AsyncTerminatingLink):
     url: str
-    auth_errors: List[HTTPStatus] = field(
+    auth_errors: List[HTTPStatus] = Field(
         default_factory=lambda: (HTTPStatus.FORBIDDEN,)
     )
+
     _session = None
 
     async def __aenter__(self) -> None:
@@ -28,8 +27,13 @@ class AIOHttpLink(AsyncTerminatingLink):
     async def __aexit__(self, *args, **kwargs) -> None:
         await self._session.__aexit__(*args, **kwargs)
 
-    async def aquery(self, operation: Operation) -> GraphQLResult:
+    async def aexecute(self, operation: Operation) -> GraphQLResult:
         payload = {"query": operation.document}
+
+        if operation.node.operation == OperationType.SUBSCRIPTION:
+            raise NotImplementedError(
+                "Aiohttp Transport does not support subscriptions"
+            )
 
         if len(operation.context.files.items()) > 0:
             payload["variables"] = operation.variables
@@ -86,20 +90,8 @@ class AIOHttpLink(AsyncTerminatingLink):
 
                 raise Exception(f"Response does not contain data {json_response}")
 
-            return GraphQLResult(data=json_response["data"])
+            yield GraphQLResult(data=json_response["data"])
 
-    async def asubscribe(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
-        if operation.node.operation == OperationType.SUBSCRIPTION:
-            raise NotImplementedError(
-                "Aiohttp Transport does not support subscriptions"
-            )
-
-        if operation.node.operation == OperationType.QUERY:
-            if operation.extensions.pollInterval:
-                while True:
-                    yield await self.aquery(operation)
-                    await asyncio.sleep(operation.extensions.pollInterval)
-            else:
-                raise NotImplementedError(
-                    "If you didn't specify a pollInterval you cannot use subscribe to this query"
-                )
+    class Config:
+        arbitrary_types_allowed = True
+        underscore_attrs_are_private = True

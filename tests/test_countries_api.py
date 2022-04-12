@@ -1,19 +1,18 @@
 from rath.links.validate import ValidatingLink, ValidationError
-from rath.operation import Operation, opify
 import pytest
 from rath.links import compose
-from rath.links.testing.mock import AsyncMockLink, AsyncMockResolver
-from tests.apis.countries import acountries, countries
+from .apis.countries import acountries, countries
 from rath import Rath
-from tests.mocks import QueryAsync, MutationAsync, SubscriptionAsync
 from rath.links.aiohttp import AIOHttpLink
 
 
+@pytest.mark.public
 @pytest.fixture()
 def real_world_link():
     return AIOHttpLink(url="https://countries.trevorblades.com/")
 
 
+@pytest.mark.public
 async def test_query_async(real_world_link):
 
     rath = Rath(link=real_world_link)
@@ -24,6 +23,7 @@ async def test_query_async(real_world_link):
     assert isinstance(countries, list), "Not a list"
 
 
+@pytest.mark.public
 def test_query_sync(real_world_link):
 
     rath = Rath(link=real_world_link)
@@ -34,15 +34,16 @@ def test_query_sync(real_world_link):
     assert isinstance(xcountries, list), "Not a list"
 
 
+@pytest.mark.public
 async def test_validation(real_world_link):
 
-    link = ValidatingLink()
+    link = ValidatingLink(allow_introspection=True)
 
     rath = Rath(link=compose(link, real_world_link))
     r = await rath.aconnect()
 
     with pytest.raises(ValidationError):
-        await rath.aexecute(
+        await rath.aquery(
             """
             query {
                 beast(leg: 1) {
@@ -52,7 +53,7 @@ async def test_validation(real_world_link):
             """
         )
 
-    await rath.aexecute(
+    await rath.aquery(
         """
             query {
                 countries {

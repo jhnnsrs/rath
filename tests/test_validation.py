@@ -1,9 +1,10 @@
 from rath.links.validate import ValidatingLink, ValidationError
-from rath.operation import Operation, opify
+from rath.operation import Operation
 import pytest
 from rath.links import compose
 from rath.links.testing.mock import AsyncMockLink, AsyncMockResolver
 from rath import Rath
+from .utils import build_relative_glob
 
 schema = """
 type Beast {
@@ -38,14 +39,14 @@ type Mutation {
 
 
 class QueryAsync(AsyncMockResolver):
-    async def resolve_beast(self, operation: Operation):
+    @staticmethod
+    async def resolve_beast(operation: Operation):
         return {"id": "1", "legs": 1}
 
 
 class MutationAsync(AsyncMockResolver):
-    pass
-
-    async def resolve_createBeast(self, operation: Operation):
+    @staticmethod
+    async def resolve_createBeast(operation: Operation):
         return {
             "id": operation.variables["id"],
             "name": "John Doe",
@@ -55,44 +56,30 @@ class MutationAsync(AsyncMockResolver):
 
 @pytest.fixture()
 def mock_link():
-    return AsyncMockLink(query_resolver=QueryAsync(), mutation_resolver=MutationAsync())
-
-
-async def test_validation(mock_link):
-
-    link = ValidatingLink(schema_glob="schema.graphql")
-
-    rath = Rath(link=compose(link, mock_link))
-
-    await rath.aexecute(
-        """
-        query {
-            beast(id: "1") {
-                binomial
-            }
-        }
-    """
+    return AsyncMockLink(
+        query_resolver=QueryAsync().to_dict(),
+        mutation_resolver=MutationAsync().to_dict(),
     )
 
 
 async def test_validation(mock_link):
 
-    link = ValidatingLink(schema_dsl=schema)
+    link = ValidatingLink(schema_glob=build_relative_glob("/schemas/beasts.graphql"))
 
-    rath = Rath(link=compose(link, mock_link))
+    async with Rath(link=compose(link, mock_link)) as r:
 
-    await rath.aexecute(
-        """
-        query {
-            beast(id: "1") {
-                binomial
+        await r.aquery(
+            """
+            query {
+                beast(id: "1") {
+                    binomial
+                }
             }
-        }
-    """
-    )
+        """
+        )
 
 
-async def test_validation(mock_link):
+async def test_validation_error(mock_link):
 
     link = ValidatingLink(schema_dsl=schema)
 
@@ -100,7 +87,7 @@ async def test_validation(mock_link):
     r = await rath.aconnect()
 
     with pytest.raises(ValidationError):
-        await rath.aexecute(
+        await r.aquery(
             """
             query {
                 beast(leg: 1) {
