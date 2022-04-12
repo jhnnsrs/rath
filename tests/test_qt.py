@@ -1,3 +1,4 @@
+import pytest
 from rath.links.aiohttp import AIOHttpLink
 from rath.links.validate import ValidatingLink
 from rath.links import compose
@@ -56,6 +57,7 @@ class QtFuncWidget(QtWidgets.QWidget):
         self.greet_label.setText("Hello!")
 
 
+@pytest.mark.qt
 def test_no_interference(qtbot):
     """Tests if just adding koil interferes with normal
     qtpy widgets.
@@ -72,6 +74,7 @@ def test_no_interference(qtbot):
     assert widget.greet_label.text() == "Hello!"
 
 
+@pytest.mark.qt
 def test_call_query(qtbot):
     """Tests if we can call a task from a koil widget."""
     widget = QtRathWidget()

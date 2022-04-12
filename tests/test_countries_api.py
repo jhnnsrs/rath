@@ -6,11 +6,13 @@ from rath import Rath
 from rath.links.aiohttp import AIOHttpLink
 
 
+@pytest.mark.public
 @pytest.fixture()
 def real_world_link():
     return AIOHttpLink(url="https://countries.trevorblades.com/")
 
 
+@pytest.mark.public
 async def test_query_async(real_world_link):
 
     rath = Rath(link=real_world_link)
@@ -21,6 +23,7 @@ async def test_query_async(real_world_link):
     assert isinstance(countries, list), "Not a list"
 
 
+@pytest.mark.public
 def test_query_sync(real_world_link):
 
     rath = Rath(link=real_world_link)
@@ -31,6 +34,7 @@ def test_query_sync(real_world_link):
     assert isinstance(xcountries, list), "Not a list"
 
 
+@pytest.mark.public
 async def test_validation(real_world_link):
 
     link = ValidatingLink(allow_introspection=True)

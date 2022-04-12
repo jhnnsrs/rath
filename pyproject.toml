@@ -8,7 +8,7 @@ packages = [{include = "rath"}]
 
 [tool.poetry.dependencies]
 python = "^3.7"
-koil = "0.2.2"
+koil = "0.2.3"
 aiohttp = "^3.8.1"
 graphql-core = "^3.2.0"
 pydantic = "^1.9.0"
@@ -21,7 +21,6 @@ websockets = ["websockets"]
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"
 pytest-aiohttp = "^1.0.3"
-tox = "^3.24.5"
 pytest-cov = "^3.0.0"
 black = "^22.1.0"
 pydoc-markdown = "^4.6.1"
@@ -30,6 +29,7 @@ pytest-qt = "^4.0.2"
 PyQt5 = "^5.15.6"
 autoflake = "^1.4"
 pylint = "^2.12.2"
+testcontainers = "^3.5.3"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -41,6 +41,12 @@ search_path = [ "rath" ]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+qt_api="pyqt5"
+markers = [
+    "integration: marks tests that require a running server",
+    "qt: marks tests that require a running qt application",
+    "public: marks tests that require a public api"
+]
 
 [tool.pydoc-markdown.renderer]
 type = "docusaurus"
