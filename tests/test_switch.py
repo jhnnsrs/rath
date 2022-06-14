@@ -1,4 +1,4 @@
-from rath.errors import NotConnectedError
+from rath.errors import NotConnectedError, NotEnteredError
 import pytest
 from rath.links import compose
 from rath.links.testing.mock import AsyncMockLink
@@ -53,7 +53,7 @@ async def test_bypass(simple_rath):
 
 async def test_link_not_connected_exception(stateful_rath):
 
-    with pytest.raises(NotConnectedError):
+    with pytest.raises(NotEnteredError):
         x = await stateful_rath.aquery(
             """
             query {
@@ -186,7 +186,7 @@ def test_stateful_link_execution_sync_same_koil(stateful_rath):
 
 def test_stateful_link_execution_sync_unsafe_connect(stateful_rath):
 
-    stateful_rath.connect()
+    stateful_rath.enter()
 
     x = stateful_rath.query(
         """
@@ -212,7 +212,7 @@ def test_stateful_link_execution_sync_unsafe_connect(stateful_rath):
 
     assert x.data, "No data received"
 
-    stateful_rath.disconnect()
+    stateful_rath.exit()
 
 
 def test_stateful_link_subscription_sync_same_koil(stateful_rath):

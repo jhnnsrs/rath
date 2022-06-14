@@ -4,6 +4,12 @@ from rath.operation import GraphQLResult, Operation
 
 
 class Link(KoiledModel):
+    async def aconnect(self):
+        pass
+
+    async def adisconnect(self):
+        pass
+
     async def __aenter__(self) -> None:
         pass
 
@@ -43,5 +49,5 @@ class ContinuationLink(Link):
         self.next = next
 
     async def aexecute(self, operation: Operation, **kwargs) -> GraphQLResult:
-        async for x in self.next.asubscribe(operation, **kwargs):
+        async for x in self.next.aexecute(operation, **kwargs):
             yield x

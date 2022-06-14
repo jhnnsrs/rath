@@ -1,0 +1,20 @@
+version: "3.4"
+
+services:
+  mini:
+    image: jhnnsrs/minigraphql:prod
+    volumes:
+      - ./mini.yaml:/workspace/config.yaml
+      - database:/workspace/db
+    ports:
+      - 5454:5454
+    depends_on:
+      - redis
+  redis:
+    image: redis:latest
+    ports:
+      - 6379:6379 
+  
+
+volumes:
+  database:

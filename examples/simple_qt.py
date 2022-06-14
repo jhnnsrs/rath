@@ -13,7 +13,7 @@ class QtRathWidget(QtWidgets.QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.koil = QtKoil(parent=self)
-        self.koil.connect()
+        self.koil.enter()
 
         public_link = AIOHttpLink(url="https://countries.trevorblades.com/")
         validating_link = ValidatingLink(allow_introspection=True)

@@ -1,0 +1,23 @@
+lok:
+  issuer: herre
+  key_type: RS256
+  public_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC3zKYtsPl/wsTtX4XQRtBnaTYYXGzqF8uhAourwqvWYPMnQlVbSJGZquVkmljFnRKg1FjOmoEsjIvb9tBtyZuW+oWL06aqArLm2kcCbPofYN8mJnoQdtAxssnJz02gkIYfbFUy/ImBWWq3xQjbleNtN8qGPGaYbo3BIzZv1zwZIddta0MJhBGlGhUO1LsookU6k0OaZcFg1xjUFZgkgTm7DNWUkuEBJwtGvI6W6IF0e2KAXkgp/c77p+5/ZqXwa694+Uoz36Dqsffjho2FtfLwFUfsFvIkB40Pwzd/2Uie9b5W8ocXou3S71+6jgeQZqsB+STnBX/X4Uh7d5uiPSoH
+port: 8050
+postgres:
+  db_name: port_db
+  host: daten
+  password: 6398045f7711b517ac0aa3c7e6b77a63
+  port: 5432
+  user: arkitekt
+redis:
+  host: redis
+  port: 6379
+server:
+  admin:
+    email: demo@demo.demo
+    password: none_of_your_buisness
+    username: test_user
+  debug: true
+  hosts:
+    - "*"
+  secret_key: i7aunx1(8--9141j&s+#ru)*_#bnd*ihb+ei3xdmndrj%^u$*f

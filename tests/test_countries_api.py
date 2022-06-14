@@ -9,7 +9,7 @@ from rath.links.aiohttp import AIOHttpLink
 @pytest.mark.public
 @pytest.fixture()
 def real_world_link():
-    return AIOHttpLink(url="https://countries.trevorblades.com/")
+    return AIOHttpLink(endpoint_url="https://countries.trevorblades.com/")
 
 
 @pytest.mark.public
@@ -40,7 +40,7 @@ async def test_validation(real_world_link):
     link = ValidatingLink(allow_introspection=True)
 
     rath = Rath(link=compose(link, real_world_link))
-    r = await rath.aconnect()
+    r = await rath.aenter()
 
     with pytest.raises(ValidationError):
         await rath.aquery(
@@ -63,4 +63,4 @@ async def test_validation(real_world_link):
             """
     )
 
-    await r.adisconnect()
+    await r.aexit()

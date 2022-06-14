@@ -26,6 +26,14 @@ class ComposedLink(TerminatingLink):
 
         return value
 
+    async def aconnect(self):
+        for link in self.links:
+            await link.aconnect()
+
+    async def adisconnect(self):
+        for link in self.links:
+            await link.adisconnect()
+
     async def __aenter__(self):
         for i in range(len(self.links) - 1):
             self.links[i].set_next(self.links[i + 1])

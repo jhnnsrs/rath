@@ -46,11 +46,11 @@ class InvalidPayload(TerminatingLinkError):
 
 
 async def none_token_loader():
-    return None
+    raise Exception("Token loader was not set")
 
 
 class WebSocketLink(AsyncTerminatingLink):
-    url: str
+    ws_endpoint_url: str
     allow_reconnect: bool = False
     time_between_retries = 1
     max_retries = 3
@@ -68,20 +68,25 @@ class WebSocketLink(AsyncTerminatingLink):
         await self._send_queue.put(message)
 
     async def __aenter__(self):
-        logger.info("Connecting Websockets")
         self._ongoing_subscriptions = {}
         self._send_queue = asyncio.Queue()
+
+    async def aconnect(self):
+        logger.info("Connecting Websockets")
         self._connection_task = asyncio.create_task(self.websocket_loop())
         self._connected = True
 
+    async def adisconnect(self):
+        self._connection_task.cancel()
+
+        try:
+            await self._connection_task
+        except asyncio.CancelledError:
+            logger.info(f"Websocket Transport {self} succesfully disconnected")
+
     async def __aexit__(self, *args, **kwargs):
         if self._connection_task:
-            self._connection_task.cancel()
-
-            try:
-                await self._connection_task
-            except asyncio.CancelledError:
-                logger.info(f"Websocket Transport {self} succesfully disconnected")
+            await self.adisconnect()
 
     async def websocket_loop(self, retry=0):
         send_task = None
@@ -89,7 +94,11 @@ class WebSocketLink(AsyncTerminatingLink):
         try:
             try:
                 token = await self.token_loader()
-                url = f"{self.url}?token={token}" if token else self.url
+                url = (
+                    f"{self.ws_endpoint_url}?token={token}"
+                    if token
+                    else self.ws_endpoint_url
+                )
                 async with websockets.connect(
                     url,
                     subprotocols=[GQL_WS_SUBPROTOCOL],

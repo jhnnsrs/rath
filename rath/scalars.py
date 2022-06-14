@@ -2,7 +2,8 @@ from pydantic import BaseModel
 
 
 class ID(str):
-    """A custom scalar for IDs."""
+    """A custom scalar for IDs. If passed a pydantic model it an id property
+    it will automatically validate to that models id"""
 
     def __init__(self, value) -> None:
         self.value = value

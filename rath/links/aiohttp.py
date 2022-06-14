@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class AIOHttpLink(AsyncTerminatingLink):
-    url: str
+    endpoint_url: str
     auth_errors: List[HTTPStatus] = Field(
         default_factory=lambda: (HTTPStatus.FORBIDDEN,)
     )
@@ -68,7 +68,7 @@ class AIOHttpLink(AsyncTerminatingLink):
             post_kwargs = {"json": payload}
 
         async with self._session.post(
-            self.url, headers=operation.context.headers, **post_kwargs
+            self.endpoint_url, headers=operation.context.headers, **post_kwargs
         ) as response:
 
             if response.status == HTTPStatus.OK:

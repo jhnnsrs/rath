@@ -4,3 +4,7 @@ class RathException(Exception):
 
 class NotConnectedError(RathException):
     pass
+
+
+class NotEnteredError(RathException):
+    pass
