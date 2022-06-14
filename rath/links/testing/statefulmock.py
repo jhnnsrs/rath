@@ -39,6 +39,8 @@ class AsyncStatefulMockLink(AsyncTerminatingLink):
 
     """
 
+    timeout: float = 2
+
     query_resolver: Dict[str, Callable[[Operation], Awaitable[Dict]]] = Field(
         default_factory=dict, exclude=True
     )
@@ -70,20 +72,24 @@ class AsyncStatefulMockLink(AsyncTerminatingLink):
             return v.to_dict()
         return v
 
-    async def __aenter__(self) -> None:
-        self._connected = True
+    async def aconnect(self):
         self._futures = {}
         self._inqueue = asyncio.Queue()
         self._connection_task = asyncio.create_task(self.resolving())
+        self._connected = True
 
-    async def __aexit__(self, *args, **kwargs) -> None:
-        self._connected = False
+    async def adisconnect(self):
         self._connection_task.cancel()
+        self._connected = False
 
         try:
             await self._connection_task
         except asyncio.CancelledError:
             pass
+
+    async def __aexit__(self, *args, **kwargs) -> None:
+        if self._connection_task:
+            await self.adisconnect()
 
     async def resolving(self):
         """A coroutine that resolves the incoming operations in
@@ -128,6 +134,7 @@ class AsyncStatefulMockLink(AsyncTerminatingLink):
                                 f"Mocked Resolver for Query '{op.name.value}' not in resolvers: {self.mutation_resolver}, {self.resolver}  for AsyncMockLink"
                             )
                 resolved = await asyncio.gather(*resolve_futures)
+
                 self._futures[id].set_result(
                     GraphQLResult(
                         data={
@@ -142,7 +149,6 @@ class AsyncStatefulMockLink(AsyncTerminatingLink):
                 raise ConfigurationError(f"No resolver for operation {op}") from t
 
             except Exception as e:
-
                 self._futures[id].set_exception(e)
 
             self._inqueue.task_done()
@@ -151,6 +157,8 @@ class AsyncStatefulMockLink(AsyncTerminatingLink):
         await self._inqueue.put((o, id))
 
     async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
+        if not self._connected:
+            raise TerminatingLinkError("Not connected")
 
         if (
             operation.node.operation == OperationType.QUERY
@@ -159,7 +167,7 @@ class AsyncStatefulMockLink(AsyncTerminatingLink):
             uniqueid = uuid.uuid4()
             self._futures[uniqueid] = asyncio.Future()
             await self.submit(operation, uniqueid)
-            yield await self._futures[uniqueid]
+            yield await asyncio.wait_for(self._futures[uniqueid], timeout=self.timeout)
 
         if operation.node.operation == OperationType.SUBSCRIPTION:
             assert (

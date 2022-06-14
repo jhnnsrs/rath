@@ -1,5 +1,5 @@
 from koil.composition import KoiledModel
-from rath.errors import NotConnectedError
+from rath.errors import NotConnectedError, NotEnteredError
 from rath.links.base import TerminatingLink
 from typing import (
     AsyncIterator,
@@ -21,6 +21,21 @@ class Rath(KoiledModel):
     set_context: bool = True
 
     _connected = False
+    _entered = False
+    auto_connect = True
+    connect_on_enter: bool = False
+
+    async def aconnect(self):
+        if not self._entered:
+            raise NotEnteredError(
+                "You need to use enter `async with Rath(...) as rath`"
+            )
+        await self.link.aconnect()
+        self._connected = True
+
+    async def adisconnect(self):
+        await self.link.adisconnect()
+        self._connected = False
 
     async def aquery(
         self,
@@ -31,9 +46,12 @@ class Rath(KoiledModel):
         **kwargs,
     ) -> GraphQLResult:
         if not self._connected:
-            raise NotConnectedError(
-                "Rath is not connected. Please use `async with Rath(...) as rath` or use `await rath.aconnect() before`"
-            )
+            if not self.auto_connect:
+                raise NotConnectedError(
+                    "Rath is not connected. Please use `async with Rath(..., auto_connect=True) as rath` or use `await rath.aconnect() before`"
+                )
+            await self.aconnect()
+
         op = opify(query, variables, headers, operation_name, **kwargs)
 
         async for data in self.link.aexecute(op):
@@ -70,23 +88,29 @@ class Rath(KoiledModel):
         **kwargs,
     ) -> AsyncIterator[GraphQLResult]:
         if not self._connected:
-            raise NotConnectedError(
-                "Rath is not connected. Please use `async with Rath(...) as rath` or use `await rath.aconnect() before`"
-            )
+            if not self.auto_connect:
+                raise NotConnectedError(
+                    "Rath is not connected. Please use `async with Rath(..., auto_connect=True) as rath` or use `await rath.aconnect() before`"
+                )
+            await self.aconnect()
+
         op = opify(query, variables, headers, operation_name, **kwargs)
         async for data in self.link.aexecute(op):
             yield data
 
     async def __aenter__(self):
+        self._entered = True
         if self.set_context:
             current_rath.set(self)
         await self.link.__aenter__()
-        self._connected = True
         return self
 
     async def __aexit__(self, *args, **kwargs):
+        if self._connected:
+            await self.adisconnect()
+
         await self.link.__aexit__(*args, **kwargs)
-        self._connected = False
+        self._entered = False
         if self.set_context:
             current_rath.set(None)
 

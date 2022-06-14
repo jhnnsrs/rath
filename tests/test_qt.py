@@ -12,13 +12,13 @@ class QtRathWidget(QtWidgets.QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.koil = QtKoil(parent=self)
-        self.koil.connect()
+        self.koil.enter()
 
-        public_link = AIOHttpLink(url="https://countries.trevorblades.com/")
+        public_link = AIOHttpLink(endpoint_url="https://countries.trevorblades.com/")
         validating_link = ValidatingLink(allow_introspection=True)
 
         self.rath = Rath(link=compose(validating_link, public_link))
-        self.rath.connect()
+        self.rath.enter()
 
         self.countries_query = QtRunner(acountries)
 
@@ -41,6 +41,7 @@ class QtFuncWidget(QtWidgets.QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.koil = QtKoil(parent=self)
+        self.koil.enter()
 
         self.button_greet = QtWidgets.QPushButton("Greet")
         self.greet_label = QtWidgets.QLabel("")

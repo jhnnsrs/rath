@@ -84,7 +84,7 @@ async def test_validation_error(mock_link):
     link = ValidatingLink(schema_dsl=schema)
 
     rath = Rath(link=compose(link, mock_link))
-    r = await rath.aconnect()
+    r = await rath.aenter()
 
     with pytest.raises(ValidationError):
         await r.aquery(
@@ -96,3 +96,5 @@ async def test_validation_error(mock_link):
             }
             """
         )
+
+    await rath.aexit()

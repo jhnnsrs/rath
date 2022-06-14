@@ -1,4 +1,4 @@
-from typing import AsyncIterator, Awaitable, Callable
+from typing import AsyncIterator, Awaitable, Callable, Optional
 
 from pydantic import Field
 from rath.links.base import ContinuationLink
@@ -12,29 +12,35 @@ async def fake_loader():
 
 class AuthTokenLink(ContinuationLink):
 
-    token_loader: Callable[[], Awaitable[str]] = Field(
-        default_factory=lambda: fake_loader, exclude=True
-    )
-    maximum_refresh_attempts: int = 2
+    token_loader: Callable[[], Awaitable[str]]
+    token_refresher: Optional[Callable[[], Awaitable[str]]]
+
+    maximum_refresh_attempts: int = 3
     load_token_on_connect: bool = True
+    load_token_on_enter: bool = True
 
     _token: str = None
 
-    async def __aenter__(self):
+    async def aconnect(self):
         if self.load_token_on_connect:
-            await self.reload_token()
+            self._token = await self.token_loader()
 
     async def reload_token(self) -> None:
-        self._token = await self.token_loader()
+        if self.token_refresher:
+            self._token = await self.token_refresher()
+        else:
+            self._token = await self.token_loader()
+
         return self._token
 
     async def aexecute(
         self, operation: Operation, retry=0, **kwargs
     ) -> AsyncIterator[GraphQLResult]:
+        if not self._token:
+            print("Reloading token")
+            await self.reload_token()
 
         operation.context.headers["Authorization"] = f"Bearer {self._token}"
-        if not self._token:
-            await self.reload_token()
         try:
 
             async for result in self.next.aexecute(operation, **kwargs):
@@ -42,6 +48,7 @@ class AuthTokenLink(ContinuationLink):
 
         except AuthenticationError as e:
             retry = retry + 1
+            self._token = None
             if retry > self.maximum_refresh_attempts:
                 raise AuthenticationError("Maximum refresh attempts reached") from e
 
