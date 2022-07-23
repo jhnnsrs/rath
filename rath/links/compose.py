@@ -50,7 +50,7 @@ class ComposedLink(TerminatingLink):
             yield result
 
 
-def compose(*links: List[Link]) -> ComposedLink:
+def compose(*links: Link) -> ComposedLink:
     """
     Composes a list of Links into a single Link.
     """
