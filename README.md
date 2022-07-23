@@ -25,7 +25,7 @@ pip install rath
 
 ```python
 from rath.links.auth import AuthTokenLink
-from rath.links.aiohttp import AioHttpLink
+from rath.links.aiohttp import AIOHttpLink
 from rath.links import compose, split
 from rath.gql import gql
 
@@ -34,7 +34,7 @@ async def aload_token():
 
 
 auth = AuthTokenLink(token_loader=aload_token)
-link = AioHttpLink(url="https://api.spacex.land/graphql/")
+link = AIOHttpLink(endpoint_url="https://api.spacex.land/graphql/")
 
 
 with Rath(links=compose(auth,link)) as rath:
@@ -60,7 +60,7 @@ Rath is build for async usage but uses koil, for async/sync compatibility
 
 ```python
 from rath.links.auth import AuthTokenLink
-from rath.links.aiohttp import AioHttpLink
+from rath.links.aiohttp import AIOHttpLink
 from rath.links import compose, split
 from rath.gql import gql
 
@@ -69,7 +69,7 @@ async def aload_token():
 
 
 auth = AuthTokenLink(token_loader=aload_token)
-link = AioHttpLink(url="https://api.spacex.land/graphql/")
+link = AIOHttpLink(endpoint_url="https://api.spacex.land/graphql/")
 
 
 async def main():
