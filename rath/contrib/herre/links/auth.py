@@ -1,5 +1,4 @@
 from typing import Awaitable, Callable, Optional
-from fakts.config.base import Config
 from herre.herre import Herre
 from rath.links.aiohttp import AIOHttpLink
 from rath.links.auth import AuthTokenLink
