@@ -2,8 +2,10 @@ name: CI
 on:
   push:
     branches: [master]
+    paths: [rath/**, tests/**]
   pull_request:
     branches: [master]
+    paths: [rath/**, tests/**]
 jobs:
   mac_and_windows_unit:
     strategy:
