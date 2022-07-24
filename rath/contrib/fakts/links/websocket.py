@@ -1,12 +1,13 @@
-from typing import Optional
-from fakts.config.base import Config
+from typing import Any, Dict, Optional
+from fakts.fakt.base import Fakt
+from fakts.fakts import get_current_fakts
 from rath.links.aiohttp import AIOHttpLink
 from rath.links.auth import AuthTokenLink
 from rath.links.websockets import WebSocketLink
 from herre import current_herre
 
 
-class AioHttpConfig(Config):
+class WebsocketHttpConfig(Fakt):
     ws_endpoint_url: str
 
     class Config:
@@ -15,12 +16,19 @@ class AioHttpConfig(Config):
 
 class FaktsWebsocketLink(WebSocketLink):
     ws_endpoint_url: Optional[str]
-    fakts_group: str
+    fakts_group: str = "websocket"
+
+    _old_fakt: Dict[str, Any] = {}
+
+    def configure(self, fakt: WebsocketHttpConfig) -> None:
+        self.ws_endpoint_url = fakt.ws_endpoint_url
+        self.token_loader = current_herre.get().aget_token
 
     async def aconnect(self):
-        print("CONNECTING")
-        herre = current_herre.get()
-        config = await AioHttpConfig.from_fakts(self.fakts_group)
-        self.ws_endpoint_url = config.ws_endpoint_url
-        self.token_loader = herre.aget_token
+        fakts = get_current_fakts()
+
+        if fakts.has_changed(self._old_fakt, self.fakts_group):
+            self._old_fakt = await fakts.aget(self.fakts_group)
+            self.configure(WebsocketHttpConfig(**self._old_fakt))
+
         return await super().aconnect()

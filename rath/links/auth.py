@@ -23,24 +23,15 @@ class AuthTokenLink(ContinuationLink):
 
     async def aconnect(self):
         if self.load_token_on_connect:
-            self._token = await self.token_loader()
-
-    async def reload_token(self) -> None:
-        if self.token_refresher:
-            self._token = await self.token_refresher()
-        else:
-            self._token = await self.token_loader()
-
-        return self._token
+            await self.token_loader()
 
     async def aexecute(
         self, operation: Operation, retry=0, **kwargs
     ) -> AsyncIterator[GraphQLResult]:
-        if not self._token:
-            print("Reloading token")
-            await self.reload_token()
 
-        operation.context.headers["Authorization"] = f"Bearer {self._token}"
+        operation.context.headers[
+            "Authorization"
+        ] = f"Bearer {await self.token_loader()}"
         try:
 
             async for result in self.next.aexecute(operation, **kwargs):
@@ -48,7 +39,9 @@ class AuthTokenLink(ContinuationLink):
 
         except AuthenticationError as e:
             retry = retry + 1
-            self._token = None
+            operation.context.headers[
+                "Authorization"
+            ] = f"Bearer {await self.token_refresher()}"
             if retry > self.maximum_refresh_attempts:
                 raise AuthenticationError("Maximum refresh attempts reached") from e
 

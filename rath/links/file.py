@@ -12,6 +12,8 @@ FILE_CLASSES = (
     aiohttp.StreamReader,
     AsyncGenerator,
 )
+
+
 from typing import Any, Dict, Tuple, Type
 
 
@@ -44,6 +46,11 @@ def parse_variables(
         elif isinstance(obj, file_classes):
             # extract obj from its parent and put it into files instead.
             files[path] = obj
+            return None
+
+        elif hasattr(obj, "__file__"):
+            # extract obj from its parent and put it into files instead.
+            files[path] = obj.value
             return None
 
         else:
