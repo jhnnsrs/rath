@@ -30,6 +30,7 @@ PyQt5 = "^5.15.6"
 autoflake = "^1.4"
 pylint = "^2.12.2"
 testcontainers = "^3.5.3"
+pytest-xvfb = "^2.0.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
