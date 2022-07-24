@@ -21,7 +21,11 @@ class PydanticJsonEncoder(JSONEncoder):
 def dumps(value: Any):
     """
     Serialize an object to a JSON formatted string using PydanticJsonEncoder.
-    :param value: The object to serialize.
-    :return: The serialized string.
+    
+    Arguments:
+        value (Any): The object to serialize.
+        
+    Returns:
+        str: The serialized string.
     """
     return json.dumps(value, cls=PydanticJsonEncoder)
