@@ -52,6 +52,7 @@ jobs:
         run: poetry install
       - name: Run Tests
         env:
+          QT_DEBUG_PLUGINS: 1
           DISPLAY: ":99.0"
         run: poetry run pytest --cov --cov-report=xml -k "not integration"
   linux_integration:
@@ -71,7 +72,7 @@ jobs:
         env:
           DISPLAY: ":99.0"
         run: |
-          sudo apt install libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0
+          sudo apt install -y xvfb x11-utils libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0 xdotool
       - name: Run image
         uses: abatilo/actions-poetry@v2.0.0
         with:
