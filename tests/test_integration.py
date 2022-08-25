@@ -1,6 +1,5 @@
 from urllib.robotparser import RequestRate
 from urllib.robotparser import RequestRate
-import requests
 from testcontainers.compose import DockerCompose
 import pytest
 from rath import Rath
@@ -18,6 +17,7 @@ def integration_link():
 @pytest.mark.integration
 @pytest.fixture(scope="session")
 def environment():
+
     with DockerCompose(
         filepath=build_relative("integration"),
         compose_file_name="docker-compose.yaml",
