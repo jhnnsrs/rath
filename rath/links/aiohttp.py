@@ -67,30 +67,31 @@ class AIOHttpLink(AsyncTerminatingLink):
             payload["variables"] = operation.variables
             post_kwargs = {"json": payload}
 
-        async with self._session.post(
-            self.endpoint_url, headers=operation.context.headers, **post_kwargs
-        ) as response:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                self.endpoint_url, headers=operation.context.headers, **post_kwargs
+            ) as response:
 
-            if response.status == HTTPStatus.OK:
-                result = await response.json()
+                if response.status == HTTPStatus.OK:
+                    result = await response.json()
 
-            if response.status in self.auth_errors:
-                raise AuthenticationError(
-                    f"Token Expired Error {operation.context.headers}"
-                )
+                if response.status in self.auth_errors:
+                    raise AuthenticationError(
+                        f"Token Expired Error {operation.context.headers}"
+                    )
 
-            json_response = await response.json()
+                json_response = await response.json()
 
-            if "errors" in json_response:
-                raise GraphQLException(
-                    "\n".join([e["message"] for e in json_response["errors"]])
-                )
+                if "errors" in json_response:
+                    raise GraphQLException(
+                        "\n".join([e["message"] for e in json_response["errors"]])
+                    )
 
-            if "data" not in json_response:
+                if "data" not in json_response:
 
-                raise Exception(f"Response does not contain data {json_response}")
+                    raise Exception(f"Response does not contain data {json_response}")
 
-            yield GraphQLResult(data=json_response["data"])
+                yield GraphQLResult(data=json_response["data"])
 
     class Config:
         arbitrary_types_allowed = True

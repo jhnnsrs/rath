@@ -11,7 +11,12 @@ import logging
 import uuid
 from rath.links.errors import LinkNotConnectedError, TerminatingLinkError
 
-from rath.operation import GraphQLException, GraphQLResult, Operation
+from rath.operation import (
+    GraphQLException,
+    GraphQLResult,
+    Operation,
+    SubscriptionDisconnect,
+)
 from rath.links.base import AsyncTerminatingLink
 
 
@@ -32,6 +37,9 @@ GQL_ERROR = "error"
 GQL_COMPLETE = "complete"
 GQL_CONNECTION_KEEP_ALIVE = "ka"
 
+WEBSOCKET_DEAD = "websocket_dead"
+WEBSOCKET_CANCELLED = "websocket_cancelled"
+
 
 class CorrectableConnectionFail(TerminatingLinkError):
     pass
@@ -51,8 +59,8 @@ async def none_token_loader():
 
 class WebSocketLink(AsyncTerminatingLink):
     ws_endpoint_url: str
-    allow_reconnect: bool = False
-    time_between_retries = 1
+    allow_reconnect: bool = True
+    time_between_retries = 4
     max_retries = 3
     token_loader: Callable[[], Awaitable[str]] = Field(
         default_factory=lambda: none_token_loader, exclude=True
@@ -103,6 +111,7 @@ class WebSocketLink(AsyncTerminatingLink):
                     url,
                     subprotocols=[GQL_WS_SUBPROTOCOL],
                 ) as client:
+                    logger.info("Websocket successfully connected")
 
                     send_task = asyncio.create_task(self.sending(client))
                     receive_task = asyncio.create_task(self.receiving(client))
@@ -120,26 +129,26 @@ class WebSocketLink(AsyncTerminatingLink):
                     for task in done:
                         raise task.exception()
 
-            except ConnectionClosedError as e:
-                logger.warning("Websocket was closed", exc_info=True)
-                raise CorrectableConnectionFail from e
-
             except Exception as e:
                 logger.warning("Websocket excepted. Trying to recover", exc_info=True)
                 raise CorrectableConnectionFail from e
 
         except CorrectableConnectionFail as e:
-            logger.info(f"Trying to Recover from Exception {e}")
+            logger.info(
+                f"Trying to Recover from Exception {e} Reconnect is {self.allow_reconnect} Retry: {retry}"
+            )
             if retry > self.max_retries or not self.allow_reconnect:
+                logger.error("Max retries reached. Aborting")
                 raise DefiniteConnectionFail("Exceeded Number of Retries")
 
             await asyncio.sleep(self.time_between_retries)
             logger.info(f"Retrying to connect")
+            await self.broadcast({"type": WEBSOCKET_DEAD, "error": e})
             await self.websocket_loop(retry=retry + 1)
 
         except DefiniteConnectionFail as e:
             logger.error("Websocket excepted closed definetely", exc_info=True)
-            self.connection_dead = False
+            self.connection_dead = True
             raise e
 
         except asyncio.CancelledError as e:
@@ -153,6 +162,11 @@ class WebSocketLink(AsyncTerminatingLink):
                 )
             raise e
 
+        except Exception as e:
+            logger.error("Websocket excepted", exc_info=True)
+            self.connection_dead = True
+            raise e
+
     async def sending(self, client, headers=None):
         payload = {"type": GQL_CONNECTION_INIT, "payload": {"headers": headers}}
         await client.send(json.dumps(payload))
@@ -164,27 +178,39 @@ class WebSocketLink(AsyncTerminatingLink):
                 await client.send(message)
                 self._send_queue.task_done()
         except asyncio.CancelledError as e:
-            logger.debug("Sending Task sucessfully Cancelled")
+            logger.debug("Sending Task sucessfully Cancelled")  #
+            raise e
 
     async def receiving(self, client):
         try:
             async for message in client:
                 logger.debug("GraphQL Websocket: <<<<<<< " + message)
-                await self.broadcast(message)
-        except asyncio.CancelledError as e:
-            logger.debug("Receiving Task sucessfully Cancelled")
+                try:
+                    message = json.loads(message)
+                    await self.broadcast(message)
+                except json.JSONDecodeError as err:
+                    logger.warning(
+                        "Ignoring. Server sent invalid JSON data: %s \n %s",
+                        message,
+                        err,
+                    )
+        except Exception as e:
+            logger.warning("Websocket excepted. Trying to recover", exc_info=True)
+            raise e
 
-    async def broadcast(self, res):
-        try:
-            message = json.loads(res)
-        except json.JSONDecodeError as err:
-            logger.warning(
-                "Ignoring. Server sent invalid JSON data: %s \n %s", res, err
-            )
-
+    async def broadcast(self, message: dict):
         type = message["type"]
 
         if type == GQL_CONNECTION_KEEP_ALIVE:
+            return
+
+        if type == GQL_CONNECTION_KEEP_ALIVE:
+            return
+
+        if type == WEBSOCKET_DEAD:
+            # notify all subscriptipns that the websocket is dead
+            for subscription in self._ongoing_subscriptions.values():
+                await subscription.put(message)
             return
 
         if type in [GQL_DATA, GQL_COMPLETE]:
@@ -207,7 +233,7 @@ class WebSocketLink(AsyncTerminatingLink):
         ), "Operation is not a subscription"
         assert not operation.context.files, "We cannot send files through websockets"
 
-        id = str(uuid.uuid4())
+        id = operation.id
         subscribe_queue = asyncio.Queue()
         self._ongoing_subscriptions[id] = subscribe_queue
 
@@ -232,6 +258,12 @@ class WebSocketLink(AsyncTerminatingLink):
 
                 if "data" in payload:
                     yield GraphQLResult(data=payload["data"])
+                    subscribe_queue.task_done()
+
+            if answer["type"] == WEBSOCKET_DEAD:
+                raise SubscriptionDisconnect(
+                    f"Subcription {id} failed propagating Error {operation}"
+                )
 
             if answer["type"] == GQL_COMPLETE:
                 logger.info(f"Subcription done {operation}")

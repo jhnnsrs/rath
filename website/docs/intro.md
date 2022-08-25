@@ -46,7 +46,37 @@ with rath as r
   }
   """
 
-  result = r.execute(query)
+  result = r.query(query)
+
+```
+
+Subscriptions follow a similar pattern. Just iterate over the results in the subscribe method (actual subscription happens in another thread, so keep alive signals are automatically send). Here the context manager takes care of automatically cleaning up the stateful websocket
+connection when leaving the context.
+
+```python
+from rath.links.aiohttp import AioHttpLink
+from rath.links.websocket import WebsocketLink
+from rath import Rath
+
+link = WebsocketLink(url="...your subscription service ...")
+
+
+rath = Rath(link=link)
+
+with rath as r
+
+  sub = """subscription NiceEvent {
+    capsules {
+      id
+      missions {
+        flight
+      }
+    }
+  }
+  """
+
+  for event in r.subscribe(sub):
+    print(event)
 
 ```
 
@@ -73,7 +103,7 @@ query = """query TestQuery {
 }
 """
 
-result = rath.execute(query)
+result = rath.query(query)
 
 
 # later
@@ -112,8 +142,40 @@ async def main():
     }
     """
 
-    result = await r.aexecute(query)
+    result = await r.query(query)
 
+
+asyncio.run(main())
+```
+
+Likewise for subscriptions
+
+```python
+from rath.links.aiohttp import AioHttpLink
+from rath.links.websocket import WebsocketLink
+from rath import Rath
+
+link = WebsocketLink(url="...your subscription service ...")
+
+
+rath = Rath(link=link)
+
+
+async def main():
+  async with rath as r
+
+    sub = """subscription NiceEvent {
+      capsules {
+        id
+        missions {
+          flight
+        }
+      }
+    }
+    """
+
+    async for event in r.subscribe(sub):
+      print(event)
 
 asyncio.run(main())
 ```

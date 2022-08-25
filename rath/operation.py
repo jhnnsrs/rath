@@ -6,6 +6,7 @@ from graphql import (
     parse,
 )
 from pydantic import BaseModel, Field
+import uuid
 
 
 class Context(BaseModel):
@@ -20,6 +21,7 @@ class Extensions(BaseModel):
 
 
 class Operation(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     document_node: DocumentNode
     node: OperationDefinitionNode
     document: str
@@ -37,6 +39,10 @@ class GraphQLResult(BaseModel):
 
 
 class GraphQLException(Exception):
+    pass
+
+
+class SubscriptionDisconnect(GraphQLException):
     pass
 
 
