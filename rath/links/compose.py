@@ -1,6 +1,6 @@
 from typing import List
 
-from pydantic import validator
+from pydantic import validator, root_validator
 from rath.links.base import ContinuationLink, Link, TerminatingLink
 from rath.operation import Operation
 
@@ -48,6 +48,50 @@ class ComposedLink(TerminatingLink):
     async def aexecute(self, operation: Operation, **kwargs):
         async for result in self.links[0].aexecute(operation):
             yield result
+
+
+class TypedComposedLink(TerminatingLink):
+    _firstlink: Link = None
+
+    async def aconnect(self):
+        for key, link in self:
+            if isinstance(link, Link):
+                await link.aconnect()
+
+    async def adisconnect(self):
+        for key, link in self:
+            if isinstance(link, Link):
+                await link.adisconnect()
+
+    async def __aenter__(self):
+
+        current_link = None
+
+        for key, link in self:
+            if isinstance(link, Link):
+                if current_link:
+                    current_link.set_next(link)
+                    await current_link.__aenter__()
+                else:
+                    self._firstlink = link
+                    await self._firstlink.__aenter__()
+
+                current_link = link
+
+        await current_link.__aenter__()
+
+    async def __aexit__(self, *args, **kwargs):
+        for key, link in self:
+            if isinstance(link, Link):
+                await link.__aexit__(*args, **kwargs)
+
+    async def aexecute(self, operation: Operation, **kwargs):
+
+        async for result in self._firstlink.aexecute(operation):
+            yield result
+
+    class Config:
+        underscore_attrs_are_private = True
 
 
 def compose(*links: Link) -> ComposedLink:

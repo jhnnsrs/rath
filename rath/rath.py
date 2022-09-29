@@ -12,7 +12,6 @@ from typing import (
 from rath.operation import GraphQLResult, opify
 from contextvars import ContextVar
 from koil import unkoil_gen, unkoil
-from typing_extensions import Self
 
 
 current_rath = ContextVar("current_rath")

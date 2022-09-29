@@ -14,6 +14,7 @@ class ShrinkByID:
 
 class ShrinkingLink(ParsingLink):
     async def aparse(self, operation: Operation) -> Operation:
+
         shrinked_variables = {
             key: await var.ashrink()
             for key, var in operation.variables.items()

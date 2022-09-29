@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "rath"
-version = "0.2.5"
+version = "0.2.9"
 description = "aiohttp powered apollo like graphql client"
 authors = ["jhnnsrs <jhnnsrs@gmail.com>"]
 readme = "README.md"

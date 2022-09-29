@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Union
 from graphql.language import OperationDefinitionNode, parse
 from graphql import (
     DocumentNode,

@@ -1,3 +1,4 @@
+import json
 from typing import Dict
 from pydantic import BaseModel
 from rath.operation import Operation
@@ -7,7 +8,7 @@ from rath.links.parsing import ParsingLink
 def parse_variables(
     variables: Dict,
 ) -> Dict:
-    def recurse_extract(path, obj):
+    def recurse_extract(obj):
         """
         recursively traverse obj, doing a deepcopy, but
         replacing any file-like objects with nulls and
@@ -17,22 +18,22 @@ def parse_variables(
         if isinstance(obj, list):
             nulled_obj = []
             for key, value in enumerate(obj):
-                value = recurse_extract(f"{path}.{key}", value)
+                value = recurse_extract(value)
                 nulled_obj.append(value)
             return nulled_obj
         elif isinstance(obj, dict):
             nulled_obj = {}
             for key, value in obj.items():
-                value = recurse_extract(f"{path}.{key}", value)
+                value = recurse_extract(value)
                 nulled_obj[key] = value
             return nulled_obj
         elif isinstance(obj, BaseModel):
-            return obj.dict(by_alias=True)
+            return json.loads(obj.json(by_alias=True))
         else:
             # base case: pass through unchanged
             return obj
 
-    dicted_variables = recurse_extract("variables", variables)
+    dicted_variables = recurse_extract(variables)
 
     return dicted_variables
 
