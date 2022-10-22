@@ -3,7 +3,7 @@ from http import HTTPStatus
 import json
 from ssl import SSLContext
 from typing import Any, Dict, List, Type
-
+import httpx
 import aiohttp
 from graphql import OperationType
 from pydantic import Field
@@ -25,7 +25,7 @@ class DateTimeEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, o)
 
 
-class AIOHttpLink(AsyncTerminatingLink):
+class HttpxLink(AsyncTerminatingLink):
     endpoint_url: str
     ssl_context: SSLContext = Field(
         default_factory=lambda: ssl.create_default_context(cafile=certifi.where())
@@ -35,13 +35,13 @@ class AIOHttpLink(AsyncTerminatingLink):
     )
     json_encoder: Type[json.JSONEncoder] = Field(default=DateTimeEncoder, exclude=True)
 
-    _session = None
+    _client = None
 
     async def __aenter__(self) -> None:
-        self._session = await aiohttp.ClientSession().__aenter__()
+        self._client = await httpx.AsyncClient().__aenter__()
 
     async def __aexit__(self, *args, **kwargs) -> None:
-        await self._session.__aexit__(*args, **kwargs)
+        await self._client.__aexit__(*args, **kwargs)
 
     async def aexecute(self, operation: Operation) -> GraphQLResult:
         payload = {"query": operation.document}
@@ -55,7 +55,6 @@ class AIOHttpLink(AsyncTerminatingLink):
             payload["variables"] = operation.variables
 
             files = operation.context.files
-            data = aiohttp.FormData()
 
             file_map = {str(i): [path] for i, path in enumerate(files)}
 
@@ -63,54 +62,44 @@ class AIOHttpLink(AsyncTerminatingLink):
             # Will generate something like {'0': <_io.BufferedReader ...>}
             file_streams = {str(i): files[path] for i, path in enumerate(files)}
             operations_str = json.dumps(payload, cls=self.json_encoder)
-
-            data.add_field(
-                "operations", operations_str, content_type="application/json"
-            )
             file_map_str = json.dumps(file_map)
-            data.add_field("map", file_map_str, content_type="application/json")
 
-            for k, v in file_streams.items():
-                data.add_field(
-                    k,
-                    v,
-                    filename=getattr(v, "name", k),
-                )
-
-            post_kwargs: Dict[str, Any] = {"data": data}
+            post_kwargs: Dict[str, Any] = {
+                "data": {
+                    "operations": operations_str,
+                    "map": file_map_str,
+                },
+                "files": file_streams,
+            }
+            print(post_kwargs)
 
         else:
             payload["variables"] = operation.variables
             post_kwargs = {"json": payload}
 
-        async with aiohttp.ClientSession(
-            connector=aiohttp.TCPConnector(ssl=self.ssl_context),
-            json_serialize=lambda x: json.dumps(x, cls=self.json_encoder),
-        ) as session:
-            async with session.post(
-                self.endpoint_url, headers=operation.context.headers, **post_kwargs
-            ) as response:
+        response = await self._client.post(
+            self.endpoint_url, headers=operation.context.headers, **post_kwargs
+        )
 
-                if response.status == HTTPStatus.OK:
-                    result = await response.json()
+        if response.status_code in self.auth_errors:
+            raise AuthenticationError(
+                f"Token Expired Error {operation.context.headers}"
+            )
 
-                if response.status in self.auth_errors:
-                    raise AuthenticationError(
-                        f"Token Expired Error {operation.context.headers}"
-                    )
+        if response.status_code == HTTPStatus.OK:
 
-                json_response = await response.json()
+            json_response = response.json()
 
-                if "errors" in json_response:
-                    raise GraphQLException(
-                        "\n".join([e["message"] for e in json_response["errors"]])
-                    )
+            if "errors" in json_response:
+                raise GraphQLException(
+                    "\n".join([e["message"] for e in json_response["errors"]])
+                )
 
-                if "data" not in json_response:
+            if "data" not in json_response:
 
-                    raise Exception(f"Response does not contain data {json_response}")
+                raise Exception(f"Response does not contain data {json_response}")
 
-                yield GraphQLResult(data=json_response["data"])
+            yield GraphQLResult(data=json_response["data"])
 
     class Config:
         arbitrary_types_allowed = True
