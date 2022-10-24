@@ -1,3 +1,4 @@
+from ssl import SSLContext
 from typing import Awaitable, Callable, Dict, Optional
 from graphql import OperationType
 from pydantic import Field
@@ -9,6 +10,8 @@ from websockets.exceptions import (
 )
 import logging
 import uuid
+import ssl
+import certifi
 from rath.links.errors import LinkNotConnectedError, TerminatingLinkError
 
 from rath.operation import (
@@ -62,6 +65,9 @@ class WebSocketLink(AsyncTerminatingLink):
     allow_reconnect: bool = True
     time_between_retries = 4
     max_retries = 3
+    ssl_context: SSLContext = Field(
+        default_factory=lambda: ssl.create_default_context(cafile=certifi.where())
+    )
     token_loader: Callable[[], Awaitable[str]] = Field(
         default_factory=lambda: none_token_loader, exclude=True
     )
@@ -110,6 +116,7 @@ class WebSocketLink(AsyncTerminatingLink):
                 async with websockets.connect(
                     url,
                     subprotocols=[GQL_WS_SUBPROTOCOL],
+                    ssl=self.ssl_context if url.startswith("wss") else None,
                 ) as client:
                     logger.info("Websocket successfully connected")
 
