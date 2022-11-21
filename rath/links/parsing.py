@@ -3,6 +3,11 @@ from rath.operation import Operation
 
 
 class ParsingLink(ContinuationLink):
+    """ ParsingLink is a link that parses operation and returns a new operation.
+    It is an abstract class that needs to be implemented by the user.
+    """
+
+
     async def aparse(self, operation: Operation) -> Operation:
         raise NotImplementedError("Please implement this method")
 

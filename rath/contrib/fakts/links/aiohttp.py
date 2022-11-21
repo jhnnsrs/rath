@@ -1,24 +1,37 @@
+""" Provides  a fakts implementaiton of the aiohttp link"""
+
 from typing import Any, Dict, Optional
-from fakts.fakt.base import Fakt
+from fakts.fakt import Fakt
 from fakts.fakts import get_current_fakts
 from rath.links.aiohttp import AIOHttpLink
 
 
 class AioHttpConfig(Fakt):
-    endpoint_url: str
+    """AioHttpConfig
 
-    class Config:
-        group = "aiohttp"
+    AioHttpConfig is a Fakt that can be used to configure the aiohttp client.
+    """
+
+    endpoint_url: str
 
 
 class FaktsAIOHttpLink(AIOHttpLink):
+    """FaktsAIOHttpLink
+
+    A FaktsAIOHttpLink is a link that retrieves the configuration
+    from a sorounding fakts context.
+
+    """
+
     endpoint_url: Optional[str]
+
     fakts_group: str
-    fakt: Optional[AioHttpConfig]
+    """ The fakts group within the fakts context to use for configuration """
 
     _old_fakt: Dict[str, Any] = None
 
     def configure(self, fakt: AioHttpConfig) -> None:
+        """Configure the link with the given fakt"""
         self.endpoint_url = fakt.endpoint_url
 
     async def aconnect(self):

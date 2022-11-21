@@ -17,23 +17,21 @@ import ssl
 logger = logging.getLogger(__name__)
 
 
-class DateTimeEncoder(json.JSONEncoder):
-    def default(self, o):
-        if isinstance(o, datetime):
-            return o.isoformat()
-
-        return json.JSONEncoder.default(self, o)
-
-
 class HttpxLink(AsyncTerminatingLink):
+    """HttpxLink is a terminating link that sends operations over HTTP using httpx
+    
+    
+    """
+
+
     endpoint_url: str
-    ssl_context: SSLContext = Field(
-        default_factory=lambda: ssl.create_default_context(cafile=certifi.where())
-    )
+    """endpoint_url is the URL to send operations to."""
+
+
     auth_errors: List[HTTPStatus] = Field(
         default_factory=lambda: (HTTPStatus.FORBIDDEN,)
     )
-    json_encoder: Type[json.JSONEncoder] = Field(default=DateTimeEncoder, exclude=True)
+    """auth_errors is a list of HTTPStatus codes that indicate an authentication error."""
 
     _client = None
 

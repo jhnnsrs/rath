@@ -1,14 +1,14 @@
 [tool.poetry]
 name = "rath"
 version = "0.3.2"
-description = "async powered apollo like graphql client"
+description = "async transport-agnostic graphql client"
 authors = ["jhnnsrs <jhnnsrs@gmail.com>"]
 readme = "README.md"
 packages = [{ include = "rath" }]
 
 [tool.poetry.dependencies]
 python = "^3.7"
-koil = "^0.2.8"
+koil = ">=0.2.10"
 graphql-core = "^3.2.0"
 pydantic = "^1.9.0"
 websockets = { version = "^10.2", optional = true }
@@ -22,23 +22,19 @@ aiohttp = ["aiohttp", "certifi"]
 httpx = ["httpx"]
 
 
-[tool.poetry.dev-dependencies]
-pytest = "^6.2.5"
-pytest-aiohttp = "^1.0.3"
-pytest-cov = "^3.0.0"
-black = "^22.1.0"
-pydoc-markdown = "^4.6.1"
-turms = { version = "^0.2.3", python = "^3.9" }
-pytest-qt = "^4.0.2"
-PyQt5 = "^5.15.6"
-autoflake = "^1.4"
-pylint = "^2.12.2"
-certifi = ">2021"
-testcontainers = "^3.5.3"
-pytest-xvfb = "^2.0.0"
-
 [tool.poetry.group.dev.dependencies]
 httpx = "^0.23.0"
+autoflake = "^1.7.7"
+pytest = "^7.2.0"
+PyQtWebEngine = "^5.15.5"
+PyQt5 = "^5.15.6"
+testcontainers = "^3.7.0"
+pytest-qt = "^4.2.0"
+pytest-asyncio = "^0.20.2"
+turms = { version = ">=0.2.3", python = "^3.9" }
+aiohttp = "^3.8.3"
+websockets = "^10.4"
+black = "^22.10.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

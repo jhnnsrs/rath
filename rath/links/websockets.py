@@ -61,16 +61,30 @@ async def none_token_loader():
 
 
 class WebSocketLink(AsyncTerminatingLink):
+    """WebSocketLink is a terminating link that sends operations over websockets using websockets
+
+    This is a terminating link, so it should be the last link in the chain.
+    This is a stateful link, keeing a connection open and sending messages over it.
+
+    """
+
     ws_endpoint_url: str
+    """ The endpoint url to connect to """
     allow_reconnect: bool = True
+    """ Should the websocket try to reconnect if it fails """
     time_between_retries = 4
+    """ The sleep time between retries """
     max_retries = 3
+    """ The maximum amount of retries before giving up """
     ssl_context: SSLContext = Field(
         default_factory=lambda: ssl.create_default_context(cafile=certifi.where())
     )
+    """ The SSL Context to use for the connection """
     token_loader: Callable[[], Awaitable[str]] = Field(
         default_factory=lambda: none_token_loader, exclude=True
     )
+    """ A function that returns the token to use for the connection as a query parameter """
+
 
     _connected: bool = False
     _alive: bool = False
