@@ -19,7 +19,6 @@ class AuthTokenLink(ContinuationLink):
     This link is statelss, and does not store the token. It is up to the user to
     store the token and pass it to the token_loader function.
     """
-    
 
     token_loader: Callable[[], Awaitable[str]]
     """The function used to load the authentication token. This function should
@@ -27,7 +26,6 @@ class AuthTokenLink(ContinuationLink):
     token_refresher: Callable[[], Awaitable[str]]
     """The function used to refresh the authentication token. This function should
         return a string containing the authentication token."""
-
 
     maximum_refresh_attempts: int = 3
     """The maximum number of times the token_refresher function will be called, before the operation fails."""
@@ -48,7 +46,6 @@ class AuthTokenLink(ContinuationLink):
         operation.context.headers[
             "Authorization"
         ] = f"Bearer {await self.token_loader()}"
-        print(operation.context.headers)
         try:
 
             async for result in self.next.aexecute(operation, **kwargs):

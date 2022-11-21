@@ -18,15 +18,10 @@ logger = logging.getLogger(__name__)
 
 
 class HttpxLink(AsyncTerminatingLink):
-    """HttpxLink is a terminating link that sends operations over HTTP using httpx
-    
-    
-    """
-
+    """HttpxLink is a terminating link that sends operations over HTTP using httpx"""
 
     endpoint_url: str
     """endpoint_url is the URL to send operations to."""
-
 
     auth_errors: List[HTTPStatus] = Field(
         default_factory=lambda: (HTTPStatus.FORBIDDEN,)
@@ -69,7 +64,6 @@ class HttpxLink(AsyncTerminatingLink):
                 },
                 "files": file_streams,
             }
-            print(post_kwargs)
 
         else:
             payload["variables"] = operation.variables
