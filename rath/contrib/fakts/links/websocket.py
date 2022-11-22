@@ -1,10 +1,9 @@
 from typing import Any, Dict, Optional
+
 from fakts.fakt.base import Fakt
 from fakts.fakts import get_current_fakts
-from rath.links.aiohttp import AIOHttpLink
-from rath.links.auth import AuthTokenLink
-from rath.links.websockets import WebSocketLink
 from herre import current_herre
+from rath.links.websockets import WebSocketLink
 
 
 class WebsocketHttpConfig(Fakt):

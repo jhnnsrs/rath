@@ -12,8 +12,16 @@
 
 ## Inspiration
 
-Rath is like Apollo, but for python. It adheres to the design principle of Links and enables complex GraphQL
-setups, like seperation of query and subscription endpoints, dynamic token loading, etc..
+Rath is a transportation agnostic graphql client for python focused on composability. It utilizes Links to
+compose GraphQL request logic, similar to the apollo client in typescript. It comes with predefined links to
+enable transports like aiohttp, websockets and httpx, as well as links to retrieve auth tokens, enable retry logic
+or validating requests on a schema.
+
+## Supported Transports
+
+- aiohttp
+- httpx
+- websockets
 
 ## Installation
 
@@ -51,8 +59,7 @@ with Rath(links=compose(auth,link)) as rath:
     result = rath.query(query)
 ```
 
-This example composes both the AuthToken and AioHttp link: During each query the Bearer headers are set to the retrieved token, on authentication fail (for example if Token Expired) the
-AuthToken automatically refetches the token and retries the query.
+This example composes both the AuthToken and AioHttp link: During each query the Bearer headers are set to the retrieved token, on authentication fail (for example if Token Expired) the AuthToken automatically refetches the token and retries the query.
 
 ## Async Usage
 
@@ -101,7 +108,7 @@ accomplished by providing a split link.
 link = SplitLink(
   AioHttpLink(url="https://api.spacex.land/graphql/"),
   WebsocketLink(url="ws://api.spacex.land/graphql/",
-  lamda o: o.node.operation == OperationType.SUBSCRIPTION
+  lambda o: o.node.operation == OperationType.SUBSCRIPTION
 )
 
 rath = Rath(link=link)

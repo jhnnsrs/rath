@@ -16,7 +16,6 @@ class QtRathQuery(QtRunner, Generic[T]):
     def __init__(self, operation: Type[T], rath: Rath):
         async def coro(*args, **kwargs):
             assert rath is not None, "No rath found"
-            print("RUnning")
 
             result = await rath.aquery(operation.Meta.document, *args, **kwargs)
             return operation(**result.data)

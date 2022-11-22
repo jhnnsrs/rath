@@ -1,9 +1,14 @@
-class LinkError(Exception):
-    """Base class for all transport errors."""
+from rath.errors import RathException
+
+
+class LinkError(RathException):
+    """Base class for all link errors."""
 
 
 
-class LinkNotConnectedError(Exception):
+class LinkNotConnectedError(LinkError):
+    """LinkNotConnectedError is raised when the link is not connected and autoload is set to false."""
+
     pass
 
     def __init__(self, message) -> None:

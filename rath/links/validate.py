@@ -38,11 +38,22 @@ class ValidationError(ContinuationLinkError):
 
 
 class ValidatingLink(ContinuationLink):
+    """ValidatingLink validates the operation againt as schema before passing it on to the next link.
+
+    The schema can be provided as a dsl string, or as a glob to a set of graphql files.
+    If the schema is not provided, the link will introspect the server to get the schema if allow_introspection is set to True.
+
+    
+    """
     schema_dsl: Optional[str] = None
+    """ The schema (as a string) to validate against. If not provided, the link will introspect the server to get the schema if allow_introspection is set to True."""
     schema_glob: Optional[str] = None
+    """ The glob to a set of graphql files to validate against. If not provided, the link will introspect the server to get the schema if allow_introspection is set to True."""
     allow_introspection: bool = False
+    """ If set to True, the link will introspect the server to get the schema if it is not provided."""
 
     graphql_schema: Optional[GraphQLSchema] = None
+    """ The schema to validate against. If not provided, the link will introspect the server to get the schema if allow_introspection is set to True."""
 
     @root_validator(allow_reuse=True)
     @classmethod
