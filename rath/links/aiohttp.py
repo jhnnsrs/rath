@@ -5,7 +5,9 @@ from ssl import SSLContext
 from typing import Any, Dict, List, Type
 
 import aiohttp
+from aiohttp.typedefs import JSONEncoder
 from graphql import OperationType
+from rath.json.encoders import dumps
 from pydantic import Field
 from rath.operation import GraphQLException, GraphQLResult, Operation
 from rath.links.base import AsyncTerminatingLink
@@ -54,9 +56,12 @@ class AIOHttpLink(AsyncTerminatingLink):
     this is a DateTimeEncoder that extends the default python json decoder to serializes datetime objects to ISO 8601 strings."""
 
     _session = None
+    _json_encoder: JSONEncoder = dumps
 
     async def __aenter__(self) -> None:
-        self._session = await aiohttp.ClientSession().__aenter__()
+        self._session = await aiohttp.ClientSession(
+            json_serialize=self._json_encoder
+        ).__aenter__()
 
     async def __aexit__(self, *args, **kwargs) -> None:
         await self._session.__aexit__(*args, **kwargs)
