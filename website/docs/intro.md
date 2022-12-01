@@ -9,9 +9,9 @@ Let's discover **Rath in less than 5 minutes**.
 
 ### Inspiration
 
-Rath is like Apollo, but for python. It adheres to the design principle of Links and enables complex GraphQL
-setups, like seperation of query and subscription endpoints, dynamic token loading, etc.., but its also super easy to
-configure and extendable
+Rath is like Apollo, but for python. It adheres to the design principle of Links and enables composing complex GraphQL
+setups, like seperation of query and subscription endpoints, dynamic token loading, etc.., as well as being compatible
+with a variety of graphql transports like aiohttp and httpx.
 
 ### Installation
 
@@ -49,6 +49,11 @@ with rath as r
   result = r.query(query)
 
 ```
+
+:::tip
+
+This example requires `aiohttp` to be installed.
+:::
 
 Subscriptions follow a similar pattern. Just iterate over the results in the subscribe method (actual subscription happens in another thread, so keep alive signals are automatically send). Here the context manager takes care of automatically cleaning up the stateful websocket
 connection when leaving the context.
@@ -117,6 +122,8 @@ stage. Especially when using asynchronous links/transports (supporting subscript
 environment,as only on disconnect we will close the threaded loop that these transports required
 to operate. Otherwise this connection will stay open.
 :::
+
+# Asyncio
 
 This is the same within an asyncio loop:
 

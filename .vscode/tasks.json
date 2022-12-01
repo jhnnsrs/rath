@@ -17,7 +17,7 @@
     {
       "label": "Generate Docs",
       "type": "shell",
-      "command": "source venv/bin/activate; pydoc-markdown"
+      "command": "pydoc-markdown"
     },
     {
       "type": "shell",

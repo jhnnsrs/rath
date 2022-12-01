@@ -9,26 +9,12 @@
     },
     {
       "items": [
-        "reference/fakts/__init__",
-        "reference/fakts/links"
-      ],
-      "label": "fakts",
-      "type": "category"
-    },
-    {
-      "items": [
-        "reference/herre/__init__",
-        "reference/herre/links"
-      ],
-      "label": "herre",
-      "type": "category"
-    },
-    {
-      "items": [
         {
           "items": [
             "reference/links/testing/__init__",
-            "reference/links/testing/mock"
+            "reference/links/testing/check",
+            "reference/links/testing/mock",
+            "reference/links/testing/statefulmock"
           ],
           "label": "links.testing",
           "type": "category"
@@ -38,13 +24,16 @@
         "reference/links/auth",
         "reference/links/base",
         "reference/links/compose",
-        "reference/links/context",
         "reference/links/dictinglink",
         "reference/links/errors",
         "reference/links/file",
+        "reference/links/httpx",
         "reference/links/parsing",
+        "reference/links/retry",
         "reference/links/shrink",
         "reference/links/split",
+        "reference/links/transpile",
+        "reference/links/utils",
         "reference/links/validate",
         "reference/links/websockets"
       ],
@@ -53,10 +42,24 @@
     },
     {
       "items": [
+        "reference/qt/__init__",
+        "reference/qt/helpers"
+      ],
+      "label": "qt",
+      "type": "category"
+    },
+    {
+      "items": [
+        {
+          "items": [
+            "reference/turms/plugins/__init__",
+            "reference/turms/plugins/funcs"
+          ],
+          "label": "turms.plugins",
+          "type": "category"
+        },
         "reference/turms/__init__",
-        "reference/turms/object",
-        "reference/turms/operation",
-        "reference/turms/utils"
+        "reference/turms/funcs"
       ],
       "label": "turms",
       "type": "category"
@@ -64,8 +67,7 @@
     "reference/errors",
     "reference/operation",
     "reference/rath",
-    "reference/registry",
-    "reference/utils"
+    "reference/scalars"
   ],
   "label": "Reference",
   "type": "category"
