@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "rath"
-version = "0.3.4"
+version = "0.3.5"
 description = "async transport-agnostic graphql client"
 authors = ["jhnnsrs <jhnnsrs@gmail.com>"]
 readme = "README.md"
