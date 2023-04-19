@@ -8,6 +8,7 @@ import asyncio
 from websockets.exceptions import (
     ConnectionClosedError,
 )
+import asyncio
 import logging
 import uuid
 import ssl
@@ -84,7 +85,6 @@ class WebSocketLink(AsyncTerminatingLink):
         default_factory=lambda: none_token_loader, exclude=True
     )
     """ A function that returns the token to use for the connection as a query parameter """
-
 
     _connected: bool = False
     _alive: bool = False
@@ -235,7 +235,6 @@ class WebSocketLink(AsyncTerminatingLink):
             return
 
         if type in [GQL_DATA, GQL_COMPLETE]:
-
             if "id" not in message:
                 raise InvalidPayload(f"Protocol Violation. Expected 'id' in {message}")
 
@@ -263,32 +262,40 @@ class WebSocketLink(AsyncTerminatingLink):
             "query": operation.document,
             "variables": operation.variables,
         }
-        frame = {"id": id, "type": GQL_START, "payload": payload}
-        await self.aforward(json.dumps(frame))
 
-        while True:
-            answer = await subscribe_queue.get()
+        try:
+            frame = {"id": id, "type": GQL_START, "payload": payload}
+            await self.aforward(json.dumps(frame))
+            logger.debug(f"Subcription started {operation}")
 
-            if answer["type"] == GQL_DATA:
-                payload = answer["payload"]
+            while True:
+                answer = await subscribe_queue.get()
 
-                if "errors" in payload:
-                    raise GraphQLException(
-                        "\n".join([e["message"] for e in payload["errors"]])
+                if answer["type"] == GQL_DATA:
+                    payload = answer["payload"]
+
+                    if "errors" in payload:
+                        raise GraphQLException(
+                            "\n".join([e["message"] for e in payload["errors"]])
+                        )
+
+                    if "data" in payload:
+                        yield GraphQLResult(data=payload["data"])
+                        subscribe_queue.task_done()
+
+                if answer["type"] == WEBSOCKET_DEAD:
+                    raise SubscriptionDisconnect(
+                        f"Subcription {id} failed propagating Error {operation}"
                     )
 
-                if "data" in payload:
-                    yield GraphQLResult(data=payload["data"])
-                    subscribe_queue.task_done()
+                if answer["type"] == GQL_COMPLETE:
+                    logger.info(f"Subcription done {operation}")
+                    return
 
-            if answer["type"] == WEBSOCKET_DEAD:
-                raise SubscriptionDisconnect(
-                    f"Subcription {id} failed propagating Error {operation}"
-                )
-
-            if answer["type"] == GQL_COMPLETE:
-                logger.info(f"Subcription done {operation}")
-                return
+        except asyncio.CancelledError as e:
+            logger.debug(f"Subcription ended {operation}")
+            await self.aforward(json.dumps({"id": id, "type": GQL_STOP}))
+            raise e
 
     class Config:
         arbitrary_types_allowed = True
