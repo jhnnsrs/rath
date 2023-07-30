@@ -18,7 +18,7 @@ from contextvars import ContextVar
 from koil import unkoil_gen, unkoil
 
 
-current_rath = ContextVar("current_rath")
+current_rath = ContextVar("current_rath_unpicklable")
 
 
 class Rath(KoiledModel):
@@ -49,9 +49,6 @@ class Rath(KoiledModel):
 
     """
 
-
-
-
     link: Optional[TerminatingLink] = None
     """The terminating link used to send operations to the server. Can be a composed link chain."""
 
@@ -71,7 +68,7 @@ class Rath(KoiledModel):
         exited.
 
         This method is called automatically when a query is executed if
-        `auto_connect` is set to True. 
+        `auto_connect` is set to True.
 
         Raises:
             NotEnteredError: Raises an error if the Rath is not entered.
@@ -93,7 +90,7 @@ class Rath(KoiledModel):
         query: Union[str, DocumentNode],
         variables: Dict[str, Any] = None,
         headers: Dict[str, Any] = None,
-        operation_name: str =None,
+        operation_name: str = None,
         **kwargs,
     ) -> GraphQLResult:
         """Query the GraphQL API.
@@ -116,7 +113,6 @@ class Rath(KoiledModel):
             GraphQLResult: The result of the query
         """
 
-
         if not self._connected:
             if not self.auto_connect:
                 raise NotConnectedError(
@@ -134,7 +130,7 @@ class Rath(KoiledModel):
         query: Union[str, DocumentNode],
         variables: Dict[str, Any] = None,
         headers: Dict[str, Any] = None,
-        operation_name: str =None,
+        operation_name: str = None,
         **kwargs,
     ) -> GraphQLResult:
         """Query the GraphQL API.
@@ -163,7 +159,7 @@ class Rath(KoiledModel):
         query: str,
         variables: Dict[str, Any] = None,
         headers: Dict[str, Any] = None,
-        operation_name: str =None,
+        operation_name: str = None,
         **kwargs,
     ) -> Iterator[GraphQLResult]:
         """Subscripe to a GraphQL API.
@@ -183,7 +179,7 @@ class Rath(KoiledModel):
 
         Yields:
             Iterator[GraphQLResult]: The result of the query as an async iterator
-        """ 
+        """
         return unkoil_gen(
             self.asubscribe, query, variables, headers, operation_name, **kwargs
         )
@@ -213,7 +209,7 @@ class Rath(KoiledModel):
 
         Yields:
             Iterator[GraphQLResult]: The result of the query as an async iterator
-        """        """"""
+        """ """"""
         if not self._connected:
             if not self.auto_connect:
                 raise NotConnectedError(
@@ -240,10 +236,5 @@ class Rath(KoiledModel):
         if self._context_token:
             current_rath.set(None)
 
-    
-
     class Config:
         underscore_attrs_are_private = True
-
-
-

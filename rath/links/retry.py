@@ -28,9 +28,7 @@ class RetryLink(ContinuationLink):
     async def aexecute(
         self, operation: Operation, retry=0, **kwargs
     ) -> AsyncIterator[GraphQLResult]:
-
         try:
-
             async for result in self.next.aexecute(operation, **kwargs):
                 yield result
 
