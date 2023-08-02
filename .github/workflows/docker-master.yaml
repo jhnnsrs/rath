@@ -54,9 +54,6 @@ jobs:
       - name: Install Qt because Qt sucks with Poetry
         run: poetry run pip install pyqt5
       - name: Run Tests
-        env:
-          QT_DEBUG_PLUGINS: 1
-          DISPLAY: ":99.0"
         run: poetry run pytest --cov --cov-report=xml -k "not integration"
   linux_integration:
     strategy:

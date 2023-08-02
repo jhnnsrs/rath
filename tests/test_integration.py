@@ -1,17 +1,14 @@
-from urllib.robotparser import RequestRate
-from urllib.robotparser import RequestRate
 from testcontainers.compose import DockerCompose
 import pytest
 from rath import Rath
 from rath.links.aiohttp import AIOHttpLink
 from .integration.utils import wait_for_http_response
 from .utils import build_relative
-from functools import cached_property
 import subprocess
 
 
 class DockerV2Compose(DockerCompose):
-    @cached_property
+    @property
     def docker_cmd_comment(self):
         """Returns the base docker command by testing the docker compose api
 
@@ -55,7 +52,6 @@ def integration_link():
 @pytest.mark.integration
 @pytest.fixture(scope="session")
 def environment():
-
     with DockerV2Compose(
         filepath=build_relative("integration"),
         compose_file_name="docker-compose.yaml",
@@ -66,10 +62,8 @@ def environment():
 
 @pytest.mark.integration
 def test_connection_x(environment, integration_link):
-
     rath = Rath(link=integration_link)
     with rath:
-
         answer = rath.query(
             """query {
                     miniModels {
