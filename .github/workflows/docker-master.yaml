@@ -11,8 +11,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.8, 3.9]
-        poetry-version: [1.2]
+        python-version: [3.7, 3.8, 3.9, "3.10", "3.11"]
+        poetry-version: [1.4]
         os: [macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
@@ -32,8 +32,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.8, 3.9]
-        poetry-version: [1.2]
+        python-version: [3.7, 3.8, 3.9, "3.10", "3.11"]
+        poetry-version: [1.4]
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
@@ -41,11 +41,7 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
-        env:
-          DISPLAY: ":99.0"
-        run: |
-          sudo apt install -y xvfb x11-utils libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0 xdotool
+      - uses: tlambert03/setup-qt-libs@v1
       - name: Run image
         uses: abatilo/actions-poetry@v2.0.0
         with:
@@ -61,8 +57,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.8, 3.9]
-        poetry-version: [1.2]
+        python-version: [3.7, 3.8, 3.9, "3.10", "3.11"]
+        poetry-version: [1.4]
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
@@ -70,11 +66,7 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
-        env:
-          DISPLAY: ":99.0"
-        run: |
-          sudo apt install -y xvfb x11-utils libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0 xdotool
+      - uses: tlambert03/setup-qt-libs@v1
       - name: Run image
         uses: abatilo/actions-poetry@v2.0.0
         with:
@@ -82,9 +74,6 @@ jobs:
       - name: Run Poetry Install
         run: poetry install
       - name: Run Tests
-        env:
-          QT_DEBUG_PLUGINS: 1
-          DISPLAY: ":99.0"
         run: poetry run pytest --cov --cov-report=xml
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
