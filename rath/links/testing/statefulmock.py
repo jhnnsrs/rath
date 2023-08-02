@@ -54,6 +54,7 @@ class AsyncStatefulMockLink(AsyncTerminatingLink):
         default_factory=dict, exclude=True
     )
 
+    _connection_lock: asyncio.Lock = None
     _connected: bool = False
     _futures: Optional[Dict[str, asyncio.Future]] = None
     _inqueue: Optional[asyncio.Queue] = None
@@ -72,11 +73,16 @@ class AsyncStatefulMockLink(AsyncTerminatingLink):
             return v.to_dict()
         return v
 
+    async def __aenter__(self) -> None:
+        self._connection_lock = asyncio.Lock()
+        return await super().__aenter__()
+
     async def aconnect(self):
         self._futures = {}
         self._inqueue = asyncio.Queue()
-        self._connection_task = asyncio.create_task(self.resolving())
-        self._connected = True
+        _connection_future = asyncio.Future()
+        self._connection_task = asyncio.create_task(self.resolving(_connection_future))
+        await _connection_future
 
     async def adisconnect(self):
         self._connection_task.cancel()
@@ -91,13 +97,14 @@ class AsyncStatefulMockLink(AsyncTerminatingLink):
         if self._connection_task:
             await self.adisconnect()
 
-    async def resolving(self):
+    async def resolving(self, connection_future: asyncio.Future):
         """A coroutine that resolves the incoming operations in
         an inifite Loop
 
         Raises:
             NotImplementedError: If the operation is not supported (aka not implemented)
         """
+        connection_future.set_result(True)
         while True:
             operation, id = await self._inqueue.get()
 
@@ -116,7 +123,8 @@ class AsyncStatefulMockLink(AsyncTerminatingLink):
                             )
                         else:
                             raise NotImplementedError(
-                                f"Mocked Resolver for Query '{op.name.value}' not in resolvers: {self.query_resolver}, {self.resolver}  for AsyncMockLink"
+                                f"Mocked Resolver for Query '{op.name.value}' not in resolvers"
+                                f": {self.query_resolver}, {self.resolver}  for AsyncMockLink"
                             )
 
                 if operation.node.operation == OperationType.MUTATION:
@@ -131,7 +139,8 @@ class AsyncStatefulMockLink(AsyncTerminatingLink):
                             )
                         else:
                             raise NotImplementedError(
-                                f"Mocked Resolver for Query '{op.name.value}' not in resolvers: {self.mutation_resolver}, {self.resolver}  for AsyncMockLink"
+                                f"Mocked Resolver for Query '{op.name.value}' not in resolvers:"
+                                f"{self.mutation_resolver}, {self.resolver}  for AsyncMockLink"
                             )
                 resolved = await asyncio.gather(*resolve_futures)
 
@@ -157,8 +166,9 @@ class AsyncStatefulMockLink(AsyncTerminatingLink):
         await self._inqueue.put((o, id))
 
     async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
-        if not self._connected:
-            raise TerminatingLinkError("Not connected")
+        async with self._connection_lock:
+            if not self._connected:
+                await self.aconnect()
 
         if (
             operation.node.operation == OperationType.QUERY

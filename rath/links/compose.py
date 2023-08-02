@@ -1,6 +1,6 @@
 from typing import List
 
-from pydantic import validator, root_validator
+from pydantic import validator
 from rath.links.base import ContinuationLink, Link, TerminatingLink
 from rath.operation import Operation
 
@@ -13,8 +13,10 @@ class ComposedLink(TerminatingLink):
     link in the chain is the terminating link, which is responsible for sending
     the operation to the server.
     """
+
     links: List[Link]
-    """The links that are composed to form the chain. pydantic will validate that the last link is a terminating link."""
+    """The links that are composed to form the chain. pydantic will validate 
+    that the last link is a terminating link."""
 
     @validator("links")
     def validate(cls, value):
@@ -43,7 +45,6 @@ class ComposedLink(TerminatingLink):
             await link.adisconnect()
 
     async def __aenter__(self):
-
         # We need to make sure that the links are connected in the correct order
         for i in range(len(self.links) - 1):
             self.links[i].set_next(self.links[i + 1])
@@ -67,20 +68,10 @@ class TypedComposedLink(TerminatingLink):
     that you want to use to the class definition and they will be
     automatically composed together.
     """
+
     _firstlink: Link = None
 
-    async def aconnect(self):
-        for key, link in self:
-            if isinstance(link, Link):
-                await link.aconnect()
-
-    async def adisconnect(self):
-        for key, link in self:
-            if isinstance(link, Link):
-                await link.adisconnect()
-
     async def __aenter__(self):
-
         current_link = None
 
         for key, link in self:
@@ -102,7 +93,6 @@ class TypedComposedLink(TerminatingLink):
                 await link.__aexit__(*args, **kwargs)
 
     async def aexecute(self, operation: Operation, **kwargs):
-
         async for result in self._firstlink.aexecute(operation):
             yield result
 
@@ -117,6 +107,6 @@ def compose(*links: Link) -> ComposedLink:
 
     Returns:
         ComposedLink: The composed link
-    """   
+    """
 
     return ComposedLink(links=links)

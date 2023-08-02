@@ -2,7 +2,7 @@
 
 from typing import Any, Dict, Optional
 from fakts.fakt import Fakt
-from fakts.fakts import get_current_fakts
+from fakts.fakts import get_current_fakts, Fakts
 from rath.links.aiohttp import AIOHttpLink
 
 
@@ -23,6 +23,7 @@ class FaktsAIOHttpLink(AIOHttpLink):
 
     """
 
+    fakts: Fakts
     endpoint_url: Optional[str]
 
     fakts_group: str
@@ -34,11 +35,9 @@ class FaktsAIOHttpLink(AIOHttpLink):
         """Configure the link with the given fakt"""
         self.endpoint_url = fakt.endpoint_url
 
-    async def aconnect(self):
-        fakts = get_current_fakts()
-
-        if fakts.has_changed(self._old_fakt, self.fakts_group):
-            self._old_fakt = await fakts.aget(self.fakts_group)
+    async def aconnect(self, operation):
+        if self.fakts.has_changed(self._old_fakt, self.fakts_group):
+            self._old_fakt = await self.fakts.aget(self.fakts_group)
             self.configure(AioHttpConfig(**self._old_fakt))
 
-        return await super().aconnect()
+        return await super().aconnect(operation)

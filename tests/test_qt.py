@@ -4,7 +4,7 @@ from rath.links.validate import ValidatingLink
 from rath.links import compose
 from rath import Rath
 from PyQt5 import QtWidgets, QtCore
-from koil.qt import QtKoil, QtRunner
+from koil.qt import QtRunner
 from .apis.countries import acountries
 
 

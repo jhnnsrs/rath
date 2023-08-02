@@ -14,6 +14,7 @@ class Context(BaseModel):
 
     headers: Optional[Dict[str, str]] = Field(default_factory=dict)
     files: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    initial_payload: Optional[Dict[str, Any]] = Field(default_factory=dict)
     kwargs: Optional[Dict[str, Any]] = Field(default_factory=dict)
 
 

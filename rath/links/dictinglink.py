@@ -42,13 +42,13 @@ class DictingLink(ParsingLink):
     """Dicting Link is a link that converts pydantic models to dicts.
     It traversed the variables dict, and converts any (nested) pydantic models to dicts
     by callind their .json() method."""
+
     by_alias = True
     """Converts pydantic models to dicts by calling their .json() method with by_alias=True"""
-    
-
-
 
     async def aparse(self, operation: Operation) -> Operation:
-        shrinked_variables = parse_variables(operation.variables, by_alias=self.by_alias)
+        shrinked_variables = parse_variables(
+            operation.variables, by_alias=self.by_alias
+        )
         operation.variables.update(shrinked_variables)
         return operation

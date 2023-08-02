@@ -5,7 +5,6 @@ class LinkError(RathException):
     """Base class for all link errors."""
 
 
-
 class LinkNotConnectedError(LinkError):
     """LinkNotConnectedError is raised when the link is not connected and autoload is set to false."""
 
@@ -20,7 +19,6 @@ class LinkNotConnectedError(LinkError):
 
 class TerminatingLinkError(LinkError):
     """Raised when a terminating link is called."""
-
 
 
 class ContinuationLinkError(LinkError):

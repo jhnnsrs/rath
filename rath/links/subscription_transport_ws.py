@@ -1,19 +1,15 @@
 from ssl import SSLContext
-from typing import Awaitable, Callable, Dict, Optional
+from typing import Dict, Optional
 from graphql import OperationType
 from pydantic import Field
 import websockets
 import json
 import asyncio
-from websockets.exceptions import (
-    ConnectionClosedError,
-)
 import asyncio
 import logging
-import uuid
 import ssl
 import certifi
-from rath.links.errors import LinkNotConnectedError, TerminatingLinkError
+from rath.links.errors import TerminatingLinkError
 
 from rath.operation import (
     GraphQLException,
@@ -41,9 +37,6 @@ GQL_ERROR = "error"
 GQL_COMPLETE = "complete"
 GQL_CONNECTION_KEEP_ALIVE = "ka"
 
-GQL_PING = "ping"
-GQL_PONG = "pong"
-
 WEBSOCKET_DEAD = "websocket_dead"
 WEBSOCKET_CANCELLED = "websocket_cancelled"
 
@@ -64,17 +57,10 @@ async def none_token_loader():
     raise Exception("Token loader was not set")
 
 
-async def default_pong_handler(payload):
-    logger.debug(f"Received Pong, {payload}")
-    return payload
-
-
-async def build_initial_payload():
-    return {}
-
-
-class WebSocketWsLink(AsyncTerminatingLink):
-    """WebSocketLink is a terminating link that sends operations over websockets using websockets
+class SubscriptionTransportWsLink(AsyncTerminatingLink):
+    """WebSocketLink is a terminating link that sends operations over websockets using
+      websockets via the subscription-transport-ws protocol. This is a
+      deprecated protocol, and should not be used for new projects.
 
     This is a terminating link, so it should be the last link in the chain.
     This is a stateful link, keeing a connection open and sending messages over it.
@@ -93,17 +79,11 @@ class WebSocketWsLink(AsyncTerminatingLink):
         default_factory=lambda: ssl.create_default_context(cafile=certifi.where())
     )
     """ The SSL Context to use for the connection """
-    token_loader: Optional[Callable[[], Awaitable[str]]] = Field(exclude=True)
-    """ A function that returns the token to use for the connection as a query parameter """
+    payload_token_to_querystring: bool = True
+    """Should the payload token be sent as a querystring instead (as connection params
+      is not supported by all servers)"""
 
-    on_connect: Optional[Callable[[], Awaitable[None]]] = Field(exclude=True)
-    on_pong: Optional[Callable[[], Awaitable[None]]] = default_pong_handler
-    build_initial_payload: Optional[Callable[[], Awaitable[dict]]] = Field(
-        default_factory=build_initial_payload
-    )
-    """ A function that is called when the connection is established """
-    heartbeat_interval_ms: Optional[int] = None
-
+    _connection_lock: asyncio.Lock = None
     _connected: bool = False
     _alive: bool = False
     _send_queue: asyncio.Queue = None
@@ -116,11 +96,15 @@ class WebSocketWsLink(AsyncTerminatingLink):
     async def __aenter__(self):
         self._ongoing_subscriptions = {}
         self._send_queue = asyncio.Queue()
+        self._connection_lock = asyncio.Lock()
 
-    async def aconnect(self):
+    async def aconnect(self, initiating_operation: Operation):
         logger.info("Connecting Websockets")
-        self._connection_task = asyncio.create_task(self.websocket_loop())
-        self._connected = True
+        connection_future = asyncio.get_running_loop().create_future()
+        self._connection_task = asyncio.create_task(
+            self.websocket_loop(initiating_operation, connection_future)
+        )
+        return await initiating_operation
 
     async def adisconnect(self):
         self._connection_task.cancel()
@@ -134,9 +118,9 @@ class WebSocketWsLink(AsyncTerminatingLink):
         if self._connection_task:
             await self.adisconnect()
 
-    async def abuild_url(self):
-        if self.token_loader:
-            token = await self.token_loader()
+    async def build_url(self, initiating_operation: Operation) -> str:
+        if self.payload_token_to_querystring:
+            token = initiating_operation.context.get("token", None)
             return (
                 f"{self.ws_endpoint_url}?token={token}"
                 if token
@@ -145,12 +129,17 @@ class WebSocketWsLink(AsyncTerminatingLink):
         else:
             return self.ws_endpoint_url
 
-    async def websocket_loop(self, retry=0):
+    async def websocket_loop(
+        self,
+        initiating_operation: Operation,
+        connection_future: asyncio.Future,
+        retry=0,
+    ):
         send_task = None
         receive_task = None
         try:
             try:
-                url = await self.abuild_url()
+                url = await self.build_url(initiating_operation)
                 async with websockets.connect(
                     url,
                     subprotocols=[GQL_WS_SUBPROTOCOL],
@@ -158,8 +147,12 @@ class WebSocketWsLink(AsyncTerminatingLink):
                 ) as client:
                     logger.info("Websocket successfully connected")
 
-                    send_task = asyncio.create_task(self.sending(client))
-                    receive_task = asyncio.create_task(self.receiving(client))
+                    send_task = asyncio.create_task(
+                        self.sending(client, initiating_operation)
+                    )
+                    receive_task = asyncio.create_task(
+                        self.receiving(client, initiating_operation, connection_future)
+                    )
 
                     self._alive = True
                     done, pending = await asyncio.wait(
@@ -194,6 +187,8 @@ class WebSocketWsLink(AsyncTerminatingLink):
         except DefiniteConnectionFail as e:
             logger.error("Websocket excepted closed definetely", exc_info=True)
             self.connection_dead = True
+            if connection_future and not connection_future.done():
+                connection_future.set_exception(e)
             raise e
 
         except asyncio.CancelledError as e:
@@ -210,12 +205,14 @@ class WebSocketWsLink(AsyncTerminatingLink):
         except Exception as e:
             logger.error("Websocket excepted", exc_info=True)
             self.connection_dead = True
+            if connection_future and not connection_future.done():
+                connection_future.set_exception(e)
             raise e
 
-    async def sending(self, client, headers=None):
+    async def sending(self, client, initiating_operation: Operation):
         payload = {
             "type": GQL_CONNECTION_INIT,
-            "payload": await self.build_initial_payload(),
+            "payload": {"headers": initiating_operation.context.headers},
         }
         await client.send(json.dumps(payload))
 
@@ -229,13 +226,13 @@ class WebSocketWsLink(AsyncTerminatingLink):
             logger.debug("Sending Task sucessfully Cancelled")  #
             raise e
 
-    async def receiving(self, client):
+    async def receiving(self, client, connection_future: asyncio.Future):
         try:
             async for message in client:
                 logger.debug("GraphQL Websocket: <<<<<<< " + message)
                 try:
                     message = json.loads(message)
-                    await self.broadcast(message)
+                    await self.broadcast(message, connection_future)
                 except json.JSONDecodeError as err:
                     logger.warning(
                         "Ignoring. Server sent invalid JSON data: %s \n %s",
@@ -246,22 +243,17 @@ class WebSocketWsLink(AsyncTerminatingLink):
             logger.warning("Websocket excepted. Trying to recover", exc_info=True)
             raise e
 
-    async def broadcast(self, message: dict):
+    async def broadcast(self, message: dict, connection_future: asyncio.Future):
         type = message["type"]
 
         if type == GQL_CONNECTION_ACK:
-            if self.on_connect:
-                await self.on_connect(message.get("payload", {}))
+            if connection_future and not connection_future.done():
+                connection_future.set_result(True)
             return
 
-        if type == GQL_PING:
-            if self.on_pong:
-                payload = await self.on_pong(message.get("payload", {}))
-            else:
-                payload = message.get("payload", {})
-            await self.aforward(json.dumps({"type": GQL_PONG, "payload": payload}))
-
         if type == GQL_CONNECTION_KEEP_ALIVE:
+            if connection_future and not connection_future.done():
+                connection_future.set_result(True)
             return
 
         if type == WEBSOCKET_DEAD:
@@ -270,7 +262,7 @@ class WebSocketWsLink(AsyncTerminatingLink):
                 await subscription.put(message)
             return
 
-        if type in [GQL_DATA, GQL_COMPLETE, GQL_ERROR]:
+        if type in [GQL_DATA, GQL_COMPLETE]:
             if "id" not in message:
                 raise InvalidPayload(f"Protocol Violation. Expected 'id' in {message}")
 
@@ -281,8 +273,9 @@ class WebSocketWsLink(AsyncTerminatingLink):
             await self._ongoing_subscriptions[id].put(message)
 
     async def aexecute(self, operation: Operation):
-        if self._connection_task == False:
-            raise LinkNotConnectedError("Websocket_link is not connected")
+        async with self._connection_lock:
+            if self._connection_task is None or self._connection_task.done():
+                await self.aconnect(operation)
 
         assert (
             operation.node.operation == OperationType.SUBSCRIPTION
@@ -306,17 +299,6 @@ class WebSocketWsLink(AsyncTerminatingLink):
 
             while True:
                 answer = await subscribe_queue.get()
-
-                if answer["type"] == GQL_ERROR:
-                    payload = answer["payload"]
-                    if isinstance(payload, list):
-                        error_list = payload
-                    else:
-                        error_list = [payload]
-
-                    raise GraphQLException(
-                        "\n".join([e["message"] for e in error_list])
-                    )
 
                 if answer["type"] == GQL_DATA:
                     payload = answer["payload"]

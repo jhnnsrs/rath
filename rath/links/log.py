@@ -1,9 +1,7 @@
-from typing import AsyncIterator, Awaitable, Callable, Optional
+from typing import AsyncIterator, Awaitable, Callable
 
-from pydantic import Field
 from rath.links.base import ContinuationLink
 from rath.operation import GraphQLResult, Operation
-from rath.links.errors import AuthenticationError
 
 
 async def just_print(operation: Operation):
@@ -17,9 +15,6 @@ class LogLink(ContinuationLink):
     """
 
     log: Callable[[Operation], Awaitable[None]] = just_print
-
-    async def aconnect(self):
-        pass
 
     async def aexecute(
         self, operation: Operation, **kwargs

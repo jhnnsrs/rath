@@ -7,9 +7,11 @@ from rath.links.base import TerminatingLink
 
 class SplitLink(TerminatingLink):
     """SplitLink is a link that splits the operation into two paths. The operation is sent to the left path if the predicate returns true, otherwise to the right path.
-    
+
     This is useful for exampole when implementing a cache link, where the operation is sent to the cache if it is a query, and to the network if it is a mutation.
-    Or when subscriptions and queries are sent to different links (e.g. a websocket link and a http link)."""
+    Or when subscriptions and queries are sent to different links (e.g. a websocket link and a http link).
+    """
+
     left: TerminatingLink
     """The link that is used if the predicate returns true."""
     right: TerminatingLink
@@ -26,14 +28,6 @@ class SplitLink(TerminatingLink):
 
         async for res in iterator:
             yield res
-
-    async def aconnect(self):
-        await self.left.aconnect()
-        await self.right.aconnect()
-
-    async def adisconnect(self):
-        await self.left.adisconnect()
-        await self.right.adisconnect()
 
     async def __aenter__(self):
         await self.left.__aenter__()

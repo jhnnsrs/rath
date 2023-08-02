@@ -43,8 +43,9 @@ class ValidatingLink(ContinuationLink):
     The schema can be provided as a dsl string, or as a glob to a set of graphql files.
     If the schema is not provided, the link will introspect the server to get the schema if allow_introspection is set to True.
 
-    
+
     """
+
     schema_dsl: Optional[str] = None
     """ The schema (as a string) to validate against. If not provided, the link will introspect the server to get the schema if allow_introspection is set to True."""
     schema_glob: Optional[str] = None

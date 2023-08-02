@@ -33,6 +33,7 @@ class AIOHttpLink(AsyncTerminatingLink):
     that is configured to use the certifi CA bundle by default. You can override this
     behavior by passing your own SSLContext to the constructor.
     """
+
     endpoint_url: str
     """endpoint_url is the URL to send operations to."""
     ssl_context: SSLContext = Field(
@@ -51,17 +52,24 @@ class AIOHttpLink(AsyncTerminatingLink):
 
     json_encoder: Type[json.JSONEncoder] = Field(default=DateTimeEncoder, exclude=True)
     """json_encoder is the JSONEncoder to use when serializing the payload. By default,
-    this is a DateTimeEncoder that extends the default python json decoder to serializes datetime objects to ISO 8601 strings."""
+    this is a DateTimeEncoder that extends the default python json decoder to serialize 
+    datetime objects to ISO 8601 strings."""
 
-    _session = None
+    _connected = False
 
     async def __aenter__(self) -> None:
-        self._session = await aiohttp.ClientSession().__aenter__()
+        pass
+
+    async def aconnect(self, operation: Operation):
+        self._connected = True
 
     async def __aexit__(self, *args, **kwargs) -> None:
-        await self._session.__aexit__(*args, **kwargs)
+        pass
 
     async def aexecute(self, operation: Operation) -> GraphQLResult:
+        if not self._connected:
+            await self.aconnect(operation)
+
         payload = {"query": operation.document}
 
         if operation.node.operation == OperationType.SUBSCRIPTION:
@@ -108,7 +116,6 @@ class AIOHttpLink(AsyncTerminatingLink):
             async with session.post(
                 self.endpoint_url, headers=operation.context.headers, **post_kwargs
             ) as response:
-
                 if response.status == HTTPStatus.OK:
                     result = await response.json()
 
@@ -125,7 +132,6 @@ class AIOHttpLink(AsyncTerminatingLink):
                     )
 
                 if "data" not in json_response:
-
                     raise Exception(f"Response does not contain data {json_response}")
 
                 yield GraphQLResult(data=json_response["data"])

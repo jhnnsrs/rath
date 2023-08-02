@@ -1,18 +1,13 @@
-from datetime import datetime
 from http import HTTPStatus
 import json
-from ssl import SSLContext
-from typing import Any, Dict, List, Type
+from typing import Any, Dict, List
 import httpx
-import aiohttp
 from graphql import OperationType
 from pydantic import Field
 from rath.operation import GraphQLException, GraphQLResult, Operation
 from rath.links.base import AsyncTerminatingLink
 from rath.links.errors import AuthenticationError
 import logging
-import certifi
-import ssl
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +74,6 @@ class HttpxLink(AsyncTerminatingLink):
             )
 
         if response.status_code == HTTPStatus.OK:
-
             json_response = response.json()
 
             if "errors" in json_response:
@@ -88,7 +82,6 @@ class HttpxLink(AsyncTerminatingLink):
                 )
 
             if "data" not in json_response:
-
                 raise Exception(f"Response does not contain data {json_response}")
 
             yield GraphQLResult(data=json_response["data"])

@@ -55,35 +55,7 @@ class Rath(KoiledModel):
     _connected = False
     _entered = False
     _context_token = None
-    auto_connect = True
-    """If true, the Rath will automatically connect to the server when a query is executed."""
-    connect_on_enter: bool = False
     """If true, the Rath will automatically connect to the server when entering the context manager."""
-
-    async def aconnect(self):
-        """Connect to the server.
-
-        This method needs to be called within the context of a Rath instance,
-        to always ensure that the Rath is disconnected when the context is
-        exited.
-
-        This method is called automatically when a query is executed if
-        `auto_connect` is set to True.
-
-        Raises:
-            NotEnteredError: Raises an error if the Rath is not entered.
-        """
-        if not self._entered:
-            raise NotEnteredError(
-                "You need to use enter `async with Rath(...) as rath`"
-            )
-        await self.link.aconnect()
-        self._connected = True
-
-    async def adisconnect(self):
-        """Disconnect from the server."""
-        await self.link.adisconnect()
-        self._connected = False
 
     async def aquery(
         self,
@@ -112,14 +84,6 @@ class Rath(KoiledModel):
         Returns:
             GraphQLResult: The result of the query
         """
-
-        if not self._connected:
-            if not self.auto_connect:
-                raise NotConnectedError(
-                    "Rath is not connected. Please use `async with Rath(..., auto_connect=True) as rath` or use `await rath.aconnect() before`"
-                )
-            await self.aconnect()
-
         op = opify(query, variables, headers, operation_name, **kwargs)
 
         async for data in self.link.aexecute(op):
@@ -209,13 +173,7 @@ class Rath(KoiledModel):
 
         Yields:
             Iterator[GraphQLResult]: The result of the query as an async iterator
-        """ """"""
-        if not self._connected:
-            if not self.auto_connect:
-                raise NotConnectedError(
-                    "Rath is not connected. Please use `async with Rath(..., auto_connect=True) as rath` or use `await rath.aconnect() before`"
-                )
-            await self.aconnect()
+        """
 
         op = opify(query, variables, headers, operation_name, **kwargs)
         async for data in self.link.aexecute(op):
@@ -228,9 +186,6 @@ class Rath(KoiledModel):
         return self
 
     async def __aexit__(self, *args, **kwargs):
-        if self._connected:
-            await self.adisconnect()
-
         await self.link.__aexit__(*args, **kwargs)
         self._entered = False
         if self._context_token:

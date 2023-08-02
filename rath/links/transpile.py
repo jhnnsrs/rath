@@ -12,8 +12,6 @@ from rath.links.parsing import ParsingLink
 from rath.operation import Operation
 import logging
 
-logger = logging.getLogger(__name__)
-
 
 class TranspileHandler(BaseModel):
     """A Transpilation Handler
@@ -134,7 +132,7 @@ class TranspileRegistry(BaseModel):
             predicate (Callable[[Any], bool]): A predicate Function
             handle_list (bool, optional): Should we act on lists of this type. Defaults to False.
             name (_type_, optional): A name for this hanlder. Defaults to the function name.
-        """
+        """  # noqa: E501
 
         def decorator(func):
             """The decorator function
@@ -173,7 +171,8 @@ def recurse_transpile(
         var (VariableNode): The variable definition node correspoin to this variable
         value (Any): The to transpile valued
         registry (TranspileRegistry): The transpile registry to use
-        in_list (bool, optional): Recursive Parameter. That will be set to the list depth. Defaults to False.
+        in_list (bool, optional): Recursive Parameter. That will be set to the list depth.
+                                 Defaults to False.
         strict (bool, optional): Should we error on predicate errors. Defaults to False.
 
     Raises:
@@ -204,7 +203,8 @@ def recurse_transpile(
                                     f"Handler {handler} predicate failed"
                                 ) from e
                             logger.warning(
-                                f"Handler {handler} failed on predicating {value}. Please check your predicate for edge cases"
+                                f"Handler {handler} failed on predicating {value}."
+                                "Please check your predicate for edge cases"
                             )
                             continue
 
@@ -212,7 +212,7 @@ def recurse_transpile(
                             parsed_value = handler.parser(value, in_list)
                             assert (
                                 parsed_value is not None
-                            ), f"Handler {handler} failed on parsing {value}. Please check your parser for edge cases"
+                            ), f"Handler {handler} failed on parsing {value} Please check your parser for edge cases"
                             return parsed_value
 
                 return value
@@ -259,7 +259,8 @@ def transpile(
     Args:
         op (OperationDefinitionNode): The operation definition node,
         registry (TranspileRegistry): The registry
-        strict (bool, optional): Should we fail if a handler predicate fails. Defaults to False.
+        strict (bool, optional): Should we fail if a handler predicate fails. Defaults
+        to False.
 
     Returns:
         Dict: The transpiled variables

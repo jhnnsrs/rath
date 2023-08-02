@@ -14,9 +14,6 @@ class ForwardLink(ContinuationLink):
     links.
     """
 
-    async def aconnect(self):
-        pass
-
     async def aexecute(
         self, operation: Operation, **kwargs
     ) -> AsyncIterator[GraphQLResult]:

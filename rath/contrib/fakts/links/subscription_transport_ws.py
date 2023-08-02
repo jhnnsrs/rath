@@ -1,9 +1,9 @@
 from typing import Any, Dict, Optional
 
 from fakts.fakt.base import Fakt
-from fakts.fakts import get_current_fakts
+from fakts.fakts import Fakts
 from herre import current_herre
-from rath.links.websockets import WebSocketLink
+from rath.links.subscription_transport_ws import SubscriptionTransportWsLink
 
 
 class WebsocketHttpConfig(Fakt):
@@ -13,7 +13,8 @@ class WebsocketHttpConfig(Fakt):
         group = "aiohttp"
 
 
-class FaktsWebsocketLink(WebSocketLink):
+class FaktsWebsocketLink(SubscriptionTransportWsLink):
+    fakts: Fakts
     ws_endpoint_url: Optional[str]
     fakts_group: str = "websocket"
 
@@ -23,11 +24,9 @@ class FaktsWebsocketLink(WebSocketLink):
         self.ws_endpoint_url = fakt.ws_endpoint_url
         self.token_loader = current_herre.get().aget_token
 
-    async def aconnect(self):
-        fakts = get_current_fakts()
-
-        if fakts.has_changed(self._old_fakt, self.fakts_group):
-            self._old_fakt = await fakts.aget(self.fakts_group)
+    async def aconnect(self, operation):
+        if self.fakts.has_changed(self._old_fakt, self.fakts_group):
+            self._old_fakt = await self.fakts.aget(self.fakts_group)
             self.configure(WebsocketHttpConfig(**self._old_fakt))
 
-        return await super().aconnect()
+        return await super().aconnect(operation)
