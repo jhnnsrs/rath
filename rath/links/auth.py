@@ -27,16 +27,16 @@ class AuthTokenLink(ContinuationLink):
     load_token_on_enter: bool = True
     """If True, the token_loader function will be called when the link is entered."""
 
-    async def aload_token(self):
+    async def aload_token(self, operation: Operation):
         raise Exception("No Token loader specified")
 
-    async def arefresh_token(self):
+    async def arefresh_token(self, operation: Operation):
         raise Exception("No Token refresher specified")
 
     async def aexecute(
         self, operation: Operation, retry=0, **kwargs
     ) -> AsyncIterator[GraphQLResult]:
-        token = await self.aload_token()
+        token = await self.aload_token(operation)
         operation.context.headers["Authorization"] = f"Bearer {token}"
         operation.context.initial_payload["token"] = token
 
@@ -46,7 +46,7 @@ class AuthTokenLink(ContinuationLink):
 
         except AuthenticationError as e:
             retry = retry + 1
-            await self.arefresh_token()
+            await self.arefresh_token(operation)
             if retry > self.maximum_refresh_attempts:
                 raise AuthenticationError("Maximum refresh attempts reached") from e
 
@@ -66,12 +66,12 @@ class ComposedAuthLink(AuthTokenLink):
     """The function used to refresh the authentication token. This function should
         return a string containing the authentication token."""
 
-    async def aload_token(self):
+    async def aload_token(self, operation: Operation):
         if self.token_loader is None:
             raise Exception("No Token loader specified")
         return await self.token_loader()
 
-    async def arefresh_token(self):
+    async def arefresh_token(self, operation: Operation):
         if self.token_refresher is None:
             raise Exception("No Token refresher specified")
         return await self.token_refresher()

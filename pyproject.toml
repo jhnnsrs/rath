@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "rath"
-version = "0.4.0"
+version = "0.4.2"
 description = "async transport-agnostic graphql client"
 authors = ["jhnnsrs <jhnnsrs@gmail.com>"]
 readme = "README.md"
@@ -35,6 +35,8 @@ websockets = "^10.4"
 black = "^22.10.0"
 pytest-cov = "^4.0.0"
 ruff = "^0.0.282"
+cryptography = "^41.0.3"
+pyjwt = "^2.8.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

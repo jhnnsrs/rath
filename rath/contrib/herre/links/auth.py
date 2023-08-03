@@ -7,10 +7,10 @@ from herre import current_herre
 class HerreAuthLink(AuthTokenLink):
     herre: Herre
 
-    async def aload_token(self) -> str:
+    async def aload_token(self, operation) -> str:
         herre = self.herre
         return await herre.aget_token()
 
-    async def arefresh_token(self) -> str:
+    async def arefresh_token(self, operation) -> str:
         herre = self.herre
         return await herre.arefresh_token()

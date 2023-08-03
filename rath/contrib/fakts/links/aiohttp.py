@@ -2,7 +2,7 @@
 
 from typing import Any, Dict, Optional
 from fakts.fakt import Fakt
-from fakts.fakts import get_current_fakts, Fakts
+from fakts.fakts import Fakts
 from rath.links.aiohttp import AIOHttpLink
 
 
