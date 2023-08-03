@@ -1,10 +1,10 @@
-from typing import AsyncIterator, Callable
+from typing import AsyncIterator, Callable, List
 from rath.links.base import AsyncTerminatingLink
 from rath.operation import GraphQLResult, Operation
 
 
 class AssertLink(AsyncTerminatingLink):
-    assertions: list[Callable[[Operation], bool]] = []
+    assertions: List[Callable[[Operation], bool]] = []
 
     async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
         for assertion in self.assertions:
