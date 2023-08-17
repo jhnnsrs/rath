@@ -15,11 +15,13 @@ websockets = { version = "^10.2", optional = true }
 aiohttp = { version = "^3.8.2", optional = true }
 certifi = { version = ">2021", optional = true }
 httpx = { version = "^0.23.0", optional = true }
+cryptography = { version = "^41.0.3", optional = true }
 
 [tool.poetry.extras]
 websockets = ["websockets"]
 aiohttp = ["aiohttp", "certifi"]
 httpx = ["httpx"]
+signing = ["cryptography"]
 
 
 [tool.poetry.group.dev.dependencies]

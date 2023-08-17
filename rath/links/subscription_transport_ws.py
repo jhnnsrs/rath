@@ -120,7 +120,7 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
 
     async def build_url(self, initiating_operation: Operation) -> str:
         if self.payload_token_to_querystring:
-            token = initiating_operation.context.get("token", None)
+            token = initiating_operation.context.initial_payload.get("token", None)
             return (
                 f"{self.ws_endpoint_url}?token={token}"
                 if token
@@ -226,7 +226,9 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
             logger.debug("Sending Task sucessfully Cancelled")  #
             raise e
 
-    async def receiving(self, client, connection_future: asyncio.Future):
+    async def receiving(
+        self, client, initiating_operation: Operation, connection_future: asyncio.Future
+    ):
         try:
             async for message in client:
                 logger.debug("GraphQL Websocket: <<<<<<< " + message)

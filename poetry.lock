@@ -267,7 +267,7 @@ files = [
 name = "cffi"
 version = "1.15.1"
 description = "Foreign Function Interface for Python calling C code."
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 files = [
@@ -548,7 +548,7 @@ toml = ["tomli"]
 name = "cryptography"
 version = "41.0.3"
 description = "cryptography is a package which provides cryptographic recipes and primitives to Python developers."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -1044,7 +1044,7 @@ testing = ["pytest", "pytest-benchmark"]
 name = "pycparser"
 version = "2.21"
 description = "C parser in Python"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 files = [
@@ -1922,4 +1922,4 @@ websockets = ["websockets"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7"
-content-hash = "09ab2ff217d8ccef5b671fb33bb758c245db69a768e22c2a39e5813ef7998372"
+content-hash = "45288a4c2e2bf438efa192b7deda9880ef6123f9b4b027ed444dc9bed154c122"
