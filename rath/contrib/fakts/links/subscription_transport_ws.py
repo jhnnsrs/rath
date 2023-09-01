@@ -2,7 +2,6 @@ from typing import Any, Dict, Optional
 
 from fakts.fakt.base import Fakt
 from fakts.fakts import Fakts
-from herre import current_herre
 from rath.links.subscription_transport_ws import SubscriptionTransportWsLink
 
 
@@ -22,7 +21,6 @@ class FaktsWebsocketLink(SubscriptionTransportWsLink):
 
     def configure(self, fakt: WebsocketHttpConfig) -> None:
         self.ws_endpoint_url = fakt.ws_endpoint_url
-        self.token_loader = current_herre.get().aget_token
 
     async def aconnect(self, operation):
         if self.fakts.has_changed(self._old_fakt, self.fakts_group):

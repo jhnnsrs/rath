@@ -104,7 +104,7 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
         self._connection_task = asyncio.create_task(
             self.websocket_loop(initiating_operation, connection_future)
         )
-        return await initiating_operation
+        return await connection_future
 
     async def adisconnect(self):
         self._connection_task.cancel()
