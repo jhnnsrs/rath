@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "rath"
-version = "0.4.6"
+version = "0.4.7"
 description = "async transport-agnostic graphql client"
 authors = ["jhnnsrs <jhnnsrs@gmail.com>"]
 readme = "README.md"
@@ -8,7 +8,7 @@ packages = [{ include = "rath" }]
 
 [tool.poetry.dependencies]
 python = "^3.7"
-koil = "0.3.4"
+koil = ">=0.3.5"
 graphql-core = "^3.2.0"
 pydantic = "^1.9.0"
 websockets = { version = "^10.2", optional = true }
