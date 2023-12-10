@@ -20,6 +20,7 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+
       - uses: tlambert03/setup-qt-libs@v1
       - name: Run image
         uses: abatilo/actions-poetry@v2.0.0
@@ -30,7 +31,7 @@ jobs:
       - name: Install Qt because Qt sucks with Poetry
         run: poetry run pip install pyqt5
       - name: Run Ruff
-        run: ruff .
+        run: poetry run ruff .
   mypy:
     strategy:
       fail-fast: false
@@ -44,17 +45,19 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+          
       - uses: tlambert03/setup-qt-libs@v1
       - name: Run image
         uses: abatilo/actions-poetry@v2.0.0
         with:
           poetry-version: ${{ matrix.poetry-version }}
+          virtualenvs-create: false
       - name: Run Poetry Install
         run: poetry install
       - name: Install Qt because Qt sucks with Poetry
         run: poetry run pip install pyqt5
       - name: Run Mypy
-        run: mypy .
+        run: poetry run mypy .
   black:
     strategy:
       fail-fast: false
@@ -78,5 +81,5 @@ jobs:
       - name: Install Qt because Qt sucks with Poetry
         run: poetry run pip install pyqt5
       - name: Run black
-        run: black --check .
+        run: poetry run black --check .
   
