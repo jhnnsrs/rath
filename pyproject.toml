@@ -7,7 +7,7 @@ readme = "README.md"
 packages = [{ include = "rath" }]
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.8"
 koil = ">=0.3.5"
 graphql-core = "^3.2.0"
 pydantic = "^1.9.0"
@@ -41,6 +41,7 @@ cryptography = "^41.0.3"
 pyjwt = "^2.8.0"
 fakts = "^0.3.48"
 herre = "^0.3.31"
+mypy = "^1.7.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
