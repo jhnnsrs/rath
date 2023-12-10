@@ -1,9 +1,10 @@
 from typing import Optional, Dict, Any, Union
-from graphql.language import OperationDefinitionNode, parse, OperationType
+from graphql.language import OperationDefinitionNode, parse, OperationType, print_ast
 from graphql import (
     DocumentNode,
     get_operation_ast,
     parse,
+    
 )
 from pydantic import BaseModel, Field
 import uuid
@@ -12,10 +13,10 @@ import uuid
 class Context(BaseModel):
     """Context provides a way to pass arbitrary data to resolvers on the context"""
 
-    headers: Optional[Dict[str, str]] = Field(default_factory=dict)
-    files: Optional[Dict[str, Any]] = Field(default_factory=dict)
-    initial_payload: Optional[Dict[str, Any]] = Field(default_factory=dict)
-    kwargs: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    headers: Dict[str, str] = Field(default_factory=dict)
+    files: Dict[str, Any] = Field(default_factory=dict)
+    initial_payload: Dict[str, Any]= Field(default_factory=dict)
+    kwargs: Dict[str, Any] = Field(default_factory=dict)
 
 
 class Extensions(BaseModel):
@@ -65,8 +66,8 @@ class SubscriptionDisconnect(GraphQLException):
 
 def opify(
     query: Union[str, DocumentNode],
-    variables: Dict[str, Any] = None,
-    headers: Dict[str, Any] = None,
+    variables: Optional[Dict[str, Any]] = None,
+    headers: Optional[Dict[str, Any]] = None,
     operation_name: Optional[str] = None,
     **kwargs,
 ) -> Operation:
@@ -82,15 +83,15 @@ def opify(
         Operation: A GraphQL operation
     """
 
-    document = parse(query) if query and isinstance(query, str) else query
+    document = parse(query) if isinstance(query, str) else query
     op = get_operation_ast(document, operation_name)
     assert op, f"No operation named {operation_name}"
     return Operation(
         node=op,
-        document=query,
+        document=print_ast(document),
         document_node=document,
         variables=variables or {},
         operation_name=operation_name,
-        extensions={},
+        extensions=Extensions(),
         context=Context(headers=headers or {}, kwargs=kwargs),
     )

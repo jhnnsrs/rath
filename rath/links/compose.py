@@ -1,9 +1,9 @@
-from typing import List
+from typing import List, Optional
 
 from pydantic import validator
 from rath.links.base import ContinuationLink, Link, TerminatingLink
 from rath.operation import Operation
-
+from rath.errors import NotComposedError
 
 class ComposedLink(TerminatingLink):
     """A composed link is a link that is composed of multiple links. The links
@@ -69,7 +69,7 @@ class TypedComposedLink(TerminatingLink):
     automatically composed together.
     """
 
-    _firstlink: Link = None
+    _firstlink: Optional[Link] = None
 
     async def __aenter__(self):
         current_link = None
@@ -93,6 +93,10 @@ class TypedComposedLink(TerminatingLink):
                 await link.__aexit__(*args, **kwargs)
 
     async def aexecute(self, operation: Operation, **kwargs):
+        if not self._firstlink:
+            raise NotComposedError("Links need to be composed before they can be executed. (Through __aenter__)")
+
+
         async for result in self._firstlink.aexecute(operation):
             yield result
 

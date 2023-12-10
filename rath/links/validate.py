@@ -1,10 +1,11 @@
-from typing import AsyncIterator, Optional
+from typing import AsyncIterator, Optional, cast
 from graphql import (
     GraphQLSchema,
     build_ast_schema,
     build_client_schema,
     get_introspection_query,
     validate,
+    IntrospectionQuery
 )
 from graphql.language.parser import parse
 from pydantic import root_validator
@@ -72,33 +73,38 @@ class ValidatingLink(ContinuationLink):
             )
 
         return values
-
-    async def aload_schema(self, operation: Operation) -> None:
-        assert self.allow_introspection, "Introspection is not allowed"
+    
+    async def introspect(self, starting_operation: Operation) -> GraphQLSchema: #type: ignore
+        if not self.next:
+            raise ContinuationLinkError("No next link set")
+         
         introspect_operation = opify(get_introspection_query())
-        introspect_operation.context = operation.context
-        introspect_operation.extensions = operation.extensions
+        introspect_operation.context = starting_operation.context
+        introspect_operation.extensions = starting_operation.extensions
 
-        async for e in self.next.aexecute(introspect_operation):
-            self.graphql_schema = build_client_schema(e.data)
-            return
+        async for result in self.next.aexecute(introspect_operation):
+            return build_client_schema(cast(IntrospectionQuery, result.data))
+            
 
-    def validate(self, operation: Operation):
+
+    async def aexecute(
+        self, operation: Operation, **kwargs
+    ) -> AsyncIterator[GraphQLResult]:
+        if not self.next:
+            raise ContinuationLinkError("No next link set")
+
+        if not self.graphql_schema:
+            assert self.allow_introspection, "Introspection is not allowed"
+            self.graphql_schema = await self.introspect(operation)
+
         errors = validate(self.graphql_schema, operation.document_node)
-
         if len(errors) > 0:
             raise ValidationError(
                 f"{operation} does not comply with the schema!\n Errors: \n\n"
                 + "\n".join([e.message for e in errors])
             )
 
-    async def aexecute(
-        self, operation: Operation, **kwargs
-    ) -> AsyncIterator[GraphQLResult]:
-        if not self.graphql_schema:
-            await self.aload_schema(operation)
 
-        self.validate(operation)
         async for result in self.next.aexecute(operation, **kwargs):
             yield result
 

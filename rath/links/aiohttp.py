@@ -2,8 +2,8 @@ from datetime import datetime
 from http import HTTPStatus
 import json
 from ssl import SSLContext
-from typing import Any, Dict, List, Type
-
+from typing import Any, Dict, List, Type, AsyncIterator
+from rath.links.types import Payload
 import aiohttp
 from graphql import OperationType
 from pydantic import Field
@@ -66,11 +66,11 @@ class AIOHttpLink(AsyncTerminatingLink):
     async def __aexit__(self, *args, **kwargs) -> None:
         pass
 
-    async def aexecute(self, operation: Operation) -> GraphQLResult:
+    async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
         if not self._connected:
             await self.aconnect(operation)
 
-        payload = {"query": operation.document}
+        payload: Payload = {"query": operation.document}
 
         if operation.node.operation == OperationType.SUBSCRIPTION:
             raise NotImplementedError(

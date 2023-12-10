@@ -11,6 +11,7 @@ from rath.operation import (
 from rath.links.errors import AuthenticationError
 import logging
 import asyncio
+from rath.errors import NotComposedError
 
 logger = logging.getLogger(__name__)
 
@@ -26,10 +27,13 @@ class RetryLink(ContinuationLink):
     """The number of seconds to wait before retrying the operation."""
 
     async def aexecute(
-        self, operation: Operation, retry=0, **kwargs
+        self, operation: Operation, retry=0
     ) -> AsyncIterator[GraphQLResult]:
+        if not self.next:
+            raise NotComposedError("No next link set")
+
         try:
-            async for result in self.next.aexecute(operation, **kwargs):
+            async for result in self.next.aexecute(operation):
                 yield result
 
         except SubscriptionDisconnect as e:
@@ -41,7 +45,7 @@ class RetryLink(ContinuationLink):
                 await asyncio.sleep(self.sleep_interval)
 
             logger.info(f"Subscription {operation} disconnected. Retrying {retry}")
-            async for result in self.aexecute(operation, retry=retry + 1, **kwargs):
+            async for result in self.aexecute(operation, retry=retry + 1):
                 yield result
 
     class Config:

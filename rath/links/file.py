@@ -1,10 +1,13 @@
+from rath.errors import NotComposedError
 from rath.links.base import ContinuationLink
+from rath.operation import GraphQLResult, Operation
 from rath.operation import Operation
-from rath.operation import Operation
+from typing import AsyncIterator
 
 import io
 import aiohttp
 from typing import AsyncGenerator
+from pydantic import Field
 
 
 FILE_CLASSES = (
@@ -17,10 +20,25 @@ FILE_CLASSES = (
 from typing import Any, Dict, Tuple, Type
 
 
-def parse_variables(
+def parse_nested_files(
     variables: Dict,
     file_classes: Tuple[Type[Any], ...] = FILE_CLASSES,
 ) -> Tuple[Dict, Dict]:
+    """Parse nested files
+
+    Parameters
+    ----------
+    variables : Dict
+        The variables to parse
+    file_classes : Tuple[Type[Any], ...], optional
+        File-like classes to extract, by default FILE_CLASSES
+
+    Returns
+    -------
+    Tuple[Dict, Dict]
+        The parsed variables and the extracted files
+    """
+
     files = {}
 
     def recurse_extract(path, obj):
@@ -69,10 +87,17 @@ class FileExtraction(ContinuationLink):
     These can then be used by the FileUploadLink to upload the files to a remote server.
     or used through the multipart/form-data encoding in the terminating link (if supported).
     """
+    file_classes: Tuple[Type[Any], ...] = Field(default=FILE_CLASSES)
 
-    async def aexecute(self, operation: Operation) -> Operation:
-        operation.variables, operation.context.files = parse_variables(
-            operation.variables
+    async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
+        if not self.next:
+            raise NotComposedError(
+                "FileExtractionLink must be composed with another link"
+            )
+            
+
+        operation.variables, operation.context.files = parse_nested_files(
+            operation.variables, file_classes=self.file_classes
         )
 
         async for result in self.next.aexecute(operation):

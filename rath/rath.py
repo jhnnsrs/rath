@@ -18,7 +18,7 @@ from contextvars import ContextVar
 from koil import unkoil_gen, unkoil
 
 
-current_rath = ContextVar("current_rath_unpicklable")
+current_rath: ContextVar["Rath"] = ContextVar("current_rath_unpicklable")
 
 
 class Rath(KoiledModel):
@@ -49,7 +49,7 @@ class Rath(KoiledModel):
 
     """
 
-    link: Optional[TerminatingLink] = None
+    link: TerminatingLink = Field(..., description="The terminating link used to send operations to the server. Can be a composed link chain.")
     """The terminating link used to send operations to the server. Can be a composed link chain."""
 
     _connected = False
@@ -60,9 +60,9 @@ class Rath(KoiledModel):
     async def aquery(
         self,
         query: Union[str, DocumentNode],
-        variables: Dict[str, Any] = None,
-        headers: Dict[str, Any] = None,
-        operation_name: str = None,
+        variables: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, Any]] = None,
+        operation_name: Optional[str] = None,
         **kwargs,
     ) -> GraphQLResult:
         """Query the GraphQL API.
@@ -86,15 +86,28 @@ class Rath(KoiledModel):
         """
         op = opify(query, variables, headers, operation_name, **kwargs)
 
+        result = None
+
         async for data in self.link.aexecute(op):
-            return data
+            result = data
+            break
+
+        if not result:
+            raise NotConnectedError("Could not retrieve data from the server.")
+            # This is to account for the fact that mypy apparently doesn't
+            # understand that a return statement in a generator is valid.
+            # This is a workaround to make mypy happy.
+
+        return result
+
+
 
     def query(
         self,
         query: Union[str, DocumentNode],
-        variables: Dict[str, Any] = None,
-        headers: Dict[str, Any] = None,
-        operation_name: str = None,
+        variables: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, Any]] = None,
+        operation_name: Optional[str] = None,
         **kwargs,
     ) -> GraphQLResult:
         """Query the GraphQL API.
@@ -121,9 +134,9 @@ class Rath(KoiledModel):
     def subscribe(
         self,
         query: str,
-        variables: Dict[str, Any] = None,
-        headers: Dict[str, Any] = None,
-        operation_name: str = None,
+        variables: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, Any]] = None,
+        operation_name: Optional[str] = None,
         **kwargs,
     ) -> Iterator[GraphQLResult]:
         """Subscripe to a GraphQL API.
@@ -151,9 +164,9 @@ class Rath(KoiledModel):
     async def asubscribe(
         self,
         query: str,
-        variables: Dict[str, Any] = None,
-        headers: Dict[str, Any] = {},
-        operation_name=None,
+        variables: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, Any]] = None,
+        operation_name: Optional[str]=None,
         **kwargs,
     ) -> AsyncIterator[GraphQLResult]:
         """Subscripe to a GraphQL API.

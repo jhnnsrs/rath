@@ -9,7 +9,9 @@ import asyncio
 import logging
 import ssl
 import certifi
-from rath.links.errors import TerminatingLinkError
+from rath.links.errors import LinkNotConnectedError, TerminatingLinkError
+
+
 
 from rath.operation import (
     GraphQLException,
@@ -83,11 +85,11 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
     """Should the payload token be sent as a querystring instead (as connection params
       is not supported by all servers)"""
 
-    _connection_lock: asyncio.Lock = None
+    _connection_lock: Optional[asyncio.Lock] = None
     _connected: bool = False
     _alive: bool = False
-    _send_queue: asyncio.Queue = None
-    _connection_task: asyncio.Task = None
+    _send_queue: Optional[asyncio.Queue] = None
+    _connection_task: Optional[asyncio.Task] = None
     _ongoing_subscriptions: Optional[Dict[str, asyncio.Queue]] = None
 
     async def aforward(self, message):
@@ -165,7 +167,13 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
                         task.cancel()
 
                     for task in done:
-                        raise task.exception()
+                        exception = task.exception()
+                        if exception:
+                            raise exception
+                        else:
+                            raise CorrectableConnectionFail(
+                                f"Websocket connection closed without exception: This is unexpected behaviours. Results ist {task.result()}"
+                            )
 
             except Exception as e:
                 logger.warning("Websocket excepted. Trying to recover", exc_info=True)
@@ -181,8 +189,8 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
 
             await asyncio.sleep(self.time_between_retries)
             logger.info(f"Retrying to connect")
-            await self.broadcast({"type": WEBSOCKET_DEAD, "error": e})
-            await self.websocket_loop(retry=retry + 1)
+            await self.broadcast({"type": WEBSOCKET_DEAD, "error": e}, connection_future)
+            await self.websocket_loop(initiating_operation, connection_future, retry=retry + 1)
 
         except DefiniteConnectionFail as e:
             logger.error("Websocket excepted closed definetely", exc_info=True)
@@ -213,11 +221,15 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
         payload = {
             "type": GQL_CONNECTION_INIT,
             "payload": {"headers": initiating_operation.context.headers},
+
         }
         await client.send(json.dumps(payload))
 
         try:
             while True:
+                if not self._send_queue:
+                    raise LinkNotConnectedError("Link is not connected")
+
                 message = await self._send_queue.get()
                 logger.debug("GraphQL Websocket: >>>>>> " + message)
                 await client.send(message)
@@ -260,6 +272,10 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
 
         if type == WEBSOCKET_DEAD:
             # notify all subscriptipns that the websocket is dead
+            if not self._ongoing_subscriptions:
+                self._ongoing_subscriptions = {}
+
+
             for subscription in self._ongoing_subscriptions.values():
                 await subscription.put(message)
             return
@@ -269,12 +285,19 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
                 raise InvalidPayload(f"Protocol Violation. Expected 'id' in {message}")
 
             id = message["id"]
+            if not self._ongoing_subscriptions:
+                self._ongoing_subscriptions = {}
+
+
             assert (
                 id in self._ongoing_subscriptions
             ), "Received Result for subscription that is no longer or was never active"
             await self._ongoing_subscriptions[id].put(message)
 
     async def aexecute(self, operation: Operation):
+        if not self._connection_lock:
+            raise Exception("WebsocketLink not entered yet. Please us this in an async context manager")
+
         async with self._connection_lock:
             if self._connection_task is None or self._connection_task.done():
                 await self.aconnect(operation)
@@ -285,17 +308,21 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
         assert not operation.context.files, "We cannot send files through websockets"
 
         id = operation.id
-        subscribe_queue = asyncio.Queue()
+        subscribe_queue = asyncio.Queue() # type: asyncio.Queue
+
+        if not self._ongoing_subscriptions:
+            self._ongoing_subscriptions = {}
+
         self._ongoing_subscriptions[id] = subscribe_queue
 
-        payload = {
+        send_payload = {
             "headers": operation.context.headers,
             "query": operation.document,
             "variables": operation.variables,
         }
 
         try:
-            frame = {"id": id, "type": GQL_START, "payload": payload}
+            frame = {"id": id, "type": GQL_START, "payload": send_payload}
             await self.aforward(json.dumps(frame))
             logger.debug(f"Subcription started {operation}")
 

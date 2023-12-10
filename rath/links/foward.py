@@ -4,6 +4,7 @@ from pydantic import Field
 from rath.links.base import ContinuationLink
 from rath.operation import GraphQLResult, Operation
 from rath.links.errors import AuthenticationError
+from rath.errors import NotComposedError
 
 
 class ForwardLink(ContinuationLink):
@@ -17,6 +18,9 @@ class ForwardLink(ContinuationLink):
     async def aexecute(
         self, operation: Operation, **kwargs
     ) -> AsyncIterator[GraphQLResult]:
+        if not self.next:
+            raise NotComposedError("No next link set")
+
         async for result in self.next.aexecute(operation, **kwargs):
             yield result
 

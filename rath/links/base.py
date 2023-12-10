@@ -1,7 +1,7 @@
 from typing import AsyncIterator, Optional
 from koil.composition import KoiledModel
 from rath.operation import GraphQLResult, Operation
-
+from rath.errors import NotComposedError
 
 class Link(KoiledModel):
     """A Link is a class that can be used to send operations to a GraphQL API.
@@ -14,7 +14,7 @@ class Link(KoiledModel):
 
     """
 
-    async def aconnect(self):
+    async def aconnect(self, operation: Operation):
         """A coroutine that is called when the link is connected."""
         pass
 
@@ -28,7 +28,7 @@ class Link(KoiledModel):
     async def __aexit__(self, *args, **kwargs) -> None:
         pass
 
-    def aexecute(self, operation: Operation, **kwargs) -> AsyncIterator[GraphQLResult]:
+    def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
         """A coroutine that takes an operation and returns an AsyncIterator
         of GraphQLResults. This method should be implemented by subclasses."""
         raise NotImplementedError(
@@ -56,7 +56,7 @@ class AsyncTerminatingLink(TerminatingLink):
         TerminatingLink (_type_): _description_
     """
 
-    async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
+    def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
         raise NotImplementedError("Your Async Transport needs to overwrite this method")
 
 
@@ -71,6 +71,9 @@ class ContinuationLink(Link):
     def set_next(self, next: Link):
         self.next = next
 
-    async def aexecute(self, operation: Operation, **kwargs) -> GraphQLResult:
-        async for x in self.next.aexecute(operation, **kwargs):
+    async def aexecute(self, operation: Operation) ->  AsyncIterator[GraphQLResult]:
+        if not self.next:
+            raise NotComposedError("No next link set")
+        
+        async for x in self.next.aexecute(operation):
             yield x

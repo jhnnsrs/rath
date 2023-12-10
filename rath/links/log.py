@@ -2,7 +2,7 @@ from typing import AsyncIterator, Awaitable, Callable
 
 from rath.links.base import ContinuationLink
 from rath.operation import GraphQLResult, Operation
-
+from rath.errors import NotComposedError
 
 async def just_print(operation: Operation):
     print(operation)
@@ -19,6 +19,9 @@ class LogLink(ContinuationLink):
     async def aexecute(
         self, operation: Operation, **kwargs
     ) -> AsyncIterator[GraphQLResult]:
+        if not self.next:
+            raise NotComposedError("No next link set")
+        
         await self.log(operation)
         async for result in self.next.aexecute(operation, **kwargs):
             yield result

@@ -10,6 +10,13 @@ from rath.operation import Operation
 
 
 class SignLocalLink(AuthTokenLink):
+    """SignLocalLink
+
+    SignLocalLink is a link is a type of AuthTokenLink that
+    crated a JWT token using a local private key,
+    and sends it to the next link.
+
+    """
     private_key: rsa.RSAPrivateKey
 
     @validator("private_key", pre=True, always=True)
@@ -47,6 +54,16 @@ class SignLocalLink(AuthTokenLink):
 
 
 class ComposedSignTokenLink(SignLocalLink):
+    """ComposedSignTokenLink
+
+    ComposedSignTokenLink is a SignLocalLink that
+    uses a payload retriever to retrieve the payload
+    to sign, enables the user to use a custom payload
+    retriever., without having to implement the entire
+    SignLocalLink.
+    """
+
+
     payload_retriever: Callable[[Operation], Awaitable[Dict]]
 
     async def aretrieve_payload(self, operation: Operation):

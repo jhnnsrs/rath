@@ -1,6 +1,6 @@
 from http import HTTPStatus
 import json
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Type, AsyncIterator
 import httpx
 from graphql import OperationType
 from pydantic import Field
@@ -8,8 +8,17 @@ from rath.operation import GraphQLException, GraphQLResult, Operation
 from rath.links.base import AsyncTerminatingLink
 from rath.links.errors import AuthenticationError
 import logging
-
+from rath.links.types import Payload
+from datetime import datetime
 logger = logging.getLogger(__name__)
+
+
+class DateTimeEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, datetime):
+            return o.isoformat()
+
+        return json.JSONEncoder.default(self, o)
 
 
 class HttpxLink(AsyncTerminatingLink):
@@ -22,17 +31,12 @@ class HttpxLink(AsyncTerminatingLink):
         default_factory=lambda: (HTTPStatus.FORBIDDEN,)
     )
     """auth_errors is a list of HTTPStatus codes that indicate an authentication error."""
+    json_encoder: Type[json.JSONEncoder] = Field(default=DateTimeEncoder, exclude=True)
 
-    _client = None
 
-    async def __aenter__(self) -> None:
-        self._client = await httpx.AsyncClient().__aenter__()
+    async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
 
-    async def __aexit__(self, *args, **kwargs) -> None:
-        await self._client.__aexit__(*args, **kwargs)
-
-    async def aexecute(self, operation: Operation) -> GraphQLResult:
-        payload = {"query": operation.document}
+        payload: Payload = {"query": operation.document}
 
         if operation.node.operation == OperationType.SUBSCRIPTION:
             raise NotImplementedError(
@@ -64,27 +68,29 @@ class HttpxLink(AsyncTerminatingLink):
             payload["variables"] = operation.variables
             post_kwargs = {"json": payload}
 
-        response = await self._client.post(
-            self.endpoint_url, headers=operation.context.headers, **post_kwargs
-        )
+        async with httpx.AsyncClient() as client:
 
-        if response.status_code in self.auth_errors:
-            raise AuthenticationError(
-                f"Token Expired Error {operation.context.headers}"
+            response = await client.post(
+                self.endpoint_url, headers=operation.context.headers, **post_kwargs
             )
 
-        if response.status_code == HTTPStatus.OK:
-            json_response = response.json()
-
-            if "errors" in json_response:
-                raise GraphQLException(
-                    "\n".join([e["message"] for e in json_response["errors"]])
+            if response.status_code in self.auth_errors:
+                raise AuthenticationError(
+                    f"Token Expired Error {operation.context.headers}"
                 )
 
-            if "data" not in json_response:
-                raise Exception(f"Response does not contain data {json_response}")
+            if response.status_code == HTTPStatus.OK:
+                json_response = response.json()
 
-            yield GraphQLResult(data=json_response["data"])
+                if "errors" in json_response:
+                    raise GraphQLException(
+                        "\n".join([e["message"] for e in json_response["errors"]])
+                    )
+
+                if "data" not in json_response:
+                    raise Exception(f"Response does not contain data {json_response}")
+
+                yield GraphQLResult(data=json_response["data"])
 
     class Config:
         arbitrary_types_allowed = True

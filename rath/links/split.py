@@ -1,7 +1,7 @@
-from typing import Callable
+from typing import Callable, AsyncIterator
 
 from pydantic import Field
-from rath.operation import Operation
+from rath.operation import Operation, GraphQLResult
 from rath.links.base import TerminatingLink
 
 
@@ -19,7 +19,7 @@ class SplitLink(TerminatingLink):
     split: Callable[[Operation], bool] = Field(exclude=True)
     """The function used to split the operation. This function should return a boolean. If true, the operation is sent to the left path, otherwise to the right path."""
 
-    async def aexecute(self, operation: Operation, **kwargs) -> Operation:
+    async def aexecute(self, operation: Operation, **kwargs) -> AsyncIterator[GraphQLResult]:
         iterator = (
             self.left.aexecute(operation, **kwargs)
             if self.split(operation)

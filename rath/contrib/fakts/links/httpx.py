@@ -12,12 +12,12 @@ class FaltsHttpXConfig(Fakt):
 
 
 class FaktsHttpXLink(HttpxLink):
-    endpoint_url: Optional[str]
+    endpoint_url: Optional[str] # type: ignore
     fakts_group: str
     fakt: Optional[FaltsHttpXConfig]
     fakts: Fakts
 
-    _old_fakt: Dict[str, Any] = None
+    _old_fakt: Optional[Dict[str, Any]] = None
 
     def configure(self, fakt: FaltsHttpXConfig) -> None:
         self.endpoint_url = fakt.endpoint_url

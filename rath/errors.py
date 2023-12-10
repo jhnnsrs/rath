@@ -16,3 +16,10 @@ class NotEnteredError(RathException):
     to protected methods is attempted."""
 
     pass
+
+
+class NotComposedError(RathException):
+    """NotComposedError is raised when the Rath link chain is not composed and
+    the next link is accessed."""
+
+    pass

@@ -9,6 +9,20 @@ def parse_variables(
     variables: Dict,
     by_alias: bool = True,
 ) -> Dict:
+    """Parse Variables
+     
+    Parse vaiables converts any pydantic models in the variables dict to dicts
+    by calling their .json() method with by_alias=True
+
+    Args:
+        variables (Dict): variables to parse
+        by_alias (bool, optional): whether to use the alias names. Defaults to True.
+
+    Returns:
+        Dict: the parsed variables
+    """
+
+
     def recurse_extract(obj):
         """
         recursively traverse obj, doing a deepcopy, but
@@ -43,7 +57,7 @@ class DictingLink(ParsingLink):
     It traversed the variables dict, and converts any (nested) pydantic models to dicts
     by callind their .json() method."""
 
-    by_alias = True
+    by_alias: bool = True
     """Converts pydantic models to dicts by calling their .json() method with by_alias=True"""
 
     async def aparse(self, operation: Operation) -> Operation:

@@ -3,6 +3,7 @@ from typing import AsyncIterator, Awaitable, Callable, Optional
 from rath.links.base import ContinuationLink
 from rath.operation import GraphQLResult, Operation
 from rath.links.errors import AuthenticationError
+from rath.errors import NotComposedError
 
 
 async def fake_loader():
@@ -36,6 +37,9 @@ class AuthTokenLink(ContinuationLink):
     async def aexecute(
         self, operation: Operation, retry=0, **kwargs
     ) -> AsyncIterator[GraphQLResult]:
+        if not self.next:
+            raise NotComposedError("No next link set")
+
         token = await self.aload_token(operation)
         operation.context.headers["Authorization"] = f"Bearer {token}"
         operation.context.initial_payload["token"] = token

@@ -14,10 +14,10 @@ class WebsocketHttpConfig(Fakt):
 
 class FaktsWebsocketLink(SubscriptionTransportWsLink):
     fakts: Fakts
-    ws_endpoint_url: Optional[str]
+    ws_endpoint_url: Optional[str] # type: ignore
     fakts_group: str = "websocket"
 
-    _old_fakt: Dict[str, Any] = {}
+    _old_fakt:  Optional[Dict[str, Any]] = None
 
     def configure(self, fakt: WebsocketHttpConfig) -> None:
         self.ws_endpoint_url = fakt.ws_endpoint_url
