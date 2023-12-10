@@ -1,9 +1,10 @@
-from typing import List, Optional
+from typing import AsyncIterator, List, Optional, Type, Any
 
 from pydantic import validator
 from rath.links.base import ContinuationLink, Link, TerminatingLink
-from rath.operation import Operation
+from rath.operation import GraphQLResult, Operation
 from rath.errors import NotComposedError
+
 
 class ComposedLink(TerminatingLink):
     """A composed link is a link that is composed of multiple links. The links
@@ -19,7 +20,8 @@ class ComposedLink(TerminatingLink):
     that the last link is a terminating link."""
 
     @validator("links")
-    def validate(cls, value):
+    def validate(cls: Type["ComposedLink"], value: Any) -> List[Link]:
+        """Validate that the links are valid"""
         if not value:
             raise ValueError("ComposedLink requires at least one link")
 
@@ -36,15 +38,18 @@ class ComposedLink(TerminatingLink):
 
         return value
 
-    async def aconnect(self):
+    async def aconnect(self, operation: Operation) -> None:
+        """Delegate the connect to all the links"""
         for link in self.links:
-            await link.aconnect()
+            await link.aconnect(operation)
 
-    async def adisconnect(self):
+    async def adisconnect(self) -> None:
+        """Delegate the disconnect to all the links"""
         for link in self.links:
             await link.adisconnect()
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> None:
+        """Compose the links together and set the first link as the first link"""
         # We need to make sure that the links are connected in the correct order
         for i in range(len(self.links) - 1):
             self.links[i].set_next(self.links[i + 1])
@@ -52,11 +57,17 @@ class ComposedLink(TerminatingLink):
         for link in self.links:
             await link.__aenter__()
 
-    async def __aexit__(self, *args, **kwargs):
+    async def __aexit__(self, *args, **kwargs)-> None:
+        """Exit the links in reverse order"""
         for link in self.links:
             await link.__aexit__(*args, **kwargs)
 
-    async def aexecute(self, operation: Operation, **kwargs):
+    async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
+        """Execute the first link
+        
+        This is the main method of the link. It takes an operation and returns an AsyncIterator
+        of GraphQLResults. This method should be implemented by subclasses. It is important
+        """
         async for result in self.links[0].aexecute(operation):
             yield result
 
@@ -71,7 +82,9 @@ class TypedComposedLink(TerminatingLink):
 
     _firstlink: Optional[Link] = None
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> None:
+        """Compose the links together and set the first link as the first link"""
+
         current_link = None
 
         for key, link in self:
@@ -85,22 +98,29 @@ class TypedComposedLink(TerminatingLink):
 
                 current_link = link
 
-        await current_link.__aenter__()
+        if current_link:
+            await current_link.__aenter__()
+        else:
+            raise NotComposedError("No links set")
 
-    async def __aexit__(self, *args, **kwargs):
+    async def __aexit__(self, *args, **kwargs) -> None:
+        """Exit the links in reverse order"""
         for key, link in self:
             if isinstance(link, Link):
                 await link.__aexit__(*args, **kwargs)
 
-    async def aexecute(self, operation: Operation, **kwargs):
+    async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
+        """Execute the first link"""
         if not self._firstlink:
-            raise NotComposedError("Links need to be composed before they can be executed. (Through __aenter__)")
-
+            raise NotComposedError(
+                "Links need to be composed before they can be executed. (Through __aenter__)"
+            )
 
         async for result in self._firstlink.aexecute(operation):
             yield result
 
     class Config:
+        """pydantic config"""
         underscore_attrs_are_private = True
 
 

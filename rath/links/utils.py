@@ -22,7 +22,7 @@ def recurse_parse_variables(
         Dict: _description_
     """
 
-    def recurse_extract(obj, path: Optional[str] = None):
+    def recurse_extract(obj: Any, path: Optional[str] = None) -> Any:
         """
         recursively traverse obj, doing a deepcopy, but
         replacing any file-like objects with nulls and
@@ -74,7 +74,7 @@ def recurse_parse_variables_with_operation(
         Dict: _description_
     """
 
-    def recurse_extract(obj, path: Optional[str] = None):
+    def recurse_extract(obj: Any, path: Optional[str] = None) -> Any:
         """
         recursively traverse obj, doing a deepcopy, but
         replacing any file-like objects with nulls and

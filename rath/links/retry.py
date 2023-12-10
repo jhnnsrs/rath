@@ -1,6 +1,5 @@
-from typing import AsyncIterator, Awaitable, Callable, Optional
+from typing import AsyncIterator, Optional
 
-from pydantic import Field
 from rath.links.base import ContinuationLink
 from rath.operation import (
     GraphQLException,
@@ -8,7 +7,6 @@ from rath.operation import (
     Operation,
     SubscriptionDisconnect,
 )
-from rath.links.errors import AuthenticationError
 import logging
 import asyncio
 from rath.errors import NotComposedError
@@ -27,8 +25,25 @@ class RetryLink(ContinuationLink):
     """The number of seconds to wait before retrying the operation."""
 
     async def aexecute(
-        self, operation: Operation, retry=0
+        self, operation: Operation, retry: int = 0
     ) -> AsyncIterator[GraphQLResult]:
+        """Executes an operation against the link
+
+        This link will retry the operation if it fails.
+        It will retry the operation a maximum of maximum_retry_attempts times.
+        If a sleep_interval is set, it will wait that many seconds before retrying.
+
+        Parameters
+        ----------
+        operation : Operation
+            The operation to execute
+
+        Yields
+        ------
+        GraphQLResult
+            The result of the operation
+        """
+
         if not self.next:
             raise NotComposedError("No next link set")
 
@@ -49,5 +64,6 @@ class RetryLink(ContinuationLink):
                 yield result
 
     class Config:
+        """pydantic config for the link"""
         underscore_attrs_are_private = True
         arbitary_types_allowed = True

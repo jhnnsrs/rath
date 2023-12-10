@@ -1,12 +1,13 @@
 from koil.composition import KoiledModel
 from pydantic import Field
-from rath.errors import NotConnectedError, NotEnteredError
+from rath.errors import NotConnectedError
 from rath.links.base import TerminatingLink
 from typing import (
     AsyncIterator,
     Dict,
     Any,
     Iterator,
+    
     Optional,
 )
 from typing import Union
@@ -14,11 +15,11 @@ from graphql import (
     DocumentNode,
 )
 from rath.operation import GraphQLResult, opify
-from contextvars import ContextVar
+from contextvars import ContextVar, Token
 from koil import unkoil_gen, unkoil
 
 
-current_rath: ContextVar["Rath"] = ContextVar("current_rath_unpicklable")
+current_rath: ContextVar[Optional["Rath"]] = ContextVar("current_rath", default=None)
 
 
 class Rath(KoiledModel):
@@ -36,26 +37,29 @@ class Rath(KoiledModel):
     Example:
         ```python
         from rath import Rath
-        from rath.links.retriy import RetryLink
-        from rathlinks.aiohttp import  AioHttpLink
+        from rath.links.retry import RetryLink
+        from rathlinks.aiohttp import AIOHttpLink
 
         retry = RetryLink()
-        http = AioHttpLink("https://graphql-pokemon.now.sh/graphql")
+        http = AIOHttpLink(endpoint_url"https://graphql-pokemon.now.sh/graphql")
 
         rath = Rath(link=compose(retry, link))
-        async with rath as rath:
-            await rath.aquery(...)
+        async with rath as r:
+            await r.aquery(...)
         ```
 
     """
 
-    link: TerminatingLink = Field(..., description="The terminating link used to send operations to the server. Can be a composed link chain.")
+    link: TerminatingLink = Field(
+        ...,
+        description="The terminating link used to send operations to the server. Can be a composed link chain.",
+    )
     """The terminating link used to send operations to the server. Can be a composed link chain."""
 
-    _connected = False
     _entered = False
-    _context_token = None
-    """If true, the Rath will automatically connect to the server when entering the context manager."""
+    """An internal flag flag that indicates whether the Rath is currently in the context manager."""
+    _context_token: Optional[Token] = None
+    """A context token that is used to keep track of the current rath in the context manager."""
 
     async def aquery(
         self,
@@ -99,8 +103,6 @@ class Rath(KoiledModel):
             # This is a workaround to make mypy happy.
 
         return result
-
-
 
     def query(
         self,
@@ -166,7 +168,7 @@ class Rath(KoiledModel):
         query: str,
         variables: Optional[Dict[str, Any]] = None,
         headers: Optional[Dict[str, Any]] = None,
-        operation_name: Optional[str]=None,
+        operation_name: Optional[str] = None,
         **kwargs,
     ) -> AsyncIterator[GraphQLResult]:
         """Subscripe to a GraphQL API.
@@ -192,17 +194,22 @@ class Rath(KoiledModel):
         async for data in self.link.aexecute(op):
             yield data
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "Rath":
+        """Enters the context manager of the link
+        """
         self._entered = True
         self._context_token = current_rath.set(self)
         await self.link.__aenter__()
         return self
 
-    async def __aexit__(self, *args, **kwargs):
+    async def __aexit__(self, *args, **kwargs) -> None:
+        """Exits the context manager of the link
+        """
         await self.link.__aexit__(*args, **kwargs)
         self._entered = False
         if self._context_token:
             current_rath.set(None)
 
     class Config:
+        """Configures the Rath model"""
         underscore_attrs_are_private = True

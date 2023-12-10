@@ -1,7 +1,6 @@
 from rath.errors import NotComposedError
 from rath.links.base import ContinuationLink
 from rath.operation import GraphQLResult, Operation
-from rath.operation import Operation
 from typing import AsyncIterator
 
 import io
@@ -9,6 +8,7 @@ import aiohttp
 from typing import AsyncGenerator
 from pydantic import Field
 
+from typing import Any, Dict, Tuple, Type, Union, List
 
 FILE_CLASSES = (
     io.IOBase,
@@ -17,13 +17,15 @@ FILE_CLASSES = (
 )
 
 
-from typing import Any, Dict, Tuple, Type
+
+
+ValidNestedTypes = Union[Dict[str, Any], List, Any]
 
 
 def parse_nested_files(
-    variables: Dict,
+    variables: Dict[str, Any],
     file_classes: Tuple[Type[Any], ...] = FILE_CLASSES,
-) -> Tuple[Dict, Dict]:
+) -> Tuple[Dict[str, Any], Dict]:
     """Parse nested files
 
     Parameters
@@ -41,7 +43,7 @@ def parse_nested_files(
 
     files = {}
 
-    def recurse_extract(path, obj):
+    def recurse_extract(path: str, obj: ValidNestedTypes) -> ValidNestedTypes:
         """
         recursively traverse obj, doing a deepcopy, but
         replacing any file-like objects with nulls and
@@ -50,11 +52,11 @@ def parse_nested_files(
         nonlocal files
 
         if isinstance(obj, list):
-            nulled_obj = []
-            for key, value in enumerate(obj):
-                value = recurse_extract(f"{path}.{key}", value)
-                nulled_obj.append(value)
-            return nulled_obj
+            nulled_list = []
+            for index, value in enumerate(obj):
+                value = recurse_extract(f"{path}.{str(index)}", value)
+                nulled_list.append(value)
+            return nulled_list
         elif isinstance(obj, dict):
             nulled_obj = {}
             for key, value in obj.items():
@@ -76,6 +78,7 @@ def parse_nested_files(
             return obj
 
     nulled_variables = recurse_extract("variables", variables)
+    assert isinstance(nulled_variables, dict), "variables must be a dict"
 
     return nulled_variables, files
 
@@ -87,14 +90,19 @@ class FileExtraction(ContinuationLink):
     These can then be used by the FileUploadLink to upload the files to a remote server.
     or used through the multipart/form-data encoding in the terminating link (if supported).
     """
+
     file_classes: Tuple[Type[Any], ...] = Field(default=FILE_CLASSES)
 
     async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
+        """Extracts files from the variables dict
+
+        Extracts any file-like objects from the variables dict and puts them into the context.files dict.
+        The variables dict is then updated to replace the file-like objects with nulls.
+        """
         if not self.next:
             raise NotComposedError(
                 "FileExtractionLink must be composed with another link"
             )
-            
 
         operation.variables, operation.context.files = parse_nested_files(
             operation.variables, file_classes=self.file_classes

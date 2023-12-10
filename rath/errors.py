@@ -1,6 +1,5 @@
 class RathException(Exception):
     """RathException is the base exception for all Rath errors."""
-
     pass
 
 

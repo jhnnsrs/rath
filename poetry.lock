@@ -778,6 +778,28 @@ files = [
 typing-extensions = {version = "*", markers = "python_version < \"3.8\""}
 
 [[package]]
+name = "herre"
+version = "0.3.31"
+description = "oauth2/openid client tailored to pyqt and async environments"
+category = "dev"
+optional = false
+python-versions = ">=3.7,<4.0"
+files = [
+    {file = "herre-0.3.31-py3-none-any.whl", hash = "sha256:b1c7006bc965b4517163a262c51e1138850b478e55bd37f73757c8c99b136dd4"},
+    {file = "herre-0.3.31.tar.gz", hash = "sha256:13e9232ea249c3e357820f80c0b160ddeb3cf5a5e519e65b3becc088a62bed53"},
+]
+
+[package.dependencies]
+aiohttp = ">3.7.4"
+certifi = ">2021"
+koil = ">=0.3.5"
+oauthlib = ">=3.1.1,<4.0.0"
+pydantic = ">=1.9.0"
+
+[package.extras]
+qt = ["QtPy (>=2.0.1,<3.0.0)"]
+
+[[package]]
 name = "httpcore"
 version = "0.16.3"
 description = "A minimal low-level HTTP client."
@@ -998,6 +1020,23 @@ files = [
     {file = "mypy_extensions-1.0.0-py3-none-any.whl", hash = "sha256:4392f6c0eb8a5668a69e23d168ffa70f0be9ccfd32b5cc2d26a34ae5b844552d"},
     {file = "mypy_extensions-1.0.0.tar.gz", hash = "sha256:75dbf8955dc00442a438fc4d0666508a9a97b6bd41aa2f0ffe9d2f2725af0782"},
 ]
+
+[[package]]
+name = "oauthlib"
+version = "3.2.2"
+description = "A generic, spec-compliant, thorough implementation of the OAuth request-signing logic"
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "oauthlib-3.2.2-py3-none-any.whl", hash = "sha256:8139f29aac13e25d502680e9e19963e83f16838d48a0d71c287fe40e7067fbca"},
+    {file = "oauthlib-3.2.2.tar.gz", hash = "sha256:9859c40929662bec5d64f34d01c99e093149682a3f38915dc0655d5a633dd918"},
+]
+
+[package.extras]
+rsa = ["cryptography (>=3.0.0)"]
+signals = ["blinker (>=1.4.0)"]
+signedtoken = ["cryptography (>=3.0.0)", "pyjwt (>=2.0.0,<3)"]
 
 [[package]]
 name = "packaging"
@@ -1954,4 +1993,4 @@ websockets = ["websockets"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7"
-content-hash = "a7dca388c56f8e798b342707f2cf04cf3836ecbd2b4e974d6adccdc3914f121b"
+content-hash = "1430175a8b8048c6024568b42d3b2b19191c4bb04661392a04f5421b1a11a0f9"

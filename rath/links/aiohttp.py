@@ -18,7 +18,9 @@ logger = logging.getLogger(__name__)
 
 
 class DateTimeEncoder(json.JSONEncoder):
-    def default(self, o):
+    """ DateTimeEncoder is a JSONEncoder that extends the default python json decoder to serialize"""
+    def default(self, o): # noqa
+        """Override the default method to serialize datetime objects to ISO 8601 strings"""
         if isinstance(o, datetime):
             return o.isoformat()
 
@@ -58,15 +60,39 @@ class AIOHttpLink(AsyncTerminatingLink):
     _connected = False
 
     async def __aenter__(self) -> None:
+        """Entery point for the async context manager"""
         pass
 
-    async def aconnect(self, operation: Operation):
+    async def aconnect(self, operation: Operation) -> None:
+        """Connects the link to the server
+
+        In the standard aiohttp transport, this method does nothing, as the
+        connection is established when the request is sent.
+        
+        """
         self._connected = True
 
     async def __aexit__(self, *args, **kwargs) -> None:
+        """Exit point for the async context manager"""
         pass
 
     async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
+        """Executes an operation against the link
+
+        This link will create a new aiohttp session for each request. While
+        we could also reuse the session, we currently don't do this. If
+        you feel like this should be changed, please open an issue.
+
+        Parameters
+        ----------
+        operation : Operation
+            The operation to execute
+
+        Yields
+        ------
+        GraphQLResult
+            The result of the operation
+        """
         if not self._connected:
             await self.aconnect(operation)
 
@@ -117,7 +143,7 @@ class AIOHttpLink(AsyncTerminatingLink):
                 self.endpoint_url, headers=operation.context.headers, **post_kwargs
             ) as response:
                 if response.status == HTTPStatus.OK:
-                    result = await response.json()
+                    await response.json()
 
                 if response.status in self.auth_errors:
                     raise AuthenticationError(
@@ -137,5 +163,6 @@ class AIOHttpLink(AsyncTerminatingLink):
                 yield GraphQLResult(data=json_response["data"])
 
     class Config:
+        """pydantic config"""
         arbitrary_types_allowed = True
         underscore_attrs_are_private = True

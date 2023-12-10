@@ -4,9 +4,27 @@ from rath.operation import GraphQLResult, Operation
 
 
 class AssertLink(AsyncTerminatingLink):
+    """AssertLink is a link that asserts that the operation matches a set of assertions.
+
+    This link is useful for testing.
+
+    """
+
     assertions: List[Callable[[Operation], bool]] = []
 
     async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
+        """Executes an operation against the link
+
+        Parameters
+        ----------
+        operation : Operation
+            The operation to execute
+
+        Yields
+        ------
+        GraphQLResult
+            The result of the operation
+        """
         for assertion in self.assertions:
             assert assertion(
                 operation

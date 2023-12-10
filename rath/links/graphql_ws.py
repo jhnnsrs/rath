@@ -1,16 +1,11 @@
 from ssl import SSLContext
-from typing import Awaitable, Callable, Dict, Optional, Any
+from typing import AsyncIterator, Awaitable, Callable, Dict, Optional, Any
 from graphql import OperationType
 from pydantic import Field
 import websockets
 import json
 import asyncio
-from websockets.exceptions import (
-    ConnectionClosedError,
-)
-import asyncio
 import logging
-import uuid
 import ssl
 import certifi
 from rath.links.errors import LinkNotConnectedError, TerminatingLinkError
@@ -49,24 +44,23 @@ WEBSOCKET_CANCELLED = "websocket_cancelled"
 
 
 class CorrectableConnectionFail(TerminatingLinkError):
+    """A CorrectableConnectionFail is raised when a connection fails, but can be recovered from"""
     pass
 
 
 class DefiniteConnectionFail(TerminatingLinkError):
+    """A DefiniteConnectionFail is raised when a connection fails, and cannot be recovered from"""
     pass
 
 
 class InvalidPayload(TerminatingLinkError):
+    """A InvalidPayload is raised when a invalid payload is received"""
     pass
 
-
-async def default_pong_handler(payload):
-    return payload
 
 
 InitialConnectPayload = Dict[str, Any]
 PongPayload = Dict[str, Any]
-
 
 
 class GraphQLWSLink(AsyncTerminatingLink):
@@ -91,12 +85,13 @@ class GraphQLWSLink(AsyncTerminatingLink):
         default_factory=lambda: ssl.create_default_context(cafile=certifi.where())
     )
 
-    on_connect: Optional[Callable[[InitialConnectPayload], Awaitable[None]]] = Field(exclude=True)
+    on_connect: Optional[Callable[[InitialConnectPayload], Awaitable[None]]] = Field(
+        exclude=True
+    )
     """ A function that is called before the connection is established. If an exception is raised, the connection is not established. Return is ignored."""
 
-
     on_pong: Optional[Callable[[PongPayload], Awaitable[None]]] = Field(
-        default=default_pong_handler, exclude=True
+        exclude=True
     )
     """ A function that is called before a pong is received. If an exception is raised, the connection is not established. Return is ignored."""
     heartbeat_interval_ms: Optional[int] = None
@@ -110,15 +105,39 @@ class GraphQLWSLink(AsyncTerminatingLink):
     _connection_task: Optional[asyncio.Task] = None
     _ongoing_subscriptions: Optional[Dict[str, asyncio.Queue]] = None
 
-    async def aforward(self, message):
+    async def aforward(self, message: str) -> None:
+        """Forward a message to the server
+
+        Puts the message in the send queue. If the queue is full, this will block until
+        the queue is not full anymore.
+
+        Parameters
+        ----------
+        message : str
+            The message to send
+        """
+        if not self._send_queue:
+            raise LinkNotConnectedError("Link is not connected")
+
         await self._send_queue.put(message)
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> None:
+        """Enter the link, and initialize the connection"""
+
         self._ongoing_subscriptions = {}
         self._connection_lock = asyncio.Lock()
         self._send_queue = asyncio.Queue()
 
-    async def aconnect(self, operation: Operation):
+    async def aconnect(self, operation: Operation) -> None:
+        """Connect to the server
+
+        Parameters
+        ----------
+        operation : Operation
+            The operation that is used for the first time to connect to the server
+            can be used to send an initial payload
+        """
+
         logger.info("Connecting Websockets")
         initial_connection_future = asyncio.get_running_loop().create_future()
         self._connection_task = asyncio.create_task(
@@ -126,33 +145,55 @@ class GraphQLWSLink(AsyncTerminatingLink):
         )
         await initial_connection_future
 
-    async def adisconnect(self):
-        self._connection_task.cancel()
-
-        try:
-            await self._connection_task
-        except asyncio.CancelledError:
-            logger.info(f"Websocket Transport succesfully disconnected")
-
-    async def __aexit__(self, *args, **kwargs):
+    async def adisconnect(self) -> None:
+        """Disconnect from the server"""
         if self._connection_task:
-            await self.adisconnect()
+            self._connection_task.cancel()
 
-    async def abuild_url(self):
+            try:
+                await self._connection_task
+            except asyncio.CancelledError:
+                logger.info("Websocket Transport succesfully disconnected")
+
+    async def __aexit__(self, *args, **kwargs) -> None:
+        """Exit the link, and disconnect from the server"""
+        await self.adisconnect()
+
+    async def abuild_url(self, initiating_operation: Operation) -> str:
+        """Builds the url to connect to
+
+        This can be overwritten to add additional parameters to the url
+        like authentication tokens
+
+        Parameters
+        ----------
+        initiating_operation : Operation
+            The operation that is used for the first time to connect to the server
+
+        Returns
+        -------
+        str
+            The url to connect to
+        """
         return self.ws_endpoint_url
 
     async def websocket_loop(
         self,
         initiating_operation: Operation,
         initial_connection_future: asyncio.Future,
-        retry=0,
-    ):
+        retry: int = 0,
+    ) -> None:
+        """The main websocket loop
+
+        This is the main loop that handles the websocket connection.
+        It handles all the sending and receiving of messages.
+        """
         send_task = None
         receive_task = None
         try:
             try:
-                url = await self.abuild_url()
-                async with websockets.connect(
+                url = await self.abuild_url(initiating_operation)
+                async with websockets.connect(  # type: ignore
                     url,
                     subprotocols=[GQL_WS_SUBPROTOCOL],
                     ssl=self.ssl_context if url.startswith("wss") else None,
@@ -201,9 +242,13 @@ class GraphQLWSLink(AsyncTerminatingLink):
                 raise DefiniteConnectionFail("Exceeded Number of Retries")
 
             await asyncio.sleep(self.time_between_retries)
-            logger.info(f"Retrying to connect")
-            await self.broadcast({"type": WEBSOCKET_DEAD, "error": e}, initial_connection_future)
-            await self.websocket_loop(initiating_operation, initial_connection_future, retry=retry + 1)
+            logger.info("Retrying to connect")
+            await self.broadcast(
+                {"type": WEBSOCKET_DEAD, "error": e}, initial_connection_future
+            )
+            await self.websocket_loop(
+                initiating_operation, initial_connection_future, retry=retry + 1
+            )
 
         except DefiniteConnectionFail as e:
             logger.error("Websocket excepted closed definetely", exc_info=True)
@@ -218,7 +263,7 @@ class GraphQLWSLink(AsyncTerminatingLink):
 
                 await asyncio.gather(
                     send_task, receive_task, return_exceptions=True
-                ) # wait for the tasks to finish
+                )  # wait for the tasks to finish
             raise e
 
         except Exception as e:
@@ -226,7 +271,23 @@ class GraphQLWSLink(AsyncTerminatingLink):
             self.connection_dead = True
             raise e
 
-    async def sending(self, client, initiating_operation: Operation):
+    async def sending(self, client: Any, initiating_operation: Operation) -> None:
+        """The sending task
+
+        This method is the sending task. It will send messages to the websocket
+        as they are put into the send queue.  It should not be called manually.
+        but is called automatically by the websocket loop.
+
+
+        Parameters
+        ----------
+        client : websocket.Client
+            The websockets client
+        initiating_operation : Operation
+            The initiating operation
+
+        """
+
         payload = {
             "type": GQL_CONNECTION_INIT,
             "payload": initiating_operation.context.initial_payload,
@@ -246,7 +307,21 @@ class GraphQLWSLink(AsyncTerminatingLink):
             logger.debug("Sending Task sucessfully Cancelled")  #
             raise e
 
-    async def receiving(self, client, initial_connection_future: asyncio.Future):
+    async def receiving(self, client: Any, initial_connection_future: asyncio.Future) -> None:
+        """The receiving task
+
+        This method is the receiving task. It will receive messages from the websocket
+        and broadcast them to the subscriptions. It should not be called manually.
+        but is called automatically by the websocket loop.
+
+        Parameters
+        ----------
+        client : websocket.Client
+            The websockets client
+        connection_future : asyncio.Future
+            The future to set when the connection is established
+
+        """
         try:
             async for message in client:
                 logger.debug("GraphQL Websocket: <<<<<<< " + message)
@@ -263,7 +338,8 @@ class GraphQLWSLink(AsyncTerminatingLink):
             logger.warning("Websocket excepted. Trying to recover", exc_info=True)
             raise e
 
-    async def broadcast(self, message: dict, initial_connection_future: asyncio.Future):
+    async def broadcast(self, message: dict, initial_connection_future: asyncio.Future) -> None:
+        """Broadcasts a message to all subscriptions"""
         type = message["type"]
 
         if type == GQL_CONNECTION_ACK:
@@ -304,7 +380,22 @@ class GraphQLWSLink(AsyncTerminatingLink):
             ), "Received Result for subscription that is no longer or was never active"
             await self._ongoing_subscriptions[id].put(message)
 
-    async def aexecute(self, operation: Operation):
+    async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
+        """Executes an operation against the link
+
+        This link will send the operation to the websocket, and then
+        wait for the result.
+
+        Parameters
+        ----------
+        operation : Operation
+            The operation to execute
+
+        Yields
+        ------
+        GraphQLResult
+            The result of the operation
+        """
         if not self._connection_lock:
             raise LinkNotConnectedError("Link is not connected")
 
@@ -319,7 +410,7 @@ class GraphQLWSLink(AsyncTerminatingLink):
         assert not operation.context.files, "We cannot send files through websockets"
 
         id = operation.id
-        subscribe_queue = asyncio.Queue() #type: ignore
+        subscribe_queue = asyncio.Queue()  # type: ignore
         if not self._ongoing_subscriptions:
             self._ongoing_subscriptions = {}
 
@@ -377,5 +468,6 @@ class GraphQLWSLink(AsyncTerminatingLink):
             raise e
 
     class Config:
+        """pydantic config"""
         arbitrary_types_allowed = True
         underscore_attrs_are_private = True

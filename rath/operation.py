@@ -1,10 +1,9 @@
 from typing import Optional, Dict, Any, Union
-from graphql.language import OperationDefinitionNode, parse, OperationType, print_ast
+from graphql.language import OperationDefinitionNode, print_ast
 from graphql import (
     DocumentNode,
     get_operation_ast,
     parse,
-    
 )
 from pydantic import BaseModel, Field
 import uuid
@@ -15,7 +14,7 @@ class Context(BaseModel):
 
     headers: Dict[str, str] = Field(default_factory=dict)
     files: Dict[str, Any] = Field(default_factory=dict)
-    initial_payload: Dict[str, Any]= Field(default_factory=dict)
+    initial_payload: Dict[str, Any] = Field(default_factory=dict)
     kwargs: Dict[str, Any] = Field(default_factory=dict)
 
 
@@ -45,6 +44,7 @@ class Operation(BaseModel):
     context: Context
 
     class Config:
+        """Configures the operation model"""
         arbitrary_types_allowed = True
 
 
@@ -61,6 +61,7 @@ class GraphQLException(Exception):
 
 
 class SubscriptionDisconnect(GraphQLException):
+    """SubscriptionDisconnect is raised when a subscription is disconnected."""
     pass
 
 
@@ -73,14 +74,25 @@ def opify(
 ) -> Operation:
     """Opify takes a query, variables, and headers and returns an Operation.
 
-    Args:
-        query (Union[str, DocumentNode]): The query string or the DocumentNode.
-        variables (Dict[str, Any], optional): The variables. Defaults to None.
-        headers (Dict[str, Any], optional): Additional headers. Defaults to None.
-        operation_name (Optional[str], optional): The operation_name to be exceuted. Defaults to None.
+    Operations are the main way to interact with the GraphQL client, they are
+    used to execute queries, mutations, and subscriptions, and can carry additional
+    information in their context and extensions.
 
-    Returns:
-        Operation: A GraphQL operation
+    Parameters
+    ----------
+    query : Union[str, DocumentNode]
+        The query to execute
+    variables : Optional[Dict[str, Any]], optional
+        The variables to use, by default None
+    headers : Optional[Dict[str, Any]], optional
+        The headers to use, by default None
+    operation_name : Optional[str], optional
+        The operation name to use, by default None
+
+    Returns
+    -------
+    Operation
+        The operation that can be executed
     """
 
     document = parse(query) if isinstance(query, str) else query

@@ -1,6 +1,6 @@
 from http import HTTPStatus
 import json
-from typing import Any, Dict, List, Optional, Type, AsyncIterator
+from typing import Any, Dict, List, Type, AsyncIterator
 import httpx
 from graphql import OperationType
 from pydantic import Field
@@ -10,15 +10,19 @@ from rath.links.errors import AuthenticationError
 import logging
 from rath.links.types import Payload
 from datetime import datetime
+
 logger = logging.getLogger(__name__)
 
 
 class DateTimeEncoder(json.JSONEncoder):
-    def default(self, o):
+    """ DateTimeEncoder is a JSONEncoder that extends the default python json decoder to serialize"""
+    def default(self, o): # noqa
+        """Override the default method to serialize datetime objects to ISO 8601 strings"""
         if isinstance(o, datetime):
             return o.isoformat()
 
         return json.JSONEncoder.default(self, o)
+
 
 
 class HttpxLink(AsyncTerminatingLink):
@@ -33,8 +37,23 @@ class HttpxLink(AsyncTerminatingLink):
     """auth_errors is a list of HTTPStatus codes that indicate an authentication error."""
     json_encoder: Type[json.JSONEncoder] = Field(default=DateTimeEncoder, exclude=True)
 
-
     async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
+        """Executes an operation against the link
+
+        This link will create a new httpx session for each request. While
+        we could also reuse the session, we currently don't do this. If
+        you feel like this should be changed, please open an issue.
+
+        Parameters
+        ----------
+        operation : Operation
+            The operation to execute
+
+        Yields
+        ------
+        GraphQLResult
+            The result of the operation
+        """
 
         payload: Payload = {"query": operation.document}
 
@@ -93,5 +112,7 @@ class HttpxLink(AsyncTerminatingLink):
                 yield GraphQLResult(data=json_response["data"])
 
     class Config:
+        """the config for the link"""
+
         arbitrary_types_allowed = True
         underscore_attrs_are_private = True

@@ -1,9 +1,7 @@
-from typing import AsyncIterator, Awaitable, Callable, Optional
+from typing import AsyncIterator
 
-from pydantic import Field
 from rath.links.base import ContinuationLink
 from rath.operation import GraphQLResult, Operation
-from rath.links.errors import AuthenticationError
 from rath.errors import NotComposedError
 
 
@@ -15,15 +13,29 @@ class ForwardLink(ContinuationLink):
     links.
     """
 
-    async def aexecute(
-        self, operation: Operation, **kwargs
-    ) -> AsyncIterator[GraphQLResult]:
+    async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
+        """Executes an operation against the link
+
+        This link simply forwards the operation to the next link.
+
+
+        Parameters
+        ----------
+        operation : Operation
+            The operation to execute
+
+        Yields
+        ------
+        GraphQLResult
+            The result of the operation
+        """
         if not self.next:
             raise NotComposedError("No next link set")
 
-        async for result in self.next.aexecute(operation, **kwargs):
+        async for result in self.next.aexecute(operation):
             yield result
 
     class Config:
+        """pydantic config for the link"""
         underscore_attrs_are_private = True
         arbitary_types_allowed = True

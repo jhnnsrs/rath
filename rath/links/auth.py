@@ -6,10 +6,6 @@ from rath.links.errors import AuthenticationError
 from rath.errors import NotComposedError
 
 
-async def fake_loader():
-    raise Exception("No Token loader specified")
-
-
 class AuthTokenLink(ContinuationLink):
     """AuthTokenLink is a link that adds an authentication token to the context.
     The authentication token is retrieved by calling the token_loader function.
@@ -28,15 +24,62 @@ class AuthTokenLink(ContinuationLink):
     load_token_on_enter: bool = True
     """If True, the token_loader function will be called when the link is entered."""
 
-    async def aload_token(self, operation: Operation):
+    async def aload_token(self, operation: Operation) -> str:
+        """A function that loads the authentication token.
+
+        This function should return a string containing the authentication token.
+
+        Parameters
+        ----------
+        operation : Operation
+            The operation to execute
+
+        Raises
+        ------
+        Exception
+            When the token cannot be loaded
+        """
         raise Exception("No Token loader specified")
 
-    async def arefresh_token(self, operation: Operation):
+    async def arefresh_token(self, operation: Operation) -> str:
+        """A function that refreshes the authentication token.
+
+        This function should return a string containing the authentication token.
+        In comparison to the token_loader function, this function is called when
+        the server already raised an AuthenticationError, so a refresh should really
+        be attempted.
+
+        Parameters
+        ----------
+        operation : Operation
+            The operation to execute
+
+        Raises
+        ------
+        Exception
+            When the token cannot be refreshed
+        """
         raise Exception("No Token refresher specified")
 
     async def aexecute(
-        self, operation: Operation, retry=0, **kwargs
+        self, operation: Operation, retry: int =0
     ) -> AsyncIterator[GraphQLResult]:
+        """Executes and forwards an operation to the next link.
+
+        This method will add the authentication token to the context of the operation,
+        and will refresh the token if the next link raises an AuthenticationError, until
+        the maximum number of refresh attempts is reached.
+
+        Parameters
+        ----------
+        operation : Operation
+            The operation to execute
+
+        Yields
+        ------
+        GraphQLResult
+            The result of the operation
+        """
         if not self.next:
             raise NotComposedError("No next link set")
 
@@ -45,7 +88,7 @@ class AuthTokenLink(ContinuationLink):
         operation.context.initial_payload["token"] = token
 
         try:
-            async for result in self.next.aexecute(operation, **kwargs):
+            async for result in self.next.aexecute(operation):
                 yield result
 
         except AuthenticationError as e:
@@ -54,15 +97,22 @@ class AuthTokenLink(ContinuationLink):
             if retry > self.maximum_refresh_attempts:
                 raise AuthenticationError("Maximum refresh attempts reached") from e
 
-            async for result in self.aexecute(operation, retry=retry + 1, **kwargs):
+            async for result in self.aexecute(operation, retry=retry + 1):
                 yield result
 
     class Config:
+        """pydantic configuration for the AuthTokenLink"""
         underscore_attrs_are_private = True
         arbitary_types_allowed = True
 
 
 class ComposedAuthLink(AuthTokenLink):
+    """A composed version of the AuthTokenLink.
+
+    This link is a composed link that allows to set the token_loader and token_refresher
+    functions as composition elements not as class attributes.
+    """
+
     token_loader: Optional[Callable[[], Awaitable[str]]]
     """The function used to load the authentication token. This function should
         return a string containing the authentication token."""
@@ -70,12 +120,14 @@ class ComposedAuthLink(AuthTokenLink):
     """The function used to refresh the authentication token. This function should
         return a string containing the authentication token."""
 
-    async def aload_token(self, operation: Operation):
+    async def aload_token(self, operation: Operation) -> str:
+        """Forwards the operation to the token_loader function."""
         if self.token_loader is None:
             raise Exception("No Token loader specified")
         return await self.token_loader()
 
-    async def arefresh_token(self, operation: Operation):
+    async def arefresh_token(self, operation: Operation) -> str:
+        """Forwards the operation to the token_refresher function."""
         if self.token_refresher is None:
             raise Exception("No Token refresher specified")
         return await self.token_refresher()
