@@ -230,7 +230,10 @@ class GraphQLWSLink(AsyncTerminatingLink):
                             )
 
             except Exception as e:
-                logger.warning(f"Websocket excepted. Trying to recover for the {retry+1}/{self.max_retries} time", exc_info=True)
+                logger.warning(
+                    f"Websocket excepted. Trying to recover for the {retry+1}/{self.max_retries} time",
+                    exc_info=True,
+                )
                 raise CorrectableConnectionFail from e
 
         except CorrectableConnectionFail as e:
@@ -249,8 +252,6 @@ class GraphQLWSLink(AsyncTerminatingLink):
             await self.websocket_loop(
                 initiating_operation, initial_connection_future, retry=retry + 1
             )
-
-        
 
         except DefiniteConnectionFail as e:
             logger.error("Websocket excepted closed definetely", exc_info=True)

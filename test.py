@@ -5,19 +5,21 @@ from rath.links import compose, split
 
 from rath import Rath
 
-async def aload_token():
+
+async def aload_token() -> str:
+    """Loads the token from the environment"""
     return "SERVER_TOKEN"
 
 
 auth = ComposedAuthLink(token_loader=aload_token)
 link = AIOHttpLink(endpoint_url="https://countries.trevorblades.com/")
-ws = GraphQLWSLink(ws_endpoint_url="wss://countries.trevorblades.com/") # 
+ws = GraphQLWSLink(ws_endpoint_url="wss://countries.trevorblades.com/")  #
 
 
 end_link = split(link, ws, lambda op: op.node.operation == "SUBSCRIPTION")
+with_auth = compose(auth, end_link)
 
-
-with Rath(link=end_link) as rath:
+with Rath(link=with_auth) as rath:
     query = """query {
         countries {
             native
@@ -27,7 +29,7 @@ with Rath(link=end_link) as rath:
 
     """
 
-    result = rath.query(query) # uses the http link
+    result = rath.query(query)  # uses the http link
     print(result)
 
     subscription = """subscription {
@@ -39,8 +41,5 @@ with Rath(link=end_link) as rath:
 
     """
 
-    for i in rath.subscribe(subscription): # uses the ws link
-        print(i) # will fail because the server does not support subscriptions
-
-    
-
+    for i in rath.subscribe(subscription):  # uses the ws link
+        print(i)  # will fail because the server does not support subscriptions
