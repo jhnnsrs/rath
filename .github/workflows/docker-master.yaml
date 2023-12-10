@@ -39,12 +39,17 @@ jobs:
         poetry-version: [1.4]
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
+    env:
+      DISPLAY: ':99.0'
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      - uses: tlambert03/setup-qt-libs@v1
+      - name: setup ${{ matrix.os }}
+        run: |
+          sudo apt install libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0 x11-utils
+          /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 1920x1200x24 -ac +extension GLX
       - name: Run image
         uses: abatilo/actions-poetry@v2.0.0
         with:
@@ -62,13 +67,18 @@ jobs:
         python-version: [3.8, 3.9, "3.10", "3.11"]
         poetry-version: [1.4]
         os: [ubuntu-latest]
+    env:
+      DISPLAY: ':99.0'
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      - uses: tlambert03/setup-qt-libs@v1
+      - name: setup ${{ matrix.os }}
+        run: |
+          sudo apt install libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0 x11-utils
+          /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 1920x1200x24 -ac +extension GLX
       - name: Run image
         uses: abatilo/actions-poetry@v2.0.0
         with:
