@@ -1,10 +1,11 @@
-from typing import AsyncIterator, Optional
+from typing import AsyncIterator, Optional, cast, Dict, Any, Type
 from graphql import (
     GraphQLSchema,
     build_ast_schema,
     build_client_schema,
     get_introspection_query,
     validate,
+    IntrospectionQuery,
 )
 from graphql.language.parser import parse
 from pydantic import root_validator
@@ -15,8 +16,24 @@ from glob import glob
 
 
 def schemify(
-    schema_dsl: str = None, schema_glob: str = None, schema_url: str = None
+    schema_dsl: Optional[str] = None, schema_glob: Optional[str] = None
 ) -> GraphQLSchema:
+    """Schemify creates a GraphQLSchema from a schema dsl or a glob to a set of graphql files
+
+    Parameters
+    ----------
+    schema_dsl : Optional[str], optional
+        The schema_dsl to use, by default None
+    schema_glob : Optional[str], optional
+        A path/glaob to the schema files, by default None
+
+    Returns
+    -------
+    GraphQLSchema
+        The schema
+
+    """
+
     if schema_dsl:
         return build_ast_schema(parse(schema_dsl))
     if schema_glob:
@@ -34,6 +51,8 @@ def schemify(
 
 
 class ValidationError(ContinuationLinkError):
+    """ValidationError is raised when a validation error occurs"""
+
     pass
 
 
@@ -43,8 +62,9 @@ class ValidatingLink(ContinuationLink):
     The schema can be provided as a dsl string, or as a glob to a set of graphql files.
     If the schema is not provided, the link will introspect the server to get the schema if allow_introspection is set to True.
 
-    
+
     """
+
     schema_dsl: Optional[str] = None
     """ The schema (as a string) to validate against. If not provided, the link will introspect the server to get the schema if allow_introspection is set to True."""
     schema_glob: Optional[str] = None
@@ -57,7 +77,8 @@ class ValidatingLink(ContinuationLink):
 
     @root_validator(allow_reuse=True)
     @classmethod
-    def check_schema_dsl_or_schema_glob(cls, values):
+    def check_schema_dsl_or_schema_glob(cls: Type["ValidatingLink"], values: Dict[str, Any]) -> Dict[str, Any]:  # type: ignore
+        """Validates and checks that either a schema_dsl or schema_glob is provided, or that allow_introspection is set to True"""
         if not values.get("schema_dsl") and not values.get("schema_glob"):
             if not values.get("allow_introspection"):
                 raise ValueError(
@@ -72,34 +93,63 @@ class ValidatingLink(ContinuationLink):
 
         return values
 
-    async def aload_schema(self, operation: Operation) -> None:
-        assert self.allow_introspection, "Introspection is not allowed"
+    async def introspect(self, starting_operation: Operation) -> GraphQLSchema:  # type: ignore
+        """Introspects the server to get the schema
+
+        Parameters
+        ----------
+        starting_operation : Operation
+            The operation to use for introspection (can be used to set headers, etc.)
+
+        Returns
+        -------
+        GraphQLSchema
+            The introspected schema
+        """
+        if not self.next:
+            raise ContinuationLinkError("No next link set")
+
         introspect_operation = opify(get_introspection_query())
-        introspect_operation.context = operation.context
-        introspect_operation.extensions = operation.extensions
+        introspect_operation.context = starting_operation.context
+        introspect_operation.extensions = starting_operation.extensions
 
-        async for e in self.next.aexecute(introspect_operation):
-            self.graphql_schema = build_client_schema(e.data)
-            return
+        async for result in self.next.aexecute(introspect_operation):
+            return build_client_schema(cast(IntrospectionQuery, result.data))
 
-    def validate(self, operation: Operation):
+    async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
+        """Executes an operation against the link
+
+        This link will validate the operation and then forward it to the next link,
+        the next link will then execute the operation.
+
+        Parameters
+        ----------
+        operation : Operation
+            The operation to execute
+
+        Yields
+        ------
+        GraphQLResult
+            The result of the operation
+        """
+        if not self.next:
+            raise ContinuationLinkError("No next link set")
+
+        if not self.graphql_schema:
+            assert self.allow_introspection, "Introspection is not allowed"
+            self.graphql_schema = await self.introspect(operation)
+
         errors = validate(self.graphql_schema, operation.document_node)
-
         if len(errors) > 0:
             raise ValidationError(
                 f"{operation} does not comply with the schema!\n Errors: \n\n"
                 + "\n".join([e.message for e in errors])
             )
 
-    async def aexecute(
-        self, operation: Operation, **kwargs
-    ) -> AsyncIterator[GraphQLResult]:
-        if not self.graphql_schema:
-            await self.aload_schema(operation)
-
-        self.validate(operation)
-        async for result in self.next.aexecute(operation, **kwargs):
+        async for result in self.next.aexecute(operation):
             yield result
 
     class Config:
+        """Config for pydantic"""
+
         arbitrary_types_allowed = True

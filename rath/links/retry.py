@@ -1,6 +1,5 @@
-from typing import AsyncIterator, Awaitable, Callable, Optional
+from typing import AsyncIterator, Optional
 
-from pydantic import Field
 from rath.links.base import ContinuationLink
 from rath.operation import (
     GraphQLException,
@@ -8,9 +7,9 @@ from rath.operation import (
     Operation,
     SubscriptionDisconnect,
 )
-from rath.links.errors import AuthenticationError
 import logging
 import asyncio
+from rath.errors import NotComposedError
 
 logger = logging.getLogger(__name__)
 
@@ -26,12 +25,30 @@ class RetryLink(ContinuationLink):
     """The number of seconds to wait before retrying the operation."""
 
     async def aexecute(
-        self, operation: Operation, retry=0, **kwargs
+        self, operation: Operation, retry: int = 0
     ) -> AsyncIterator[GraphQLResult]:
+        """Executes an operation against the link
+
+        This link will retry the operation if it fails.
+        It will retry the operation a maximum of maximum_retry_attempts times.
+        If a sleep_interval is set, it will wait that many seconds before retrying.
+
+        Parameters
+        ----------
+        operation : Operation
+            The operation to execute
+
+        Yields
+        ------
+        GraphQLResult
+            The result of the operation
+        """
+
+        if not self.next:
+            raise NotComposedError("No next link set")
 
         try:
-
-            async for result in self.next.aexecute(operation, **kwargs):
+            async for result in self.next.aexecute(operation):
                 yield result
 
         except SubscriptionDisconnect as e:
@@ -43,9 +60,11 @@ class RetryLink(ContinuationLink):
                 await asyncio.sleep(self.sleep_interval)
 
             logger.info(f"Subscription {operation} disconnected. Retrying {retry}")
-            async for result in self.aexecute(operation, retry=retry + 1, **kwargs):
+            async for result in self.aexecute(operation, retry=retry + 1):
                 yield result
 
     class Config:
+        """pydantic config for the link"""
+
         underscore_attrs_are_private = True
         arbitary_types_allowed = True

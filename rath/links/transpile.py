@@ -1,18 +1,15 @@
 from asyncio.log import logger
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, Optional
 from graphql import (
     ListTypeNode,
     NamedTypeNode,
     NonNullTypeNode,
     OperationDefinitionNode,
-    VariableNode,
+    TypeNode,
 )
 from pydantic import BaseModel, Field
 from rath.links.parsing import ParsingLink
 from rath.operation import Operation
-import logging
-
-logger = logging.getLogger(__name__)
 
 
 class TranspileHandler(BaseModel):
@@ -31,6 +28,8 @@ class TranspileHandler(BaseModel):
     parser: Callable[[Any], Any] = Field(exclude=True)
 
     class Config:
+        """pydantic config"""
+
         arbitrary_types_allowed = True
 
 
@@ -46,6 +45,8 @@ class ListTranspileHandler(BaseModel):
     parser: Callable[[Any, int], Any] = Field(exclude=True)
 
     class Config:
+        """pydantic config"""
+
         arbitrary_types_allowed = True
 
 
@@ -69,8 +70,8 @@ class TranspileRegistry(BaseModel):
         self,
         graphql_type: str,
         predicate: Callable[[Any], bool],
-        name=None,
-    ):
+        name: Optional[str] = None,
+    ) -> Callable:
         """A Decorator for registering a TranspileHandler
 
         If acting on a List of this type, the handle_list parameter should be set to True.
@@ -91,7 +92,7 @@ class TranspileRegistry(BaseModel):
             name (_type_, optional): A name for this hanlder. Defaults to the function name.
         """
 
-        def decorator(func):
+        def decorator(func: Callable) -> Callable:
             """The decorator function
 
             Args:
@@ -113,9 +114,9 @@ class TranspileRegistry(BaseModel):
     def register_list(
         self,
         graphql_type: str,
-        predicate: Callable[[Any, str], bool],
-        name=None,
-    ):
+        predicate: Callable[[Any, int], bool],
+        name: Optional[str] = None,
+    ) -> Callable:
         """A Decorator for registering a TranspileHandler
 
         If acting on a List of this type, the handle_list parameter should be set to True.
@@ -134,9 +135,9 @@ class TranspileRegistry(BaseModel):
             predicate (Callable[[Any], bool]): A predicate Function
             handle_list (bool, optional): Should we act on lists of this type. Defaults to False.
             name (_type_, optional): A name for this hanlder. Defaults to the function name.
-        """
+        """  # noqa: E501
 
-        def decorator(func):
+        def decorator(func: Callable) -> Callable:
             """The decorator function
 
             Args:
@@ -158,22 +159,23 @@ class TranspileRegistry(BaseModel):
 
 
 def recurse_transpile(
-    key,
-    var: VariableNode,
+    key: str,
+    var: TypeNode,
     value: Any,
     registry: TranspileRegistry,
-    in_list=0,
-    strict=False,
-):
+    in_list: int = 0,
+    strict: bool = False,
+) -> Any:
     """Recurse Transpile a variable according to a registry and
     its definition
 
     Args:
-        key (_type_): The key of the variable
+        key (str): The key of the variable
         var (VariableNode): The variable definition node correspoin to this variable
         value (Any): The to transpile valued
         registry (TranspileRegistry): The transpile registry to use
-        in_list (bool, optional): Recursive Parameter. That will be set to the list depth. Defaults to False.
+        in_list (bool, optional): Recursive Parameter. That will be set to the list depth.
+                                 Defaults to False.
         strict (bool, optional): Should we error on predicate errors. Defaults to False.
 
     Raises:
@@ -204,7 +206,8 @@ def recurse_transpile(
                                     f"Handler {handler} predicate failed"
                                 ) from e
                             logger.warning(
-                                f"Handler {handler} failed on predicating {value}. Please check your predicate for edge cases"
+                                f"Handler {handler} failed on predicating {value}."
+                                "Please check your predicate for edge cases"
                             )
                             continue
 
@@ -212,16 +215,18 @@ def recurse_transpile(
                             parsed_value = handler.parser(value, in_list)
                             assert (
                                 parsed_value is not None
-                            ), f"Handler {handler} failed on parsing {value}. Please check your parser for edge cases"
+                            ), f"Handler {handler} failed on parsing {value} Please check your parser for edge cases"
                             return parsed_value
 
                 return value
 
             else:
                 if var.name.value in registry.item_handlers:
-                    for k, handler in registry.item_handlers[var.name.value].items():
+                    type_handlers = registry.item_handlers[var.name.value]
+
+                    for key, item_handler in type_handlers.items():
                         try:
-                            predicate = handler.predicate(value)
+                            predicate = item_handler.predicate(value)
                         except Exception as e:
                             if strict:
                                 raise Exception(f"Handler {handler} failed with {e}")
@@ -230,7 +235,9 @@ def recurse_transpile(
                             )
                             continue
                         if predicate:
-                            parsed_value = [handler.parser(value) for value in value]
+                            parsed_value = [
+                                item_handler.parser(value) for value in value
+                            ]
                             assert (
                                 parsed_value is not None
                             ), f"Handler {handler} failed on parsing {value}. Please check your parser for edge cases"
@@ -249,7 +256,7 @@ def transpile(
     op: OperationDefinitionNode,
     variables: Dict[str, Any],
     registry: TranspileRegistry,
-    strict=False,
+    strict: bool = False,
 ) -> Dict[str, Any]:
     """Transpile
 
@@ -259,7 +266,8 @@ def transpile(
     Args:
         op (OperationDefinitionNode): The operation definition node,
         registry (TranspileRegistry): The registry
-        strict (bool, optional): Should we fail if a handler predicate fails. Defaults to False.
+        strict (bool, optional): Should we fail if a handler predicate fails. Defaults
+        to False.
 
     Returns:
         Dict: The transpiled variables
@@ -273,6 +281,7 @@ def transpile(
     transpiled_variables = {
         key: recurse_transpile(key, variable, variables[key], registry, strict=strict)
         for key, variable in variable_nodes.items()
+        if isinstance(variable, TypeNode)
     }
 
     return transpiled_variables
@@ -294,6 +303,21 @@ class TranspileLink(ParsingLink):
     strict: bool = False
 
     async def aparse(self, operation: Operation) -> Operation:
+        """Parse an operation
+
+        This method will transpile the variables dict, according to the registry.
+
+
+        Parameters
+        ----------
+        operation : Operation
+            The operation to transpile
+
+        Returns
+        -------
+        Operation
+            The transpiled operation
+        """
         operation.variables = transpile(
             operation.node, operation.variables, self.registry, self.strict
         )

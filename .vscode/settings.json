@@ -37,5 +37,9 @@
   "python.linting.pylintEnabled": true,
   "python.linting.pylintArgs": ["--enable=W0614"],
   "errorLens.enabledDiagnosticLevels": ["error"],
-  "python.linting.enabled": false
+  "python.linting.enabled": false,
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter"
+  },
+  "python.formatting.provider": "none"
 }

@@ -1,17 +1,19 @@
-from typing import Awaitable, Callable, Optional
 from herre.herre import Herre
-from rath.links.aiohttp import AIOHttpLink
 from rath.links.auth import AuthTokenLink
-from herre import current_herre
+from rath.operation import Operation
 
 
 class HerreAuthLink(AuthTokenLink):
-    herre: Optional[Herre]
-    token_loader: Optional[Callable[[], Awaitable[str]]]
-    token_refresher: Optional[Callable[[], Awaitable[str]]]
+    """HerreAuthLink is a link that retrieves a token from herre and sends it to the next link."""
 
-    async def aconnect(self):
-        self.herre = self.herre or current_herre.get()
-        self.token_loader = self.herre.aget_token
-        self.token_refresher = self.herre.arefresh_token
-        return await super().aconnect()
+    herre: Herre
+
+    async def aload_token(self, operation: Operation) -> str:
+        """Retrieves the token from herre"""
+        herre = self.herre
+        return await herre.aget_token()
+
+    async def arefresh_token(self, operation: Operation) -> str:
+        """Refreshes the token from herre"""
+        herre = self.herre
+        return await herre.arefresh_token()

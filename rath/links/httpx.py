@@ -1,20 +1,28 @@
-from datetime import datetime
 from http import HTTPStatus
 import json
-from ssl import SSLContext
-from typing import Any, Dict, List, Type
+from typing import Any, Dict, List, Type, AsyncIterator
 import httpx
-import aiohttp
 from graphql import OperationType
 from pydantic import Field
 from rath.operation import GraphQLException, GraphQLResult, Operation
 from rath.links.base import AsyncTerminatingLink
 from rath.links.errors import AuthenticationError
 import logging
-import certifi
-import ssl
+from rath.links.types import Payload
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
+
+
+class DateTimeEncoder(json.JSONEncoder):
+    """DateTimeEncoder is a JSONEncoder that extends the default python json decoder to serialize"""
+
+    def default(self, o):  # noqa
+        """Override the default method to serialize datetime objects to ISO 8601 strings"""
+        if isinstance(o, datetime):
+            return o.isoformat()
+
+        return json.JSONEncoder.default(self, o)
 
 
 class HttpxLink(AsyncTerminatingLink):
@@ -27,17 +35,27 @@ class HttpxLink(AsyncTerminatingLink):
         default_factory=lambda: (HTTPStatus.FORBIDDEN,)
     )
     """auth_errors is a list of HTTPStatus codes that indicate an authentication error."""
+    json_encoder: Type[json.JSONEncoder] = Field(default=DateTimeEncoder, exclude=True)
 
-    _client = None
+    async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
+        """Executes an operation against the link
 
-    async def __aenter__(self) -> None:
-        self._client = await httpx.AsyncClient().__aenter__()
+        This link will create a new httpx session for each request. While
+        we could also reuse the session, we currently don't do this. If
+        you feel like this should be changed, please open an issue.
 
-    async def __aexit__(self, *args, **kwargs) -> None:
-        await self._client.__aexit__(*args, **kwargs)
+        Parameters
+        ----------
+        operation : Operation
+            The operation to execute
 
-    async def aexecute(self, operation: Operation) -> GraphQLResult:
-        payload = {"query": operation.document}
+        Yields
+        ------
+        GraphQLResult
+            The result of the operation
+        """
+
+        payload: Payload = {"query": operation.document}
 
         if operation.node.operation == OperationType.SUBSCRIPTION:
             raise NotImplementedError(
@@ -69,30 +87,32 @@ class HttpxLink(AsyncTerminatingLink):
             payload["variables"] = operation.variables
             post_kwargs = {"json": payload}
 
-        response = await self._client.post(
-            self.endpoint_url, headers=operation.context.headers, **post_kwargs
-        )
+        async with httpx.AsyncClient() as client:
 
-        if response.status_code in self.auth_errors:
-            raise AuthenticationError(
-                f"Token Expired Error {operation.context.headers}"
+            response = await client.post(
+                self.endpoint_url, headers=operation.context.headers, **post_kwargs
             )
 
-        if response.status_code == HTTPStatus.OK:
-
-            json_response = response.json()
-
-            if "errors" in json_response:
-                raise GraphQLException(
-                    "\n".join([e["message"] for e in json_response["errors"]])
+            if response.status_code in self.auth_errors:
+                raise AuthenticationError(
+                    f"Token Expired Error {operation.context.headers}"
                 )
 
-            if "data" not in json_response:
+            if response.status_code == HTTPStatus.OK:
+                json_response = response.json()
 
-                raise Exception(f"Response does not contain data {json_response}")
+                if "errors" in json_response:
+                    raise GraphQLException(
+                        "\n".join([e["message"] for e in json_response["errors"]])
+                    )
 
-            yield GraphQLResult(data=json_response["data"])
+                if "data" not in json_response:
+                    raise Exception(f"Response does not contain data {json_response}")
+
+                yield GraphQLResult(data=json_response["data"])
 
     class Config:
+        """the config for the link"""
+
         arbitrary_types_allowed = True
         underscore_attrs_are_private = True

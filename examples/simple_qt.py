@@ -4,13 +4,13 @@ from rath.links.validate import ValidatingLink
 from rath.links import compose
 from rath import Rath
 from rath.qt import QtRathQuery
-from PyQt5 import QtWidgets, QtCore
-from koil.qt import QtKoil, QtRunner
+from PyQt5 import QtWidgets
+from koil.qt import QtKoil
 from countries.schema import Countries
 
 
 class QtRathWidget(QtWidgets.QWidget):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.koil = QtKoil(parent=self)
         self.koil.enter()

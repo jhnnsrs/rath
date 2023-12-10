@@ -6,10 +6,18 @@ title: links.errors
 ## LinkError Objects
 
 ```python
-class LinkError(Exception)
+class LinkError(RathException)
 ```
 
-Base class for all transport errors.
+Base class for all link errors.
+
+## LinkNotConnectedError Objects
+
+```python
+class LinkNotConnectedError(LinkError)
+```
+
+LinkNotConnectedError is raised when the link is not connected and autoload is set to false.
 
 ## TerminatingLinkError Objects
 

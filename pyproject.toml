@@ -1,33 +1,33 @@
 [tool.poetry]
 name = "rath"
-version = "0.3.4"
+version = "0.5.0a0"
 description = "async transport-agnostic graphql client"
 authors = ["jhnnsrs <jhnnsrs@gmail.com>"]
 readme = "README.md"
 packages = [{ include = "rath" }]
 
 [tool.poetry.dependencies]
-python = "^3.7"
-koil = ">=0.2.10"
+python = "^3.8"
+koil = ">=0.3.5"
 graphql-core = "^3.2.0"
 pydantic = "^1.9.0"
 websockets = { version = "^10.2", optional = true }
 aiohttp = { version = "^3.8.2", optional = true }
 certifi = { version = ">2021", optional = true }
 httpx = { version = "^0.23.0", optional = true }
+cryptography = { version = "^41.0.3", optional = true }
 
 [tool.poetry.extras]
 websockets = ["websockets"]
 aiohttp = ["aiohttp", "certifi"]
 httpx = ["httpx"]
+signing = ["cryptography"]
 
 
 [tool.poetry.group.dev.dependencies]
 httpx = "^0.23.0"
 autoflake = "^1.7.7"
 pytest = "^7.2.0"
-PyQtWebEngine = "^5.15.5"
-PyQt5 = "^5.15.6"
 testcontainers = "^3.7.0"
 pytest-qt = "^4.2.0"
 pytest-asyncio = "^0.20.2"
@@ -36,10 +36,54 @@ aiohttp = "^3.8.3"
 websockets = "^10.4"
 black = "^22.10.0"
 pytest-cov = "^4.0.0"
+ruff = "^0.0.282"
+cryptography = "^41.0.3"
+pyjwt = "^2.8.0"
+fakts = "^0.3.48"
+herre = "^0.3.31"
+mypy = "^1.7.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.mypy]
+exclude = ["venv/", "tests/", "examples/"]
+ignore_missing_imports = true
+
+[tool.ruff]
+extend-select = ["ANN", "D1"]
+extend-ignore = ["ANN101", "ANN002", "ANN003", "D100", "ANN401"]
+
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+    "tests",
+    "examples",
+]
+
+# Same as Black.
+line-length = 300
+
 
 [[tool.pydoc-markdown.loaders]]
 type = "python"

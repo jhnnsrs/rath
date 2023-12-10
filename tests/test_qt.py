@@ -4,15 +4,13 @@ from rath.links.validate import ValidatingLink
 from rath.links import compose
 from rath import Rath
 from PyQt5 import QtWidgets, QtCore
-from koil.qt import QtKoil, QtRunner
+from koil.qt import QtRunner
 from .apis.countries import acountries
 
 
 class QtRathWidget(QtWidgets.QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.koil = QtKoil(parent=self)
-        self.koil.enter()
 
         public_link = AIOHttpLink(endpoint_url="https://countries.trevorblades.com/")
         validating_link = ValidatingLink(allow_introspection=True)
@@ -40,8 +38,6 @@ class QtRathWidget(QtWidgets.QWidget):
 class QtFuncWidget(QtWidgets.QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.koil = QtKoil(parent=self)
-        self.koil.enter()
 
         self.button_greet = QtWidgets.QPushButton("Greet")
         self.greet_label = QtWidgets.QLabel("")

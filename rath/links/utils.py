@@ -1,11 +1,11 @@
-from typing import Dict, Any, Callable
+from typing import Dict, Any, Callable, Optional
 
 from rath.operation import Operation
 
 
 def recurse_parse_variables(
     variables: Dict,
-    predicate: Callable[[str, Any], bool],
+    predicate: Callable[[Optional[str], Any], bool],
     apply: Callable[[Any], Any],
 ) -> Dict:
     """Parse Variables
@@ -22,7 +22,7 @@ def recurse_parse_variables(
         Dict: _description_
     """
 
-    def recurse_extract(obj, path: str = None):
+    def recurse_extract(obj: Any, path: Optional[str] = None) -> Any:
         """
         recursively traverse obj, doing a deepcopy, but
         replacing any file-like objects with nulls and
@@ -30,18 +30,18 @@ def recurse_parse_variables(
         """
 
         if isinstance(obj, list):
-            nulled_obj = []
+            nulled_list = []
             for key, value in enumerate(obj):
                 value = recurse_extract(
                     value,
-                    f"{path}.{key}" if path else key,
+                    path=f"{path}.{key}" if path else str(key),
                 )
-                nulled_obj.append(value)
-            return nulled_obj
+                nulled_list.append(value)
+            return nulled_list
         elif isinstance(obj, dict):
             nulled_obj = {}
             for key, value in obj.items():
-                value = recurse_extract(value, f"{path}.{key}" if path else key)
+                value = recurse_extract(value, f"{path}.{key}" if path else str(key))
                 nulled_obj[key] = value
             return nulled_obj
         elif predicate(path, obj):
@@ -57,7 +57,7 @@ def recurse_parse_variables(
 def recurse_parse_variables_with_operation(
     variables: Dict,
     operation: Operation,
-    predicate: Callable[[str, Any], bool],
+    predicate: Callable[[Optional[str], Any], bool],
     apply: Callable[[Any], Any],
 ) -> Dict:
     """Parse Variables
@@ -74,7 +74,7 @@ def recurse_parse_variables_with_operation(
         Dict: _description_
     """
 
-    def recurse_extract(obj, path: str = None):
+    def recurse_extract(obj: Any, path: Optional[str] = None) -> Any:
         """
         recursively traverse obj, doing a deepcopy, but
         replacing any file-like objects with nulls and
@@ -82,18 +82,18 @@ def recurse_parse_variables_with_operation(
         """
 
         if isinstance(obj, list):
-            nulled_obj = []
+            nulled_list = []
             for key, value in enumerate(obj):
                 value = recurse_extract(
                     value,
-                    f"{path}.{key}" if path else key,
+                    path=f"{path}.{key}" if path else str(key),
                 )
-                nulled_obj.append(value)
-            return nulled_obj
+                nulled_list.append(value)
+            return nulled_list
         elif isinstance(obj, dict):
             nulled_obj = {}
             for key, value in obj.items():
-                value = recurse_extract(value, f"{path}.{key}" if path else key)
+                value = recurse_extract(value, f"{path}.{key}" if path else str(key))
                 nulled_obj[key] = value
             return nulled_obj
         elif predicate(path, obj):

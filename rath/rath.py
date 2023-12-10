@@ -1,6 +1,6 @@
 from koil.composition import KoiledModel
 from pydantic import Field
-from rath.errors import NotConnectedError, NotEnteredError
+from rath.errors import NotConnectedError
 from rath.links.base import TerminatingLink
 from typing import (
     AsyncIterator,
@@ -14,11 +14,11 @@ from graphql import (
     DocumentNode,
 )
 from rath.operation import GraphQLResult, opify
-from contextvars import ContextVar
+from contextvars import ContextVar, Token
 from koil import unkoil_gen, unkoil
 
 
-current_rath = ContextVar("current_rath")
+current_rath: ContextVar[Optional["Rath"]] = ContextVar("current_rath", default=None)
 
 
 class Rath(KoiledModel):
@@ -36,64 +36,36 @@ class Rath(KoiledModel):
     Example:
         ```python
         from rath import Rath
-        from rath.links.retriy import RetryLink
-        from rathlinks.aiohttp import  AioHttpLink
+        from rath.links.retry import RetryLink
+        from rathlinks.aiohttp import AIOHttpLink
 
         retry = RetryLink()
-        http = AioHttpLink("https://graphql-pokemon.now.sh/graphql")
+        http = AIOHttpLink(endpoint_url"https://graphql-pokemon.now.sh/graphql")
 
         rath = Rath(link=compose(retry, link))
-        async with rath as rath:
-            await rath.aquery(...)
+        async with rath as r:
+            await r.aquery(...)
         ```
 
     """
 
-
-
-
-    link: Optional[TerminatingLink] = None
+    link: TerminatingLink = Field(
+        ...,
+        description="The terminating link used to send operations to the server. Can be a composed link chain.",
+    )
     """The terminating link used to send operations to the server. Can be a composed link chain."""
 
-    _connected = False
     _entered = False
-    _context_token = None
-    auto_connect = True
-    """If true, the Rath will automatically connect to the server when a query is executed."""
-    connect_on_enter: bool = False
-    """If true, the Rath will automatically connect to the server when entering the context manager."""
-
-    async def aconnect(self):
-        """Connect to the server.
-
-        This method needs to be called within the context of a Rath instance,
-        to always ensure that the Rath is disconnected when the context is
-        exited.
-
-        This method is called automatically when a query is executed if
-        `auto_connect` is set to True. 
-
-        Raises:
-            NotEnteredError: Raises an error if the Rath is not entered.
-        """
-        if not self._entered:
-            raise NotEnteredError(
-                "You need to use enter `async with Rath(...) as rath`"
-            )
-        await self.link.aconnect()
-        self._connected = True
-
-    async def adisconnect(self):
-        """Disconnect from the server."""
-        await self.link.adisconnect()
-        self._connected = False
+    """An internal flag flag that indicates whether the Rath is currently in the context manager."""
+    _context_token: Optional[Token] = None
+    """A context token that is used to keep track of the current rath in the context manager."""
 
     async def aquery(
         self,
         query: Union[str, DocumentNode],
-        variables: Dict[str, Any] = None,
-        headers: Dict[str, Any] = None,
-        operation_name: str =None,
+        variables: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, Any]] = None,
+        operation_name: Optional[str] = None,
         **kwargs,
     ) -> GraphQLResult:
         """Query the GraphQL API.
@@ -115,26 +87,28 @@ class Rath(KoiledModel):
         Returns:
             GraphQLResult: The result of the query
         """
-
-
-        if not self._connected:
-            if not self.auto_connect:
-                raise NotConnectedError(
-                    "Rath is not connected. Please use `async with Rath(..., auto_connect=True) as rath` or use `await rath.aconnect() before`"
-                )
-            await self.aconnect()
-
         op = opify(query, variables, headers, operation_name, **kwargs)
 
+        result = None
+
         async for data in self.link.aexecute(op):
-            return data
+            result = data
+            break
+
+        if not result:
+            raise NotConnectedError("Could not retrieve data from the server.")
+            # This is to account for the fact that mypy apparently doesn't
+            # understand that a return statement in a generator is valid.
+            # This is a workaround to make mypy happy.
+
+        return result
 
     def query(
         self,
         query: Union[str, DocumentNode],
-        variables: Dict[str, Any] = None,
-        headers: Dict[str, Any] = None,
-        operation_name: str =None,
+        variables: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, Any]] = None,
+        operation_name: Optional[str] = None,
         **kwargs,
     ) -> GraphQLResult:
         """Query the GraphQL API.
@@ -161,9 +135,9 @@ class Rath(KoiledModel):
     def subscribe(
         self,
         query: str,
-        variables: Dict[str, Any] = None,
-        headers: Dict[str, Any] = None,
-        operation_name: str =None,
+        variables: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, Any]] = None,
+        operation_name: Optional[str] = None,
         **kwargs,
     ) -> Iterator[GraphQLResult]:
         """Subscripe to a GraphQL API.
@@ -183,7 +157,7 @@ class Rath(KoiledModel):
 
         Yields:
             Iterator[GraphQLResult]: The result of the query as an async iterator
-        """ 
+        """
         return unkoil_gen(
             self.asubscribe, query, variables, headers, operation_name, **kwargs
         )
@@ -191,9 +165,9 @@ class Rath(KoiledModel):
     async def asubscribe(
         self,
         query: str,
-        variables: Dict[str, Any] = None,
-        headers: Dict[str, Any] = {},
-        operation_name=None,
+        variables: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, Any]] = None,
+        operation_name: Optional[str] = None,
         **kwargs,
     ) -> AsyncIterator[GraphQLResult]:
         """Subscripe to a GraphQL API.
@@ -213,32 +187,27 @@ class Rath(KoiledModel):
 
         Yields:
             Iterator[GraphQLResult]: The result of the query as an async iterator
-        """        """"""
-        if not self._connected:
-            if not self.auto_connect:
-                raise NotConnectedError(
-                    "Rath is not connected. Please use `async with Rath(..., auto_connect=True) as rath` or use `await rath.aconnect() before`"
-                )
-            await self.aconnect()
+        """
 
         op = opify(query, variables, headers, operation_name, **kwargs)
         async for data in self.link.aexecute(op):
             yield data
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "Rath":
+        """Enters the context manager of the link"""
         self._entered = True
         self._context_token = current_rath.set(self)
         await self.link.__aenter__()
         return self
 
-    async def __aexit__(self, *args, **kwargs):
-        if self._connected:
-            await self.adisconnect()
-
+    async def __aexit__(self, *args, **kwargs) -> None:
+        """Exits the context manager of the link"""
         await self.link.__aexit__(*args, **kwargs)
         self._entered = False
         if self._context_token:
             current_rath.set(None)
 
     class Config:
+        """Configures the Rath model"""
+
         underscore_attrs_are_private = True
