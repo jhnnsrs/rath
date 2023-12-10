@@ -14,7 +14,6 @@ class QtRathQuery(QtRunner):
     TODO: This should be more straightforward to use.
     """
 
-
     started: QtCore.Signal = QtCore.Signal()
     errored: QtCore.Signal = QtCore.Signal(Exception)
     cancelled: QtCore.Signal = QtCore.Signal()
@@ -30,6 +29,7 @@ class QtRathQuery(QtRunner):
         rath : Rath
             The rath instance to run the operation on
         """
+
         async def coro(*args, **kwargs) -> BaseModel:
             """wrapper coroutine to run the operation on the rath instance"""
             assert rath is not None, "No rath found"
@@ -58,6 +58,6 @@ class QtRathQuery(QtRunner):
 
         """
 
-        arg = self.operation.Arguments(**kwargs).dict() # type: ignore
+        arg = self.operation.Arguments(**kwargs).dict()  # type: ignore
         # TODO: This should be more straightforward to use, and typed
         return super().run(arg)

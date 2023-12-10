@@ -12,7 +12,6 @@ Rath is built on top of [pydantic](https://pydantic-docs.helpmanual.io/).
 """
 
 
-
 from .rath import Rath
 
 __all__ = ["Rath"]

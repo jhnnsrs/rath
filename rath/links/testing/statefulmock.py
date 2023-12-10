@@ -75,7 +75,7 @@ class AsyncStatefulMockLink(AsyncTerminatingLink):
         return v
 
     async def __aenter__(self) -> None:
-        """ Aenter the link and set up the internal state"""
+        """Aenter the link and set up the internal state"""
         self._connection_lock = asyncio.Lock()
         return await super().__aenter__()
 
@@ -83,7 +83,7 @@ class AsyncStatefulMockLink(AsyncTerminatingLink):
         """Connect the link and set up the internal state"""
         self._futures = {}
         self._inqueue = asyncio.Queue()
-        _connection_future = asyncio.Future() # type: ignore
+        _connection_future = asyncio.Future()  # type: ignore
         self._connection_task = asyncio.create_task(self.resolving(_connection_future))
         await _connection_future
 
@@ -248,5 +248,6 @@ class AsyncStatefulMockLink(AsyncTerminatingLink):
 
     class Config:
         """Pydantic Config"""
+
         arbitrary_types_allowed = True
         underscore_attrs_are_private = True

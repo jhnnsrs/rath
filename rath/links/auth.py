@@ -62,7 +62,7 @@ class AuthTokenLink(ContinuationLink):
         raise Exception("No Token refresher specified")
 
     async def aexecute(
-        self, operation: Operation, retry: int =0
+        self, operation: Operation, retry: int = 0
     ) -> AsyncIterator[GraphQLResult]:
         """Executes and forwards an operation to the next link.
 
@@ -102,6 +102,7 @@ class AuthTokenLink(ContinuationLink):
 
     class Config:
         """pydantic configuration for the AuthTokenLink"""
+
         underscore_attrs_are_private = True
         arbitary_types_allowed = True
 

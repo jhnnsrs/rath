@@ -2,10 +2,10 @@ from herre.herre import Herre
 from rath.links.auth import AuthTokenLink
 from rath.operation import Operation
 
-class HerreAuthLink(AuthTokenLink):
-    """HerreAuthLink is a link that retrieves a token from herre and sends it to the next link.
 
-    """
+class HerreAuthLink(AuthTokenLink):
+    """HerreAuthLink is a link that retrieves a token from herre and sends it to the next link."""
+
     herre: Herre
 
     async def aload_token(self, operation: Operation) -> str:

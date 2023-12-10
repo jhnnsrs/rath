@@ -45,18 +45,20 @@ WEBSOCKET_CANCELLED = "websocket_cancelled"
 
 class CorrectableConnectionFail(TerminatingLinkError):
     """A CorrectableConnectionFail is raised when a connection fails, but can be recovered from"""
+
     pass
 
 
 class DefiniteConnectionFail(TerminatingLinkError):
     """A DefiniteConnectionFail is raised when a connection fails, and cannot be recovered from"""
+
     pass
 
 
 class InvalidPayload(TerminatingLinkError):
     """A InvalidPayload is raised when a invalid payload is received"""
-    pass
 
+    pass
 
 
 InitialConnectPayload = Dict[str, Any]
@@ -90,9 +92,7 @@ class GraphQLWSLink(AsyncTerminatingLink):
     )
     """ A function that is called before the connection is established. If an exception is raised, the connection is not established. Return is ignored."""
 
-    on_pong: Optional[Callable[[PongPayload], Awaitable[None]]] = Field(
-        exclude=True
-    )
+    on_pong: Optional[Callable[[PongPayload], Awaitable[None]]] = Field(exclude=True)
     """ A function that is called before a pong is received. If an exception is raised, the connection is not established. Return is ignored."""
     heartbeat_interval_ms: Optional[int] = None
     """ The heartbeat interval in milliseconds (None means no heartbeats are 
@@ -307,7 +307,9 @@ class GraphQLWSLink(AsyncTerminatingLink):
             logger.debug("Sending Task sucessfully Cancelled")  #
             raise e
 
-    async def receiving(self, client: Any, initial_connection_future: asyncio.Future) -> None:
+    async def receiving(
+        self, client: Any, initial_connection_future: asyncio.Future
+    ) -> None:
         """The receiving task
 
         This method is the receiving task. It will receive messages from the websocket
@@ -338,7 +340,9 @@ class GraphQLWSLink(AsyncTerminatingLink):
             logger.warning("Websocket excepted. Trying to recover", exc_info=True)
             raise e
 
-    async def broadcast(self, message: dict, initial_connection_future: asyncio.Future) -> None:
+    async def broadcast(
+        self, message: dict, initial_connection_future: asyncio.Future
+    ) -> None:
         """Broadcasts a message to all subscriptions"""
         type = message["type"]
 
@@ -469,5 +473,6 @@ class GraphQLWSLink(AsyncTerminatingLink):
 
     class Config:
         """pydantic config"""
+
         arbitrary_types_allowed = True
         underscore_attrs_are_private = True

@@ -7,10 +7,12 @@ from rath.links.graphql_ws import GraphQLWSLink
 
 class WebsocketHttpConfig(Fakt):
     """A WebsocketHttpConfig is a Fakt that can be used to configure the aiohttp client."""
+
     ws_endpoint_url: str
 
     class Config:
         """pydantic config"""
+
         group = "aiohttp"
 
 
@@ -22,6 +24,7 @@ class FaktsGraphQLWSLink(GraphQLWSLink):
     from a passed fakts context.
 
     """
+
     fakts: Fakts
     """The fakts context to use for configuration"""
     ws_endpoint_url: Optional[str]  # type: ignore

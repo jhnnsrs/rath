@@ -29,6 +29,7 @@ class TranspileHandler(BaseModel):
 
     class Config:
         """pydantic config"""
+
         arbitrary_types_allowed = True
 
 
@@ -45,6 +46,7 @@ class ListTranspileHandler(BaseModel):
 
     class Config:
         """pydantic config"""
+
         arbitrary_types_allowed = True
 
 
@@ -68,7 +70,7 @@ class TranspileRegistry(BaseModel):
         self,
         graphql_type: str,
         predicate: Callable[[Any], bool],
-        name: Optional[str]=None,
+        name: Optional[str] = None,
     ) -> Callable:
         """A Decorator for registering a TranspileHandler
 
@@ -113,7 +115,7 @@ class TranspileRegistry(BaseModel):
         self,
         graphql_type: str,
         predicate: Callable[[Any, int], bool],
-        name: Optional[str] =None,
+        name: Optional[str] = None,
     ) -> Callable:
         """A Decorator for registering a TranspileHandler
 

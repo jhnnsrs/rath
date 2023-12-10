@@ -12,6 +12,7 @@ from turms.plugins.funcs import (
 
 class RathPluginConfig(FuncsPluginConfig):
     """RathPluginConfig is the configuration for the RathFuncsPlugin."""
+
     definitions: List[FunctionDefinition] = [
         FunctionDefinition(type=OperationType.MUTATION, use="rath.turms.funcs.execute"),
         FunctionDefinition(
@@ -45,5 +46,6 @@ class RathPluginConfig(FuncsPluginConfig):
 
 
 class RathFuncsPlugin(FuncsPlugin):
-    """ RathFuncsPlugin is a plugin that adds functions to the schema that execute operations using rath."""
+    """RathFuncsPlugin is a plugin that adds functions to the schema that execute operations using rath."""
+
     config: RathPluginConfig = Field(default_factory=RathPluginConfig)

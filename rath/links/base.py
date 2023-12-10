@@ -63,7 +63,7 @@ class AsyncTerminatingLink(TerminatingLink):
 
     def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
         """Executes an operation against the link
-        
+
         This is the main method of the link. It takes an operation and returns an AsyncIterator
         of GraphQLResults. This method should be implemented by subclasses. It is important
         that even if the operation is a query or mutation, this method should return an AsyncIterator
@@ -78,10 +78,8 @@ class AsyncTerminatingLink(TerminatingLink):
         ------
         GraphQLResult
             The result of the operation
-        
+
         """
-
-
 
         raise NotImplementedError("Your Async Transport needs to overwrite this method")
 
@@ -110,7 +108,7 @@ class ContinuationLink(Link):
 
     async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
         """Executes an operation against the NEXT link
-        
+
         This is the main method of the link. It takes an operation and returns an AsyncIterator
         of GraphQLResults. This method should be implemented by subclasses. It is important
         To note that a ContinuationLink should always delegate the operation to the next link
@@ -125,7 +123,7 @@ class ContinuationLink(Link):
         ------
         GraphQLResult
             The result of the operation
-        
+
         """
         if not self.next:
             raise NotComposedError("No next link set")

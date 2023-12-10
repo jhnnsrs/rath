@@ -45,6 +45,7 @@ class Operation(BaseModel):
 
     class Config:
         """Configures the operation model"""
+
         arbitrary_types_allowed = True
 
 
@@ -62,6 +63,7 @@ class GraphQLException(Exception):
 
 class SubscriptionDisconnect(GraphQLException):
     """SubscriptionDisconnect is raised when a subscription is disconnected."""
+
     pass
 
 

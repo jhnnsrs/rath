@@ -79,7 +79,6 @@ class SignLocalLink(AuthTokenLink):
 
         """
 
-
         payload = await self.aretrieve_payload(operation)
         token = jwt.encode(payload, key=self.private_key, algorithm="RS256")  # type: ignore
         # rsa.RSAPrivateKey should be correctly typed in pyjwt

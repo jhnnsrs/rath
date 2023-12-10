@@ -1,4 +1,4 @@
-from typing import AsyncIterator, Optional, cast,  Dict, Any, Type
+from typing import AsyncIterator, Optional, cast, Dict, Any, Type
 from graphql import (
     GraphQLSchema,
     build_ast_schema,
@@ -52,6 +52,7 @@ def schemify(
 
 class ValidationError(ContinuationLinkError):
     """ValidationError is raised when a validation error occurs"""
+
     pass
 
 
@@ -115,9 +116,7 @@ class ValidatingLink(ContinuationLink):
         async for result in self.next.aexecute(introspect_operation):
             return build_client_schema(cast(IntrospectionQuery, result.data))
 
-    async def aexecute(
-        self, operation: Operation
-    ) -> AsyncIterator[GraphQLResult]:
+    async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
         """Executes an operation against the link
 
         This link will validate the operation and then forward it to the next link,
@@ -152,4 +151,5 @@ class ValidatingLink(ContinuationLink):
 
     class Config:
         """Config for pydantic"""
+
         arbitrary_types_allowed = True

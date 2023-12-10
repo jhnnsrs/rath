@@ -17,8 +17,6 @@ FILE_CLASSES = (
 )
 
 
-
-
 ValidNestedTypes = Union[Dict[str, Any], List, Any]
 
 

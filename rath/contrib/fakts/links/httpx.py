@@ -6,11 +6,13 @@ from rath.operation import Operation
 
 
 class FaltsHttpXConfig(Fakt):
-    """ FaltsHttpXConfig"""
+    """FaltsHttpXConfig"""
+
     endpoint_url: str
 
     class Config:
         """pydantic config"""
+
         group = "aiohttp"
 
 
@@ -22,6 +24,7 @@ class FaktsHttpXLink(HttpxLink):
     from a passed fakts context.
 
     """
+
     endpoint_url: Optional[str]  # type: ignore
     fakts_group: str
     """The fakts group within the fakts context to use for configuration"""

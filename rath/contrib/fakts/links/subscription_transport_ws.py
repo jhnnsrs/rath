@@ -5,12 +5,15 @@ from fakts.fakts import Fakts
 from rath.links.subscription_transport_ws import SubscriptionTransportWsLink
 from rath.operation import Operation
 
+
 class WebsocketHttpConfig(Fakt):
-    """ WebsocketHttpConfig"""
+    """WebsocketHttpConfig"""
+
     ws_endpoint_url: str
 
     class Config:
         """pydantic config"""
+
         group = "aiohttp"
 
 
@@ -22,6 +25,7 @@ class FaktsWebsocketLink(SubscriptionTransportWsLink):
     from a passed fakts context.
 
     """
+
     fakts: Fakts
     """The fakts context to use for configuration"""
     ws_endpoint_url: Optional[str]  # type: ignore

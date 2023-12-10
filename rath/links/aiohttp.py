@@ -18,8 +18,9 @@ logger = logging.getLogger(__name__)
 
 
 class DateTimeEncoder(json.JSONEncoder):
-    """ DateTimeEncoder is a JSONEncoder that extends the default python json decoder to serialize"""
-    def default(self, o): # noqa
+    """DateTimeEncoder is a JSONEncoder that extends the default python json decoder to serialize"""
+
+    def default(self, o):  # noqa
         """Override the default method to serialize datetime objects to ISO 8601 strings"""
         if isinstance(o, datetime):
             return o.isoformat()
@@ -68,7 +69,7 @@ class AIOHttpLink(AsyncTerminatingLink):
 
         In the standard aiohttp transport, this method does nothing, as the
         connection is established when the request is sent.
-        
+
         """
         self._connected = True
 
@@ -164,5 +165,6 @@ class AIOHttpLink(AsyncTerminatingLink):
 
     class Config:
         """pydantic config"""
+
         arbitrary_types_allowed = True
         underscore_attrs_are_private = True

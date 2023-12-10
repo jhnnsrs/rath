@@ -7,7 +7,6 @@ from typing import (
     Dict,
     Any,
     Iterator,
-    
     Optional,
 )
 from typing import Union
@@ -195,16 +194,14 @@ class Rath(KoiledModel):
             yield data
 
     async def __aenter__(self) -> "Rath":
-        """Enters the context manager of the link
-        """
+        """Enters the context manager of the link"""
         self._entered = True
         self._context_token = current_rath.set(self)
         await self.link.__aenter__()
         return self
 
     async def __aexit__(self, *args, **kwargs) -> None:
-        """Exits the context manager of the link
-        """
+        """Exits the context manager of the link"""
         await self.link.__aexit__(*args, **kwargs)
         self._entered = False
         if self._context_token:
@@ -212,4 +209,5 @@ class Rath(KoiledModel):
 
     class Config:
         """Configures the Rath model"""
+
         underscore_attrs_are_private = True

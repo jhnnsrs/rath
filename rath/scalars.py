@@ -23,7 +23,7 @@ class ID(str):
         """Validate the ID"""
         if isinstance(v, BaseModel):
             if hasattr(v, "id"):
-                return cls(v.id) # type: ignore
+                return cls(v.id)  # type: ignore
             else:
                 raise TypeError("This needs to be a instance of BaseModel with an id")
 

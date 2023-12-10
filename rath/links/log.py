@@ -45,5 +45,6 @@ class LogLink(ContinuationLink):
 
     class Config:
         """pydantic config for the link"""
+
         underscore_attrs_are_private = True
         arbitary_types_allowed = True

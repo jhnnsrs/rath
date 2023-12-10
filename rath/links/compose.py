@@ -57,14 +57,14 @@ class ComposedLink(TerminatingLink):
         for link in self.links:
             await link.__aenter__()
 
-    async def __aexit__(self, *args, **kwargs)-> None:
+    async def __aexit__(self, *args, **kwargs) -> None:
         """Exit the links in reverse order"""
         for link in self.links:
             await link.__aexit__(*args, **kwargs)
 
     async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
         """Execute the first link
-        
+
         This is the main method of the link. It takes an operation and returns an AsyncIterator
         of GraphQLResults. This method should be implemented by subclasses. It is important
         """
@@ -121,6 +121,7 @@ class TypedComposedLink(TerminatingLink):
 
     class Config:
         """pydantic config"""
+
         underscore_attrs_are_private = True
 
 
