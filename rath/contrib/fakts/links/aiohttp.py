@@ -1,13 +1,13 @@
 """ Provides  a fakts implementaiton of the aiohttp link"""
 
 from typing import Any, Dict, Optional
-from fakts.fakt import Fakt
+from pydantic import BaseModel
 from fakts.fakts import Fakts
 from rath.links.aiohttp import AIOHttpLink
 from rath.operation import Operation
 
 
-class AioHttpConfig(Fakt):
+class AioHttpConfig(BaseModel):
     """AioHttpConfig
 
     AioHttpConfig is a Fakt that can be used to configure the aiohttp client.

@@ -1,19 +1,14 @@
 from typing import Any, Dict, Optional
-from fakts.fakt.base import Fakt
 from fakts.fakts import Fakts
 from rath.links.httpx import HttpxLink
 from rath.operation import Operation
+from pydantic import BaseModel
 
 
-class FaltsHttpXConfig(Fakt):
+class FaltsHttpXConfig(BaseModel):
     """FaltsHttpXConfig"""
 
     endpoint_url: str
-
-    class Config:
-        """pydantic config"""
-
-        group = "aiohttp"
 
 
 class FaktsHttpXLink(HttpxLink):
