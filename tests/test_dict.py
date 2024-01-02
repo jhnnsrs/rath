@@ -18,7 +18,6 @@ def mock_link():
 
 
 async def test_dicting(mock_link):
-
     link = DictingLink()
 
     class DictableX(BaseModel):

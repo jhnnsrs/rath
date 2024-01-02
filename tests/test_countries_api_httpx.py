@@ -14,7 +14,6 @@ def real_world_link():
 
 @pytest.mark.public
 async def test_query_async(real_world_link):
-
     rath = Rath(link=real_world_link)
 
     async with rath:
@@ -25,7 +24,6 @@ async def test_query_async(real_world_link):
 
 @pytest.mark.public
 def test_query_sync(real_world_link):
-
     rath = Rath(link=real_world_link)
 
     with rath:
@@ -36,7 +34,6 @@ def test_query_sync(real_world_link):
 
 @pytest.mark.public
 async def test_validation(real_world_link):
-
     link = ValidatingLink(allow_introspection=True)
 
     rath = Rath(link=compose(link, real_world_link))

@@ -5,7 +5,8 @@ from rath.links.parsing import ParsingLink
 class ShrinkingLink(ParsingLink):
 
     """Shrinking Link is a link that shrinks operation variables.
-    It traverses the variables dict, and converts any model that has a .ashrink() method to its id."""
+    It traverses the variables dict, and converts any model that has a .ashrink() method to its id.
+    """
 
     async def aparse(self, operation: Operation) -> Operation:
         """Parses an operation

@@ -14,7 +14,6 @@ def mock_link():
 
 
 async def test_query_async(mock_link):
-
     rath = Rath(link=mock_link)
 
     async with rath:
@@ -24,7 +23,6 @@ async def test_query_async(mock_link):
 
 
 def test_query_sync(mock_link):
-
     rath = Rath(link=mock_link)
 
     with rath:

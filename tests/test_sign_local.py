@@ -19,7 +19,7 @@ async def test_sign_local_link():
         return op.node.operation == OperationType.QUERY
 
     def has_token_header(op: Operation):
-        return op.context.headers.get("token") is not None
+        return op.context.headers.get("Authorization") is not None
 
     async def load_payload(operation: Operation):
         return {
@@ -30,6 +30,6 @@ async def test_sign_local_link():
         ComposedSignTokenLink(
             private_key="private_key.pem", payload_retriever=load_payload
         ),
-        AssertLink(assertions=[is_query]),
+        AssertLink(assertions=[has_token_header, is_query]),
     )
     await run_basic_query(x)
