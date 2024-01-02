@@ -29,7 +29,6 @@ def stateful_mock_link():
 
 
 async def test_aquery(mock_link_left, mock_link_right):
-
     rath = Rath(
         link=split(
             mock_link_left,
@@ -51,7 +50,6 @@ async def test_aquery(mock_link_left, mock_link_right):
 
 
 async def test_stateful_mock(stateful_mock_link):
-
     async with Rath(link=stateful_mock_link) as rath:
         await rath.aquery(
             """
@@ -66,9 +64,7 @@ async def test_stateful_mock(stateful_mock_link):
 
 
 def test_stateful_mock_sync(stateful_mock_link):
-
     with Rath(link=stateful_mock_link) as rath:
-
         rath.query(
             """
                     query {
@@ -81,7 +77,6 @@ def test_stateful_mock_sync(stateful_mock_link):
 
 
 async def test_asubscribe(mock_link_left, mock_link_right):
-
     rath = Rath(
         link=split(
             mock_link_left,
@@ -91,7 +86,6 @@ async def test_asubscribe(mock_link_left, mock_link_right):
     )
 
     async with rath as r:
-
         async for ev in r.asubscribe(
             """
             subscription {

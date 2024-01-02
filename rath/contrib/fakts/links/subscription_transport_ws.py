@@ -1,20 +1,14 @@
 from typing import Any, Dict, Optional
-
-from fakts.fakt.base import Fakt
+from pydantic import BaseModel
 from fakts.fakts import Fakts
 from rath.links.subscription_transport_ws import SubscriptionTransportWsLink
 from rath.operation import Operation
 
 
-class WebsocketHttpConfig(Fakt):
+class WebsocketHttpConfig(BaseModel):
     """WebsocketHttpConfig"""
 
     ws_endpoint_url: str
-
-    class Config:
-        """pydantic config"""
-
-        group = "aiohttp"
 
 
 class FaktsWebsocketLink(SubscriptionTransportWsLink):

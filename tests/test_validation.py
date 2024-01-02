@@ -63,11 +63,9 @@ def mock_link():
 
 
 async def test_validation(mock_link):
-
     link = ValidatingLink(schema_glob=build_relative_glob("/schemas/beasts.graphql"))
 
     async with Rath(link=compose(link, mock_link)) as r:
-
         await r.aquery(
             """
             query {
@@ -80,7 +78,6 @@ async def test_validation(mock_link):
 
 
 async def test_validation_error(mock_link):
-
     link = ValidatingLink(schema_dsl=schema)
 
     rath = Rath(link=compose(link, mock_link))

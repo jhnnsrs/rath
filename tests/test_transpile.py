@@ -40,7 +40,6 @@ async def test_transpile_async():
     )
 
     async with rath:
-
         x = await acreate_transpiled_beast(non_optional_parameter=1, vectors=[[2, 3]])
 
 
@@ -64,5 +63,4 @@ def test_transpile_sync():
         )
     )
     with rath:
-
         x = create_transpiled_beast(non_optional_parameter=1, vectors=[[2, 3]])

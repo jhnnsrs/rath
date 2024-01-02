@@ -88,7 +88,6 @@ class HttpxLink(AsyncTerminatingLink):
             post_kwargs = {"json": payload}
 
         async with httpx.AsyncClient() as client:
-
             response = await client.post(
                 self.endpoint_url, headers=operation.context.headers, **post_kwargs
             )

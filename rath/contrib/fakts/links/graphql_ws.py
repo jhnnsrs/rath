@@ -1,19 +1,14 @@
 from typing import Any, Dict, Optional
 
-from fakts.fakt.base import Fakt
+from pydantic import BaseModel
 from fakts.fakts import Fakts
 from rath.links.graphql_ws import GraphQLWSLink
 
 
-class WebsocketHttpConfig(Fakt):
+class WebsocketHttpConfig(BaseModel):
     """A WebsocketHttpConfig is a Fakt that can be used to configure the aiohttp client."""
 
     ws_endpoint_url: str
-
-    class Config:
-        """pydantic config"""
-
-        group = "aiohttp"
 
 
 class FaktsGraphQLWSLink(GraphQLWSLink):

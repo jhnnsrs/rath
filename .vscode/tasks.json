@@ -33,6 +33,16 @@
         "rath"
       ],
       "problemMatcher": []
-    }
+    },
+    {
+      "label": "Clean Up",
+      "type": "shell",
+      "command": "poetry run ruff --fix . && poetry run black ."
+    },
+    {
+      "label": "Check",
+      "type": "shell",
+      "command": "poetry run mypy ."
+    },
   ]
 }
