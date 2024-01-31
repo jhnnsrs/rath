@@ -2,6 +2,8 @@ from typing import Any, List
 
 
 class NotQueriedError(Exception):
+    """An error that is raised if a nested attribute is not queried"""
+
     pass
 
 
@@ -43,26 +45,67 @@ def get_nested_error(obj: Any, nested: List[str], above: List[str]) -> Any:
         raise NotQueriedError(f"{nested} not queried. {above} was queried")
 
 
-def get_attributes_or_error(self, *args) -> Any:
-    """Get attributes or raise an error"""
+def get_attributes_or_error(object: Any, *args: str) -> Any:
+    """Get attributes or raise an error
+
+    Get attributes from an object or raise an error if the attribute is not present
+    . Nested attributes can be queried by using a dot as a delimiter.
+
+    Examples
+    --------
+
+    ```python
+    @dataclass
+    class B:
+        c: int
+
+    @dataclass
+    class A:
+        a: int
+        b: B
+
+    a = A(a=1, b=B(c=2))
+
+    get_attributes_or_error(a, "a", "b.c") # (1, 2)
+    ```
+
+    Parameters
+    ----------
+    object : Any
+        The object to query
+
+    *args : str
+        The attributes to query (nested attribtues delimited by a dot)
+
+    Raises
+    ------
+    NotQueriedError
+        The nested attribute was not queried
+
+
+
+
+
+
+    """
     returns = []
     errors = []
     for i in args:
         if "." in i:
             try:
-                returns.append(get_nested_error(self, i.split("."), []))
+                returns.append(get_nested_error(object, i.split("."), []))
                 continue
             except NotQueriedError:
                 errors.append(i)
         else:
-            if hasattr(self, i):
-                returns.append(getattr(self, i))
+            if hasattr(object, i):
+                returns.append(getattr(object, i))
             else:
                 errors.append(i)
 
     if len(errors) > 0:
         raise NotQueriedError(
-            f"Required fields {errors} not queried on {self.__class__.__name__}"
+            f"Required fields {errors} not queried on {object.__class__.__name__}"
         )
 
     if len(args) == 1:
