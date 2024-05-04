@@ -85,7 +85,7 @@ link = AIOHttpLink(endpoint_url="https://countries.trevorblades.com/")
 
 async def main():
 
-  with Rath(link=compose(auth,link)) as rath:
+  async with Rath(link=compose(auth,link)) as rath:
       query = """query {
           countries {
               native
