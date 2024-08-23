@@ -10,7 +10,6 @@ TODO: This should be more straightforward to use.
 
 """
 
-
 from .helpers import QtRathQuery
 
 __all__ = ["QtRathQuery"]

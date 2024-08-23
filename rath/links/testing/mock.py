@@ -52,9 +52,9 @@ class AsyncMockLink(AsyncTerminatingLink):
     mutation_resolver: Dict[str, Callable[[Operation], Awaitable[Dict]]] = Field(
         default_factory=dict, exclude=True
     )
-    subscription_resolver: Dict[
-        str, Callable[[Operation], AsyncIterator[Dict]]
-    ] = Field(default_factory=dict, exclude=True)
+    subscription_resolver: Dict[str, Callable[[Operation], AsyncIterator[Dict]]] = (
+        Field(default_factory=dict, exclude=True)
+    )
     resolver: ResolverDict = Field(default_factory=dict, exclude=True)
 
     @validator(

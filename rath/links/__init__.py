@@ -8,7 +8,6 @@ to compose and combine links, to create more complex client behaviour.
 
 """
 
-
 from .compose import compose
 from .split import split
 
