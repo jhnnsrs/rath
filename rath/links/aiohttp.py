@@ -163,8 +163,3 @@ class AIOHttpLink(AsyncTerminatingLink):
 
                 yield GraphQLResult(data=json_response["data"])
 
-    class Config:
-        """pydantic config"""
-
-        arbitrary_types_allowed = True
-        underscore_attrs_are_private = True

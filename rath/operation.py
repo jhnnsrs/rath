@@ -5,7 +5,7 @@ from graphql import (
     get_operation_ast,
     parse,
 )
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 import uuid
 
 
@@ -33,7 +33,7 @@ class Operation(BaseModel):
     that can be used to pass additional information to the link chain and
     extensions that can be used to pass additional information to the server.
     """
-
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     document_node: DocumentNode
     node: OperationDefinitionNode
@@ -42,11 +42,6 @@ class Operation(BaseModel):
     operation_name: Optional[str]
     extensions: Extensions
     context: Context
-
-    class Config:
-        """Configures the operation model"""
-
-        arbitrary_types_allowed = True
 
 
 class GraphQLResult(BaseModel):

@@ -8,9 +8,9 @@ packages = [{ include = "rath" }]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-koil = ">=0.3.5"
+koil = ">=1.0.0"
 graphql-core = "^3.2.0"
-pydantic = "^1.9.0"
+pydantic = ">2"
 websockets = { version = "^10.2", optional = true }
 aiohttp = { version = "^3.8.2", optional = true }
 certifi = { version = ">2021", optional = true }
@@ -31,7 +31,6 @@ pytest = "^7.2.0"
 testcontainers = "^3.7.0"
 pytest-qt = "^4.2.0"
 pytest-asyncio = "^0.20.2"
-turms = { version = ">=0.2.3", python = "^3.9" }
 aiohttp = "^3.8.3"
 websockets = "^10.4"
 black = "^22.10.0"
@@ -39,8 +38,8 @@ pytest-cov = "^4.0.0"
 ruff = "^0.0.282"
 cryptography = "^41.0.3"
 pyjwt = "^2.8.0"
-fakts = "^0.3.48"
-herre = "^0.3.31"
+fakts = "1.0.0"
+herre = "1.0.0"
 mypy = "^1.7.1"
 
 [build-system]

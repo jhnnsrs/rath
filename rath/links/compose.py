@@ -1,6 +1,6 @@
 from typing import AsyncIterator, List, Optional, Type, Any
 
-from pydantic import validator
+from pydantic import field_validator
 from rath.links.base import ContinuationLink, Link, TerminatingLink
 from rath.operation import GraphQLResult, Operation
 from rath.errors import NotComposedError
@@ -19,8 +19,8 @@ class ComposedLink(TerminatingLink):
     """The links that are composed to form the chain. pydantic will validate 
     that the last link is a terminating link."""
 
-    @validator("links")
-    def validate(cls: Type["ComposedLink"], value: Any) -> List[Link]:
+    @field_validator("links")
+    def validate(cls: Type["ComposedLink"], value: Any, info) -> List[Link]:
         """Validate that the links are valid"""
         if not value:
             raise ValueError("ComposedLink requires at least one link")
@@ -119,10 +119,6 @@ class TypedComposedLink(TerminatingLink):
         async for result in self._firstlink.aexecute(operation):
             yield result
 
-    class Config:
-        """pydantic config"""
-
-        underscore_attrs_are_private = True
 
 
 def compose(*links: Link) -> ComposedLink:

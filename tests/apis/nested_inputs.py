@@ -7,14 +7,14 @@ from rath.turms.funcs import aexecute, execute
 
 
 class BeastVector(BaseModel):
-    x: Optional[int]
-    y: Optional[int]
-    z: Optional[int]
+    x: Optional[int] = None
+    y: Optional[int] = None
+    z: Optional[int] = None
 
 
 class CreateBeastCreatebeast(BaseModel):
-    typename: Optional[Literal["Beast"]] = Field(alias="__typename")
-    binomial: Optional[str]
+    typename: Optional[Literal["Beast"]] = Field("Beast", alias="__typename")
+    binomial: Optional[str] = None
     "a beast's name in Latin"
 
 
@@ -28,8 +28,8 @@ class CreateBeast(BaseModel):
 
 
 class CreateTranspiledBeastCreatetranspiledbeast(BaseModel):
-    typename: Optional[Literal["Beast"]] = Field(alias="__typename")
-    binomial: Optional[str]
+    typename: Optional[Literal["Beast"]] = Field("Beast", alias="__typename")
+    binomial: Optional[str] = None
     "a beast's name in Latin"
 
 

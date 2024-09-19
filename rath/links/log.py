@@ -42,9 +42,3 @@ class LogLink(ContinuationLink):
         await self.log(operation)
         async for result in self.next.aexecute(operation, **kwargs):
             yield result
-
-    class Config:
-        """pydantic config for the link"""
-
-        underscore_attrs_are_private = True
-        arbitary_types_allowed = True

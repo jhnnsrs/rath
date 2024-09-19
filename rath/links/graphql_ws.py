@@ -79,20 +79,22 @@ class GraphQLWSLink(AsyncTerminatingLink):
     """ The endpoint url to connect to """
     allow_reconnect: bool = True
     """ Should the websocket try to reconnect if it fails """
-    time_between_retries = 4
+    time_between_retries: float = 4
     """ The sleep time between retries """
-    max_retries = 3
+    max_retries: int = 3
     """ The maximum amount of retries before giving up """
     ssl_context: SSLContext = Field(
         default_factory=lambda: ssl.create_default_context(cafile=certifi.where())
     )
 
     on_connect: Optional[Callable[[InitialConnectPayload], Awaitable[None]]] = Field(
-        exclude=True
+        exclude=True, default=None
     )
     """ A function that is called before the connection is established. If an exception is raised, the connection is not established. Return is ignored."""
 
-    on_pong: Optional[Callable[[PongPayload], Awaitable[None]]] = Field(exclude=True)
+    on_pong: Optional[Callable[[PongPayload], Awaitable[None]]] = Field(
+        exclude=True, default=None
+    )
     """ A function that is called before a pong is received. If an exception is raised, the connection is not established. Return is ignored."""
     heartbeat_interval_ms: Optional[int] = None
     """ The heartbeat interval in milliseconds (None means no heartbeats are 
@@ -473,9 +475,3 @@ class GraphQLWSLink(AsyncTerminatingLink):
             logger.debug(f"Subcription ended {operation}")
             await self.aforward(json.dumps({"id": id, "type": GQL_STOP}))
             raise e
-
-    class Config:
-        """pydantic config"""
-
-        arbitrary_types_allowed = True
-        underscore_attrs_are_private = True

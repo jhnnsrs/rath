@@ -19,7 +19,7 @@ class ID(str):
         yield cls.validate
 
     @classmethod
-    def validate(cls: Type["ID"], v: Any) -> "ID":
+    def validate(cls: Type["ID"], v: Any, *info) -> "ID":
         """Validate the ID"""
         if isinstance(v, BaseModel):
             if hasattr(v, "id"):

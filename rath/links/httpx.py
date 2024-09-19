@@ -109,9 +109,3 @@ class HttpxLink(AsyncTerminatingLink):
                     raise Exception(f"Response does not contain data {json_response}")
 
                 yield GraphQLResult(data=json_response["data"])
-
-    class Config:
-        """the config for the link"""
-
-        arbitrary_types_allowed = True
-        underscore_attrs_are_private = True

@@ -19,9 +19,9 @@ class RetryLink(ContinuationLink):
     This link is stateful, and will keep track of the number of times the
     subscription has been retried."""
 
-    maximum_retry_attempts = 3
+    maximum_retry_attempts: int = 3
     """The maximum number of times the operation function will be called, before the operation fails."""
-    sleep_interval: Optional[int]
+    sleep_interval: Optional[int] = None
     """The number of seconds to wait before retrying the operation."""
 
     async def aexecute(
@@ -62,9 +62,3 @@ class RetryLink(ContinuationLink):
             logger.info(f"Subscription {operation} disconnected. Retrying {retry}")
             async for result in self.aexecute(operation, retry=retry + 1):
                 yield result
-
-    class Config:
-        """pydantic config for the link"""
-
-        underscore_attrs_are_private = True
-        arbitary_types_allowed = True

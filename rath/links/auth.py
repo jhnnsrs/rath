@@ -100,11 +100,6 @@ class AuthTokenLink(ContinuationLink):
             async for result in self.aexecute(operation, retry=retry + 1):
                 yield result
 
-    class Config:
-        """pydantic configuration for the AuthTokenLink"""
-
-        underscore_attrs_are_private = True
-        arbitary_types_allowed = True
 
 
 class ComposedAuthLink(AuthTokenLink):

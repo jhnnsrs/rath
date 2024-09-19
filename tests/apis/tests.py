@@ -5,10 +5,10 @@ from pydantic import Field, BaseModel
 
 
 class Beast(BaseModel):
-    typename: Optional[Literal["Beast"]] = Field(alias="__typename")
-    common_name: Optional[str] = Field(alias="commonName")
+    typename: Optional[Literal["Beast"]] = Field("Beast", alias="__typename")
+    common_name: Optional[str] = Field(None, alias="commonName")
     "a beast's name to you and I"
-    tax_class: Optional[str] = Field(alias="taxClass")
+    tax_class: Optional[str] = Field(None, alias="taxClass")
     "taxonomy grouping"
 
 

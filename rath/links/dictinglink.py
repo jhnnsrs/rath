@@ -44,7 +44,7 @@ def parse_variables(
                 nulled_obj[key] = value
             return nulled_obj
         elif isinstance(obj, BaseModel):
-            return json.loads(obj.json(by_alias=by_alias))
+            return json.loads(obj.model_dump_json(by_alias=by_alias))
         else:
             # base case: pass through unchanged
             return obj

@@ -1,7 +1,7 @@
 import asyncio
 from typing import AsyncIterator, Awaitable, Callable, Dict, Optional, Type, Any
 
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 from rath.links.base import AsyncTerminatingLink
 from rath.links.testing.mock import AsyncMockResolver
 from rath.operation import GraphQLResult, Operation
@@ -60,12 +60,12 @@ class AsyncStatefulMockLink(AsyncTerminatingLink):
     _inqueue: Optional[asyncio.Queue] = None
     _connection_task: Optional[asyncio.Task] = None
 
-    @validator(
+    @field_validator(
         "query_resolver",
         "mutation_resolver",
         "subscription_resolver",
         "resolver",
-        pre=True,
+        mode="before",
     )
     @classmethod
     def coerce_resolver(cls: Type["AsyncStatefulMockLink"], v: Any) -> Dict[str, Any]:
@@ -245,9 +245,3 @@ class AsyncStatefulMockLink(AsyncTerminatingLink):
 
         else:
             raise NotImplementedError("Only subscription are mocked")
-
-    class Config:
-        """Pydantic Config"""
-
-        arbitrary_types_allowed = True
-        underscore_attrs_are_private = True

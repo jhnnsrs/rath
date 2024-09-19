@@ -1,7 +1,7 @@
 import asyncio
 from typing import AsyncIterator, Awaitable, Callable, Dict, Type, Any
 
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 from rath.links.base import AsyncTerminatingLink
 from rath.operation import GraphQLResult, Operation
 from graphql import FieldNode, OperationType
@@ -57,12 +57,12 @@ class AsyncMockLink(AsyncTerminatingLink):
     )
     resolver: ResolverDict = Field(default_factory=dict, exclude=True)
 
-    @validator(
+    @field_validator(
         "query_resolver",
         "mutation_resolver",
         "subscription_resolver",
         "resolver",
-        pre=True,
+        mode="before",
     )
     @classmethod
     def coerce_resolver(cls: Type["AsyncMockLink"], v: Any) -> ResolverDict:

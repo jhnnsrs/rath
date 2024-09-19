@@ -8,7 +8,7 @@ from graphql import (
     IntrospectionQuery,
 )
 from graphql.language.parser import parse
-from pydantic import root_validator
+from pydantic import model_validator
 from rath.links.base import ContinuationLink
 from rath.links.errors import ContinuationLinkError
 from rath.operation import GraphQLResult, Operation, opify
@@ -75,23 +75,23 @@ class ValidatingLink(ContinuationLink):
     graphql_schema: Optional[GraphQLSchema] = None
     """ The schema to validate against. If not provided, the link will introspect the server to get the schema if allow_introspection is set to True."""
 
-    @root_validator(allow_reuse=True)
+    @model_validator(mode="after")
     @classmethod
-    def check_schema_dsl_or_schema_glob(cls: Type["ValidatingLink"], values: Dict[str, Any]) -> Dict[str, Any]:  # type: ignore
+    def check_schema_dsl_or_schema_glob(cls: Type["ValidatingLink"], self: "ValidatingLink", *info) -> Dict[str, Any]:  # type: ignore
         """Validates and checks that either a schema_dsl or schema_glob is provided, or that allow_introspection is set to True"""
-        if not values.get("schema_dsl") and not values.get("schema_glob"):
-            if not values.get("allow_introspection"):
+        if not self.schema_dsl and not self.schema_glob:
+            if not self.allow_introspection:
                 raise ValueError(
                     "Please provide either a schema_dsl or schema_glob or allow introspection"
                 )
 
         else:
-            values["graphql_schema"] = schemify(
-                schema_dsl=values.get("schema_dsl"),
-                schema_glob=values.get("schema_glob"),
+            self.graphql_schema = schemify(
+                schema_dsl=self.schema_dsl,
+                schema_glob=self.schema_glob,
             )
 
-        return values
+        return self
 
     async def introspect(self, starting_operation: Operation) -> GraphQLSchema:  # type: ignore
         """Introspects the server to get the schema
@@ -148,8 +148,3 @@ class ValidatingLink(ContinuationLink):
 
         async for result in self.next.aexecute(operation):
             yield result
-
-    class Config:
-        """Config for pydantic"""
-
-        arbitrary_types_allowed = True

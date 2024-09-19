@@ -5,9 +5,9 @@ from pydantic import Field, BaseModel
 
 
 class CountriesCountries(BaseModel):
-    typename: Optional[Literal["Country"]] = Field(alias="__typename")
+    typename: Optional[Literal["Country"]] = Field("Country", alias="__typename")
     phone: str
-    capital: Optional[str]
+    capital: Optional[str] = None
     code: str
 
 

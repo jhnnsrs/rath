@@ -78,9 +78,9 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
     """ The endpoint url to connect to """
     allow_reconnect: bool = True
     """ Should the websocket try to reconnect if it fails """
-    time_between_retries = 4
+    time_between_retries: float = 4
     """ The sleep time between retries """
-    max_retries = 3
+    max_retries: int = 3
     """ The maximum amount of retries before giving up """
     ssl_context: SSLContext = Field(
         default_factory=lambda: ssl.create_default_context(cafile=certifi.where())
@@ -475,9 +475,3 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
             logger.debug(f"Subcription ended {operation}")
             await self.aforward(json.dumps({"id": id, "type": GQL_STOP}))
             raise e
-
-    class Config:
-        """The config for the link"""
-
-        arbitrary_types_allowed = True
-        underscore_attrs_are_private = True

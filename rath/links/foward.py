@@ -35,8 +35,3 @@ class ForwardLink(ContinuationLink):
         async for result in self.next.aexecute(operation):
             yield result
 
-    class Config:
-        """pydantic config for the link"""
-
-        underscore_attrs_are_private = True
-        arbitary_types_allowed = True
