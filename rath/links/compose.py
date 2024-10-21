@@ -120,7 +120,6 @@ class TypedComposedLink(TerminatingLink):
             yield result
 
 
-
 def compose(*links: Link) -> ComposedLink:
     """Compose a chain of links together. The first link in the chain is the first link that is executed.
     The last link in the chain is the terminating link, which is responsible for sending the operation to the server.

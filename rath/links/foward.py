@@ -34,4 +34,3 @@ class ForwardLink(ContinuationLink):
 
         async for result in self.next.aexecute(operation):
             yield result
-

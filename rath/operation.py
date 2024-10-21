@@ -33,6 +33,7 @@ class Operation(BaseModel):
     that can be used to pass additional information to the link chain and
     extensions that can be used to pass additional information to the server.
     """
+
     model_config = ConfigDict(arbitrary_types_allowed=True)
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     document_node: DocumentNode

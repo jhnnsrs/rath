@@ -21,17 +21,21 @@ class TranspileHandler(BaseModel):
     The default TranspileHandler is the identity function, which returns the
     type passed to it.
     """
+
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     graphql_type: str
     name: str
     predicate: Callable[[Any], bool] = Field(exclude=True)
     parser: Callable[[Any], Any] = Field(exclude=True)
+
+
 class ListTranspileHandler(BaseModel):
     """A List Transpile Handler
 
     Similar to a TranspileHandler, but takes act on GraphqQLList Type of that type
     """
+
     model_config = ConfigDict(arbitrary_types_allowed=True)
     graphql_type: str
     name: str

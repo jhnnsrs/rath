@@ -206,4 +206,3 @@ class Rath(KoiledModel):
         self._entered = False
         if self._context_token:
             current_rath.set(None)
-

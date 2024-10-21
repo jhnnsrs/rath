@@ -101,7 +101,6 @@ class AuthTokenLink(ContinuationLink):
                 yield result
 
 
-
 class ComposedAuthLink(AuthTokenLink):
     """A composed version of the AuthTokenLink.
 
