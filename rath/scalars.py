@@ -28,11 +28,20 @@ class ID(str):
                 raise TypeError("This needs to be a instance of BaseModel with an id")
 
         if isinstance(v, str):
+            if " " in v:
+                raise ValueError("IDs cannot contain spaces")
+            if len(v) == 0:
+                raise ValueError("IDs cannot be empty")
+            if not v.isascii():
+                raise ValueError("IDs cannot contain non-ascii characters")
+            if v.isidentifier():
+                raise ValueError("IDs cannot contain special characters")
+            
             return cls(v)
 
         if isinstance(v, int):
             return cls(str(v))
 
         raise TypeError(
-            "Needs to be either a instance of BaseModel (with an id) or a string"
+            f"Needs to be either a instance of BaseModel (with an id) or a string got {type(v)}"
         )
