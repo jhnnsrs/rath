@@ -1,50 +1,55 @@
-[tool.poetry]
+[project]
 name = "rath"
-version = "1.0.0"
+version = "1.1.1"
 description = "async transport-agnostic graphql client"
-authors = ["jhnnsrs <jhnnsrs@gmail.com>"]
+authors = [{ name = "jhnnsrs", email = "jhnnsrs@gmail.com" }]
+requires-python = "~=3.8"
 readme = "README.md"
-packages = [{ include = "rath" }]
+dependencies = [
+    "koil>=1.0.0",
+    "graphql-core>=3.2.0,<4",
+    "pydantic>2",
+]
 
-[tool.poetry.dependencies]
-python = "^3.8"
-koil = ">=1.0.0"
-graphql-core = "^3.2.0"
-pydantic = ">2"
-websockets = { version = "^10.2", optional = true }
-aiohttp = { version = "^3.8.2", optional = true }
-certifi = { version = ">2021", optional = true }
-httpx = { version = "^0.23.0", optional = true }
-cryptography = { version = "^41.0.3", optional = true }
+[project.optional-dependencies]
+websockets = ["websockets~=10.2"]
+aiohttp = [
+    "aiohttp>=3.8.2,<4",
+    "certifi>2021",
+]
+httpx = ["httpx>=0.23.0,<0.24"]
+signing = ["cryptography>=41.0.3,<42"]
 
-[tool.poetry.extras]
-websockets = ["websockets"]
-aiohttp = ["aiohttp", "certifi"]
-httpx = ["httpx"]
-signing = ["cryptography"]
+[tool.uv]
+dev-dependencies = [
+    "httpx>=0.23.0,<0.24",
+    "autoflake>=1.7.7,<2",
+    "pytest>=7.2.0,<8",
+    "testcontainers>=3.7.0,<4",
+    "pytest-qt>=4.2.0,<5",
+    "pytest-asyncio>=0.20.2,<0.21",
+    "aiohttp>=3.8.3,<4",
+    "websockets~=10.4",
+    "black>=22.10.0,<23",
+    "pytest-cov>=4.0.0,<5",
+    "ruff>=0.0.282,<0.0.283",
+    "cryptography>=41.0.3,<42",
+    "pyjwt>=2.8.0,<3",
+    "fakts==1.0.0",
+    "herre==1.0.0",
+    "mypy>=1.7.1,<2",
+    "pyqt5>=5.15.11",
+]
 
+[tool.hatch.build.targets.sdist]
+include = ["rath"]
 
-[tool.poetry.group.dev.dependencies]
-httpx = "^0.23.0"
-autoflake = "^1.7.7"
-pytest = "^7.2.0"
-testcontainers = "^3.7.0"
-pytest-qt = "^4.2.0"
-pytest-asyncio = "^0.20.2"
-aiohttp = "^3.8.3"
-websockets = "^10.4"
-black = "^22.10.0"
-pytest-cov = "^4.0.0"
-ruff = "^0.0.282"
-cryptography = "^41.0.3"
-pyjwt = "^2.8.0"
-fakts = "1.0.0"
-herre = "1.0.0"
-mypy = "^1.7.1"
+[tool.hatch.build.targets.wheel]
+include = ["rath"]
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.mypy]
 exclude = ["venv/", "tests/", "examples/"]
@@ -83,7 +88,6 @@ exclude = [
 # Same as Black.
 line-length = 300
 
-
 [[tool.pydoc-markdown.loaders]]
 type = "python"
 search_path = ["rath"]
@@ -97,6 +101,10 @@ markers = [
     "public: marks tests that require a public api",
 ]
 
-[tool.pydoc-markdown.renderer]
-type = "docusaurus"
-docs_base_path = "website/docs"
+
+[tool.semantic_release]
+version_toml = ["pyproject.toml:project.version"]
+upload_to_pypi = true
+branch = "main"
+build_command = "uv build"
+

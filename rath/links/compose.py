@@ -20,7 +20,7 @@ class ComposedLink(TerminatingLink):
     that the last link is a terminating link."""
 
     @field_validator("links")
-    def validate(cls: Type["ComposedLink"], value: Any, info) -> List[Link]:
+    def validate(cls: Type["ComposedLink"], value: Any) -> List[Link]:
         """Validate that the links are valid"""
         if not value:
             raise ValueError("ComposedLink requires at least one link")

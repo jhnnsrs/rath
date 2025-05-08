@@ -1,6 +1,7 @@
 from pydantic import BaseModel
-from typing import Any, Callable, Generator, Type
-
+from typing import Any, Type
+from pydantic import GetCoreSchemaHandler
+from pydantic_core import CoreSchema, core_schema
 
 class ID(str):
     """A custom scalar for IDs. If passed a pydantic model it an id property
@@ -11,32 +12,25 @@ class ID(str):
         self.value = value
 
     @classmethod
-    def __get_validators__(cls: Type["ID"]) -> Generator[Callable[..., Any], Any, Any]:
-        """Get validators"""
-        # one or more validators may be yielded which will be called in the
-        # order to validate the input, each validator will receive as an input
-        # the value returned from the previous validator
-        yield cls.validate
+    def __get_pydantic_core_schema__(
+        self,
+        source_type: Any,  # noqa: ANN401
+        handler: GetCoreSchemaHandler,  # noqa: ANN401
+    ) -> CoreSchema:
+        """Get the pydantic core schema for the interface"""
+        return core_schema.no_info_before_validator_function(self.validate, handler(str))
+
 
     @classmethod
-    def validate(cls: Type["ID"], v: Any, *info) -> "ID":
+    def validate(cls: Type["ID"], v: Any) -> "ID":
         """Validate the ID"""
         if isinstance(v, BaseModel):
             if hasattr(v, "id"):
                 return cls(v.id)  # type: ignore
             else:
-                raise TypeError("This needs to be a instance of BaseModel with an id")
+                raise ValueError("It appears to be a pydantic model but has no id")
 
         if isinstance(v, str):
-            if " " in v:
-                raise ValueError("IDs cannot contain spaces")
-            if len(v) == 0:
-                raise ValueError("IDs cannot be empty")
-            if not v.isascii():
-                raise ValueError("IDs cannot contain non-ascii characters")
-            if v.isidentifier():
-                raise ValueError("IDs cannot contain special characters")
-            
             return cls(v)
 
         if isinstance(v, int):
