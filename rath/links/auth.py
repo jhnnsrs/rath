@@ -86,6 +86,8 @@ class AuthTokenLink(ContinuationLink):
         token = await self.aload_token(operation)
         operation.context.headers["Authorization"] = f"Bearer {token}"
         operation.context.initial_payload["token"] = token
+        
+        
 
         try:
             async for result in self.next.aexecute(operation):
