@@ -24,6 +24,10 @@ jobs:
           version: "latest"
           python-version: "3.12"
 
+      - uses: pyvista/setup-headless-display-action@v3
+        with:
+          qt: true
+
       - name: Install dependencies
         run: uv sync --all-extras --dev
 
@@ -33,12 +37,12 @@ jobs:
       - name: Run semantic-release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: uv run semantic-release version 
+        run: uv run semantic-release version
 
       - name: Publish to Releases
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: uv run semantic-release publish 
+        run: uv run semantic-release publish
 
       - name: Publish to Pypi
         run: uv publish
