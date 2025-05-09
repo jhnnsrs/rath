@@ -1,6 +1,9 @@
 # CHANGELOG
 
 
+## v0.5.1 (2025-05-09)
+
+
 ## v0.5.0 (2025-05-09)
 
 ### Bug Fixes
@@ -13,6 +16,9 @@
 
 - Correct typo in IDModel docstring
   ([`292d01a`](https://github.com/jhnnsrs/rath/commit/292d01a66f59fc2498ae4f2c6baf822fb772bf8a))
+
+- Remove pyqt5-qt5 from dev dependencies in pyproject.toml and uv.lock
+  ([`6314343`](https://github.com/jhnnsrs/rath/commit/6314343ffe717e5ea1e4d107eceeb7db81c2a90b))
 
 - Remove unnecessary whitespace in AuthTokenLink class
   ([`fd8f6f3`](https://github.com/jhnnsrs/rath/commit/fd8f6f3cb3c5c209cffd875abe6c203ed09cb2ce))
