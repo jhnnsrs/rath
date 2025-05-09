@@ -2,7 +2,7 @@ name: Run Coverage
 
 on:
   pull_request:
-    branches: [main]  # or any branches you want to target
+    branches: [main] # or any branches you want to target
   push:
     branches: [main]
 
@@ -20,6 +20,9 @@ jobs:
           version: "latest"
           python-version: "3.12"
 
+      - uses: pyvista/setup-headless-display-action@v3
+        with:
+          qt: true
 
       - name: Install the project
         run: uv sync --all-extras --dev
