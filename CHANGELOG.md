@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v1.0.0 (2025-05-09)
+
+### Features
+
+- Update CI workflow to remove macOS and bump version to 0.5.1
+  ([`ff91de2`](https://github.com/jhnnsrs/rath/commit/ff91de2b94d10a7b45dc6baa25141b0515324aa6))
+
+
 ## v0.5.1 (2025-05-09)
 
 
