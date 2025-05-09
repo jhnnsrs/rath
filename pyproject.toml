@@ -39,6 +39,7 @@ dev-dependencies = [
     "herre==1.0.0",
     "mypy>=1.7.1,<2",
     "pyqt5>=5.15.11",
+    "python-semantic-release>=9.21.1",
 ]
 
 [tool.hatch.build.targets.sdist]
