@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v2.0.0 (2025-05-09)
+
+### Features
+
+- Remove outdated authentication example from README
+  ([`06ca84b`](https://github.com/jhnnsrs/rath/commit/06ca84b608dd5575a4f5c8aa812a00f738c3be74))
+
+
 ## v1.0.0 (2025-05-09)
 
 ### Features
