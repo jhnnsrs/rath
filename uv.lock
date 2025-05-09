@@ -1530,7 +1530,7 @@ wheels = [
 
 [[package]]
 name = "rath"
-version = "1.1.1"
+version = "0.5.1"
 source = { editable = "." }
 dependencies = [
     { name = "graphql-core" },
