@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 class IDModel(BaseModel):
     id: ID = Field(default_factory=ID)
-    """The id field is a scalar that can be used to represent an ID"""
+    """The id field is a scalar that can bes used to represent an ID"""
     
     
 
