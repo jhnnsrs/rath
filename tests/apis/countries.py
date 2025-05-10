@@ -13,6 +13,10 @@ class CountriesCountries(BaseModel):
 
 class Countries(BaseModel):
     countries: List[CountriesCountries]
+    
+    
+    class Arguments(BaseModel):
+        pass
 
     class Meta:
         domain = "countries"

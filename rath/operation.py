@@ -68,7 +68,7 @@ def opify(
     variables: Optional[Dict[str, Any]] = None,
     headers: Optional[Dict[str, Any]] = None,
     operation_name: Optional[str] = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> Operation:
     """Opify takes a query, variables, and headers and returns an Operation.
 

@@ -1,4 +1,4 @@
-from typing import AsyncIterator, List, Optional, Type, Any
+from typing import AsyncIterator, List, Optional, Type, Union, Any
 
 from pydantic import field_validator
 from rath.links.base import ContinuationLink, Link, TerminatingLink
@@ -15,12 +15,12 @@ class ComposedLink(TerminatingLink):
     the operation to the server.
     """
 
-    links: List[Link]
+    links: List[Union[ContinuationLink, TerminatingLink]] = []
     """The links that are composed to form the chain. pydantic will validate 
     that the last link is a terminating link."""
 
     @field_validator("links")
-    def validate(cls: Type["ComposedLink"], value: Any) -> List[Link]:
+    def validate(cls, value: Any) -> List[Link]:
         """Validate that the links are valid"""
         if not value:
             raise ValueError("ComposedLink requires at least one link")
@@ -28,13 +28,9 @@ class ComposedLink(TerminatingLink):
         if not all(isinstance(link, Link) for link in value):
             raise ValueError("ComposedLink requires all links to be Links")
 
-        assert isinstance(
-            value[-1], TerminatingLink
-        ), "Last link must be a TerminatingLink"
+        assert isinstance(value[-1], TerminatingLink), "Last link must be a TerminatingLink"
         for link in value[:-1]:
-            assert isinstance(
-                link, ContinuationLink
-            ), f"All but the last must be ContinuationLinks: check {link}"
+            assert isinstance(link, ContinuationLink), f"All but the last must be ContinuationLinks: check {link}"
 
         return value
 
@@ -52,15 +48,17 @@ class ComposedLink(TerminatingLink):
         """Compose the links together and set the first link as the first link"""
         # We need to make sure that the links are connected in the correct order
         for i in range(len(self.links) - 1):
-            self.links[i].set_next(self.links[i + 1])
+            link = self.links[i]
+            assert isinstance(link, ContinuationLink), f"All but the last must be ContinuationLinks: check {self.links[i]}"
+            link.set_next(self.links[i + 1])
 
         for link in self.links:
             await link.__aenter__()
 
-    async def __aexit__(self, *args, **kwargs) -> None:
+    async def __aexit__(self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], traceback: Optional[Any]) -> None:
         """Exit the links in reverse order"""
         for link in self.links:
-            await link.__aexit__(*args, **kwargs)
+            await link.__aexit__(exc_type, exc_val, traceback)
 
     async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
         """Execute the first link
@@ -87,9 +85,10 @@ class TypedComposedLink(TerminatingLink):
 
         current_link = None
 
-        for key, link in self:
+        for _, link in self:
             if isinstance(link, Link):
                 if current_link:
+                    assert isinstance(current_link, ContinuationLink), f"All but the last must be ContinuationLinks: check {current_link}"
                     current_link.set_next(link)
                     await current_link.__aenter__()
                 else:
@@ -103,24 +102,22 @@ class TypedComposedLink(TerminatingLink):
         else:
             raise NotComposedError("No links set")
 
-    async def __aexit__(self, *args, **kwargs) -> None:
+    async def __aexit__(self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], traceback: Optional[Any]) -> None:
         """Exit the links in reverse order"""
         for key, link in self:
             if isinstance(link, Link):
-                await link.__aexit__(*args, **kwargs)
+                await link.__aexit__(exc_type, exc_val, traceback)
 
     async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
         """Execute the first link"""
         if not self._firstlink:
-            raise NotComposedError(
-                "Links need to be composed before they can be executed. (Through __aenter__)"
-            )
+            raise NotComposedError("Links need to be composed before they can be executed. (Through __aenter__)")
 
         async for result in self._firstlink.aexecute(operation):
             yield result
 
 
-def compose(*links: Link) -> ComposedLink:
+def compose(*links: ContinuationLink | TerminatingLink) -> ComposedLink:
     """Compose a chain of links together. The first link in the chain is the first link that is executed.
     The last link in the chain is the terminating link, which is responsible for sending the operation to the server.
 

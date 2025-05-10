@@ -3,7 +3,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
 from pydantic import field_validator
 from cryptography.hazmat.primitives.asymmetric import rsa
-from typing import Any, Callable, Awaitable, Dict, Type
+from typing import Any, Callable, Awaitable, Dict
 import jwt
 from rath.operation import Operation
 
@@ -20,7 +20,7 @@ class SignLocalLink(AuthTokenLink):
     private_key: rsa.RSAPrivateKey
 
     @field_validator("private_key", mode="before")
-    def must_be_valid_pem_key(cls: Type["SignLocalLink"], v: Any) -> rsa.RSAPrivateKey:
+    def must_be_valid_pem_key(cls, v: Any) -> rsa.RSAPrivateKey:
         """Validates that the private key is a valid PEM key"""
         try:
             try:
@@ -30,9 +30,7 @@ class SignLocalLink(AuthTokenLink):
             except Exception as e:
                 raise ValueError("Could not read file") from e
 
-            key = serialization.load_pem_private_key(
-                v, password=None, backend=default_backend()
-            )
+            key = serialization.load_pem_private_key(v, password=None, backend=default_backend())
 
             # Check if it is an RSA key
             if not isinstance(key, rsa.RSAPrivateKey):
@@ -104,7 +102,7 @@ class ComposedSignTokenLink(SignLocalLink):
     SignLocalLink.
     """
 
-    payload_retriever: Callable[[Operation], Awaitable[Dict]]
+    payload_retriever: Callable[[Operation], Awaitable[Dict[str, Any]]]
     """ The payload retriever to use to retrieve the payload to sign"""
 
     async def aretrieve_payload(self, operation: Operation) -> Dict[str, Any]:

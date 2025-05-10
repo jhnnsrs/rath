@@ -2,7 +2,7 @@ from datetime import datetime
 from http import HTTPStatus
 import json
 from ssl import SSLContext
-from typing import Any, Dict, List, Type, AsyncIterator
+from typing import Any, Dict, List, Optional, Type, AsyncIterator
 from rath.links.types import Payload
 import aiohttp
 from graphql import OperationType
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class DateTimeEncoder(json.JSONEncoder):
     """DateTimeEncoder is a JSONEncoder that extends the default python json decoder to serialize"""
 
-    def default(self, o):  # noqa
+    def default(self, o: Any):  # noqa
         """Override the default method to serialize datetime objects to ISO 8601 strings"""
         if isinstance(o, datetime):
             return o.isoformat()
@@ -39,15 +39,11 @@ class AIOHttpLink(AsyncTerminatingLink):
 
     endpoint_url: str
     """endpoint_url is the URL to send operations to."""
-    ssl_context: SSLContext = Field(
-        default_factory=lambda: ssl.create_default_context(cafile=certifi.where())
-    )
+    ssl_context: SSLContext = Field(default_factory=lambda: ssl.create_default_context(cafile=certifi.where()))
     """ssl_context is the SSLContext to use for the aiohttp session. By default, this
     is a context that uses the certifi CA bundle."""
 
-    auth_errors: List[HTTPStatus] = Field(
-        default_factory=lambda: (HTTPStatus.FORBIDDEN,)
-    )
+    auth_errors: List[HTTPStatus] = Field(default_factory=lambda: (HTTPStatus.FORBIDDEN,))
     """auth_errors is a list of HTTPStatus codes that indicate that the request was
     unauthorized. By default, this is just HTTPStatus.FORBIDDEN, but you can
     override this to include other status codes that indicate that the request was
@@ -73,7 +69,7 @@ class AIOHttpLink(AsyncTerminatingLink):
         """
         self._connected = True
 
-    async def __aexit__(self, *args, **kwargs) -> None:
+    async def __aexit__(self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], traceback: Optional[Any]) -> None:
         """Exit point for the async context manager"""
         pass
 
@@ -100,9 +96,7 @@ class AIOHttpLink(AsyncTerminatingLink):
         payload: Payload = {"query": operation.document}
 
         if operation.node.operation == OperationType.SUBSCRIPTION:
-            raise NotImplementedError(
-                "Aiohttp Transport does not support subscriptions"
-            )
+            raise NotImplementedError("Aiohttp Transport does not support subscriptions")
 
         if len(operation.context.files.items()) > 0:
             payload["variables"] = operation.variables
@@ -117,9 +111,7 @@ class AIOHttpLink(AsyncTerminatingLink):
             file_streams = {str(i): files[path] for i, path in enumerate(files)}
             operations_str = json.dumps(payload, cls=self.json_encoder)
 
-            data.add_field(
-                "operations", operations_str, content_type="application/json"
-            )
+            data.add_field("operations", operations_str, content_type="application/json")
             file_map_str = json.dumps(file_map)
             data.add_field("map", file_map_str, content_type="application/json")
 
@@ -140,23 +132,17 @@ class AIOHttpLink(AsyncTerminatingLink):
             connector=aiohttp.TCPConnector(ssl=self.ssl_context),
             json_serialize=lambda x: json.dumps(x, cls=self.json_encoder),
         ) as session:
-            async with session.post(
-                self.endpoint_url, headers=operation.context.headers, **post_kwargs
-            ) as response:
+            async with session.post(self.endpoint_url, headers=operation.context.headers, **post_kwargs) as response:
                 if response.status == HTTPStatus.OK:
                     await response.json()
 
                 if response.status in self.auth_errors:
-                    raise AuthenticationError(
-                        f"Token Expired Error {operation.context.headers}"
-                    )
+                    raise AuthenticationError(f"Token Expired Error {operation.context.headers}")
 
                 json_response = await response.json()
 
                 if "errors" in json_response:
-                    raise GraphQLException(
-                        "\n".join([e["message"] for e in json_response["errors"]])
-                    )
+                    raise GraphQLException("\n".join([e["message"] for e in json_response["errors"]]))
 
                 if "data" not in json_response:
                     raise Exception(f"Response does not contain data {json_response}")

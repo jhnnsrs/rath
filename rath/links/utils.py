@@ -4,10 +4,10 @@ from rath.operation import Operation
 
 
 def recurse_parse_variables(
-    variables: Dict,
+    variables: Dict[str, Any],
     predicate: Callable[[Optional[str], Any], bool],
     apply: Callable[[Any], Any],
-) -> Dict:
+) -> Dict[str, Any]:
     """Parse Variables
 
     Recursively traverse variables, applying the apply function to the value if the predicate

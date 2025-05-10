@@ -1,15 +1,15 @@
 import json
-from typing import Dict, Any, Union, List
+from typing import Dict, Any, Union
 from pydantic import BaseModel
 from rath.operation import Operation
 from rath.links.parsing import ParsingLink
 
 
-ValidNestedTypes = Union[BaseModel, Dict, List, Any]
+ValidNestedTypes = Union[BaseModel, Dict[str, Any], list[Any], Any]
 
 
 def parse_variables(
-    variables: Dict,
+    variables: Dict[str, Any],
     by_alias: bool = True,
 ) -> ValidNestedTypes:
     """Parse Variables
@@ -32,17 +32,17 @@ def parse_variables(
         """
 
         if isinstance(obj, list):
-            nulled_list = []
-            for key, value in enumerate(obj):
+            nulled_list: list[Any] = []
+            for key, value in enumerate(obj):  # type: ignore
                 value = recurse_extract(value)
                 nulled_list.append(value)
             return nulled_list
         elif isinstance(obj, dict):
             nulled_obj = {}
-            for key, value in obj.items():
-                value = recurse_extract(value)
+            for key, value in obj.items():  # type: ignore
+                value = recurse_extract(value)  # type: ignore
                 nulled_obj[key] = value
-            return nulled_obj
+            return nulled_obj  # type: ignore
         elif isinstance(obj, BaseModel):
             return json.loads(obj.model_dump_json(by_alias=by_alias))
         else:
@@ -79,8 +79,6 @@ class DictingLink(ParsingLink):
             The parsed operation
         """
 
-        shrinked_variables = parse_variables(
-            operation.variables, by_alias=self.by_alias
-        )
+        shrinked_variables = parse_variables(operation.variables, by_alias=self.by_alias)
         operation.variables.update(shrinked_variables)
         return operation

@@ -37,6 +37,8 @@ class CreateTranspiledBeast(BaseModel):
     create_transpiled_beast: Optional[
         CreateTranspiledBeastCreatetranspiledbeast
     ] = Field(alias="createTranspiledBeast")
+    
+        
 
     class Meta:
         domain = "nested_inputs"
