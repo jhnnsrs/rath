@@ -1,6 +1,17 @@
 # CHANGELOG
 
 
+## v3.0.0 (2025-05-10)
+
+### Features
+
+- Refactor Turms operation protocols and update beast models for clarity
+  ([`68b794b`](https://github.com/jhnnsrs/rath/commit/68b794ba65ba036dae25457c8333f16fe9fbd4a4))
+
+- Remove Transpile link and add typing
+  ([`87eae6e`](https://github.com/jhnnsrs/rath/commit/87eae6e0e296d216d78f63dc012c40c74b440e95))
+
+
 ## v2.0.0 (2025-05-09)
 
 ### Features
