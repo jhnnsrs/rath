@@ -27,9 +27,7 @@ class ParsingLink(ContinuationLink):
         """
         raise NotImplementedError("Please implement this method")
 
-    async def aexecute(
-        self, operation: Operation, **kwargs
-    ) -> AsyncIterator[GraphQLResult]:
+    async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
         """Executes an operation against the link
 
         This link will parse the operation and then forward it to the next link,
@@ -49,5 +47,5 @@ class ParsingLink(ContinuationLink):
             raise NotComposedError("No next link set")
 
         operation = await self.aparse(operation)
-        async for result in self.next.aexecute(operation, **kwargs):
+        async for result in self.next.aexecute(operation):
             yield result

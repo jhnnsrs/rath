@@ -15,9 +15,7 @@ from rath.operation import GraphQLResult, Operation, opify
 from glob import glob
 
 
-def schemify(
-    schema_dsl: Optional[str] = None, schema_glob: Optional[str] = None
-) -> GraphQLSchema:
+def schemify(schema_dsl: Optional[str] = None, schema_glob: Optional[str] = None) -> GraphQLSchema:
     """Schemify creates a GraphQLSchema from a schema dsl or a glob to a set of graphql files
 
     Parameters
@@ -75,23 +73,20 @@ class ValidatingLink(ContinuationLink):
     graphql_schema: Optional[GraphQLSchema] = None
     """ The schema to validate against. If not provided, the link will introspect the server to get the schema if allow_introspection is set to True."""
 
-    @model_validator(mode="after")
-    @classmethod
-    def check_schema_dsl_or_schema_glob(cls: Type["ValidatingLink"], self: "ValidatingLink", *info) -> Dict[str, Any]:  # type: ignore
+    @model_validator(mode="after")  # type: ignore
+    def check_schema_dsl_or_schema_glob(cls, v: "ValidatingLink") -> "ValidatingLink":  # type: ignore
         """Validates and checks that either a schema_dsl or schema_glob is provided, or that allow_introspection is set to True"""
-        if not self.schema_dsl and not self.schema_glob:
-            if not self.allow_introspection:
-                raise ValueError(
-                    "Please provide either a schema_dsl or schema_glob or allow introspection"
-                )
+        if not v.schema_dsl and not v.schema_glob:
+            if not v.allow_introspection:
+                raise ValueError("Please provide either a schema_dsl or schema_glob or allow introspection")
 
         else:
-            self.graphql_schema = schemify(
-                schema_dsl=self.schema_dsl,
-                schema_glob=self.schema_glob,
+            v.graphql_schema = schemify(
+                schema_dsl=v.schema_dsl,
+                schema_glob=v.schema_glob,
             )
 
-        return self
+        return v
 
     async def introspect(self, starting_operation: Operation) -> GraphQLSchema:  # type: ignore
         """Introspects the server to get the schema
@@ -141,10 +136,7 @@ class ValidatingLink(ContinuationLink):
 
         errors = validate(self.graphql_schema, operation.document_node)
         if len(errors) > 0:
-            raise ValidationError(
-                f"{operation} does not comply with the schema!\n Errors: \n\n"
-                + "\n".join([e.message for e in errors])
-            )
+            raise ValidationError(f"{operation} does not comply with the schema!\n Errors: \n\n" + "\n".join([e.message for e in errors]))
 
         async for result in self.next.aexecute(operation):
             yield result

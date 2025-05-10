@@ -8,6 +8,7 @@ from typing import (
     Any,
     Iterator,
     Optional,
+    Type,
 )
 from typing import Union
 from graphql import (
@@ -57,7 +58,7 @@ class Rath(KoiledModel):
 
     _entered = False
     """An internal flag flag that indicates whether the Rath is currently in the context manager."""
-    _context_token: Optional[Token] = None
+    _context_token: Optional[Token[Optional["Rath"]]] = None
     """A context token that is used to keep track of the current rath in the context manager."""
 
     async def aquery(
@@ -66,7 +67,7 @@ class Rath(KoiledModel):
         variables: Optional[Dict[str, Any]] = None,
         headers: Optional[Dict[str, Any]] = None,
         operation_name: Optional[str] = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> GraphQLResult:
         """Query the GraphQL API.
 
@@ -109,7 +110,7 @@ class Rath(KoiledModel):
         variables: Optional[Dict[str, Any]] = None,
         headers: Optional[Dict[str, Any]] = None,
         operation_name: Optional[str] = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> GraphQLResult:
         """Query the GraphQL API.
 
@@ -130,7 +131,7 @@ class Rath(KoiledModel):
         Returns:
             GraphQLResult: The result of the query
         """
-        return unkoil(self.aquery, query, variables, headers, operation_name, **kwargs)
+        return unkoil(self.aquery, query, variables, headers, operation_name)
 
     def subscribe(
         self,
@@ -138,7 +139,7 @@ class Rath(KoiledModel):
         variables: Optional[Dict[str, Any]] = None,
         headers: Optional[Dict[str, Any]] = None,
         operation_name: Optional[str] = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> Iterator[GraphQLResult]:
         """Subscripe to a GraphQL API.
 
@@ -158,9 +159,7 @@ class Rath(KoiledModel):
         Yields:
             Iterator[GraphQLResult]: The result of the query as an async iterator
         """
-        return unkoil_gen(
-            self.asubscribe, query, variables, headers, operation_name, **kwargs
-        )
+        return unkoil_gen(self.asubscribe, query, variables, headers, operation_name, **kwargs)
 
     async def asubscribe(
         self,
@@ -168,7 +167,7 @@ class Rath(KoiledModel):
         variables: Optional[Dict[str, Any]] = None,
         headers: Optional[Dict[str, Any]] = None,
         operation_name: Optional[str] = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> AsyncIterator[GraphQLResult]:
         """Subscripe to a GraphQL API.
 
@@ -200,9 +199,9 @@ class Rath(KoiledModel):
         await self.link.__aenter__()
         return self
 
-    async def __aexit__(self, *args, **kwargs) -> None:
+    async def __aexit__(self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], traceback: Optional[Any]) -> None:
         """Exits the context manager of the link"""
-        await self.link.__aexit__(*args, **kwargs)
+        await self.link.__aexit__(exc_type, exc_val, traceback)
         self._entered = False
         if self._context_token:
             current_rath.set(None)

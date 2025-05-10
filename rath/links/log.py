@@ -18,9 +18,7 @@ class LogLink(ContinuationLink):
 
     log: Callable[[Operation], Awaitable[None]] = just_print
 
-    async def aexecute(
-        self, operation: Operation, **kwargs
-    ) -> AsyncIterator[GraphQLResult]:
+    async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
         """Executes an operation against the link
 
         This link simply forwards the operation to the next link.
@@ -40,5 +38,5 @@ class LogLink(ContinuationLink):
             raise NotComposedError("No next link set")
 
         await self.log(operation)
-        async for result in self.next.aexecute(operation, **kwargs):
+        async for result in self.next.aexecute(operation):
             yield result

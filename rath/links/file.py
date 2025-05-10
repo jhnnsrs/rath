@@ -17,13 +17,13 @@ FILE_CLASSES = (
 )
 
 
-ValidNestedTypes = Union[Dict[str, Any], List, Any]
+ValidNestedTypes = Union[Dict[str, Any], List[Any], Any]
 
 
 def parse_nested_files(
     variables: Dict[str, Any],
     file_classes: Tuple[Type[Any], ...] = FILE_CLASSES,
-) -> Tuple[Dict[str, Any], Dict]:
+) -> Tuple[Dict[str, Any], Dict[str, Any]]:
     """Parse nested files
 
     Parameters
@@ -51,16 +51,16 @@ def parse_nested_files(
 
         if isinstance(obj, list):
             nulled_list = []
-            for index, value in enumerate(obj):
+            for index, value in enumerate(obj):  # type: ignore
                 value = recurse_extract(f"{path}.{str(index)}", value)
-                nulled_list.append(value)
-            return nulled_list
+                nulled_list.append(value)  # type: ignore
+            return nulled_list  # type: ignore
         elif isinstance(obj, dict):
             nulled_obj = {}
-            for key, value in obj.items():
-                value = recurse_extract(f"{path}.{key}", value)
+            for key, value in obj.items():  # type: ignore
+                value = recurse_extract(f"{path}.{key}", value)  # type: ignore
                 nulled_obj[key] = value
-            return nulled_obj
+            return nulled_obj  # type: ignore
         elif isinstance(obj, file_classes):
             # extract obj from its parent and put it into files instead.
             files[path] = obj
@@ -78,7 +78,7 @@ def parse_nested_files(
     nulled_variables = recurse_extract("variables", variables)
     assert isinstance(nulled_variables, dict), "variables must be a dict"
 
-    return nulled_variables, files
+    return nulled_variables, files  # type: ignore
 
 
 class FileExtraction(ContinuationLink):
@@ -98,13 +98,9 @@ class FileExtraction(ContinuationLink):
         The variables dict is then updated to replace the file-like objects with nulls.
         """
         if not self.next:
-            raise NotComposedError(
-                "FileExtractionLink must be composed with another link"
-            )
+            raise NotComposedError("FileExtractionLink must be composed with another link")
 
-        operation.variables, operation.context.files = parse_nested_files(
-            operation.variables, file_classes=self.file_classes
-        )
+        operation.variables, operation.context.files = parse_nested_files(operation.variables, file_classes=self.file_classes)
 
         async for result in self.next.aexecute(operation):
             yield result

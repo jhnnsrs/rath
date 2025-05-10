@@ -3,7 +3,7 @@ name = "rath"
 version = "2.0.0"
 description = "async transport-agnostic graphql client"
 authors = [{ name = "jhnnsrs", email = "jhnnsrs@gmail.com" }]
-requires-python = "~=3.8"
+requires-python = ">=3.11"
 readme = "README.md"
 dependencies = [
     "koil>=1.0.0",
@@ -32,7 +32,7 @@ dev-dependencies = [
     "websockets~=10.4",
     "black>=22.10.0,<23",
     "pytest-cov>=4.0.0,<5",
-    "ruff>=0.0.282,<0.0.283",
+    "ruff>0.11",
     "cryptography>=41.0.3,<42",
     "pyjwt>=2.8.0,<3",
     "fakts==1.0.0",
@@ -53,6 +53,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.mypy]
+plugins = ["pydantic.mypy"]
 exclude = ["venv/", "tests/", "examples/"]
 ignore_missing_imports = true
 

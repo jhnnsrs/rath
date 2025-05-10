@@ -1,5 +1,5 @@
 from ssl import SSLContext
-from typing import AsyncIterator, Awaitable, Callable, Dict, Optional, Any
+from typing import AsyncIterator, Awaitable, Callable, Dict, Literal, Optional, Any, Type, TypedDict, NotRequired
 from graphql import OperationType
 from pydantic import Field
 import websockets
@@ -65,6 +65,34 @@ InitialConnectPayload = Dict[str, Any]
 PongPayload = Dict[str, Any]
 
 
+class TransportMessage(TypedDict):
+    """A TransportMessage is a message that is sent over the transport layer.
+
+    It is a dictionary that contains the type of the message and the payload.
+    The payload can be any type of data, but it is usually a dictionary.
+
+    """
+
+    type: Literal[
+        "connection_init",
+        "connection_ack",
+        "connection_terminate",
+        "connection_error",
+        "websocket_cancelled",
+        "connection_keep_alive",
+        "ka",
+        "websocket_dead",
+        "ping",
+        "pong",
+        "data",
+        "error",
+        "complete",
+        "websocket_dead",
+    ]
+    payload: NotRequired[Any]
+    error: NotRequired[Exception]
+
+
 class GraphQLWSLink(AsyncTerminatingLink):
     """GraphQLWSLink is a terminating link that sends operations over websockets using
       websockets via the graphql-ws protocol. This is a
@@ -83,18 +111,12 @@ class GraphQLWSLink(AsyncTerminatingLink):
     """ The sleep time between retries """
     max_retries: int = 3
     """ The maximum amount of retries before giving up """
-    ssl_context: SSLContext = Field(
-        default_factory=lambda: ssl.create_default_context(cafile=certifi.where())
-    )
+    ssl_context: SSLContext = Field(default_factory=lambda: ssl.create_default_context(cafile=certifi.where()))
 
-    on_connect: Optional[Callable[[InitialConnectPayload], Awaitable[None]]] = Field(
-        exclude=True, default=None
-    )
+    on_connect: Optional[Callable[[InitialConnectPayload], Awaitable[None]]] = Field(exclude=True, default=None)
     """ A function that is called before the connection is established. If an exception is raised, the connection is not established. Return is ignored."""
 
-    on_pong: Optional[Callable[[PongPayload], Awaitable[None]]] = Field(
-        exclude=True, default=None
-    )
+    on_pong: Optional[Callable[[PongPayload], Awaitable[None]]] = Field(exclude=True, default=None)
     """ A function that is called before a pong is received. If an exception is raised, the connection is not established. Return is ignored."""
     heartbeat_interval_ms: Optional[int] = None
     """ The heartbeat interval in milliseconds (None means no heartbeats are 
@@ -103,9 +125,9 @@ class GraphQLWSLink(AsyncTerminatingLink):
     _connection_lock: Optional[asyncio.Lock] = None
     _connected: bool = False
     _alive: bool = False
-    _send_queue: Optional[asyncio.Queue] = None
-    _connection_task: Optional[asyncio.Task] = None
-    _ongoing_subscriptions: Optional[Dict[str, asyncio.Queue]] = None
+    _send_queue: Optional[asyncio.Queue[str]] = None
+    _connection_task: Optional[asyncio.Task[None]] = None
+    _ongoing_subscriptions: Optional[Dict[str, asyncio.Queue[TransportMessage]]] = None
 
     async def aforward(self, message: str) -> None:
         """Forward a message to the server
@@ -142,9 +164,7 @@ class GraphQLWSLink(AsyncTerminatingLink):
 
         logger.info("Connecting Websockets")
         initial_connection_future = asyncio.get_running_loop().create_future()
-        self._connection_task = asyncio.create_task(
-            self.websocket_loop(operation, initial_connection_future)
-        )
+        self._connection_task = asyncio.create_task(self.websocket_loop(operation, initial_connection_future))
         await initial_connection_future
 
     async def adisconnect(self) -> None:
@@ -157,7 +177,7 @@ class GraphQLWSLink(AsyncTerminatingLink):
             except asyncio.CancelledError:
                 logger.info("Websocket Transport succesfully disconnected")
 
-    async def __aexit__(self, *args, **kwargs) -> None:
+    async def __aexit__(self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], traceback: Optional[Any]) -> None:
         """Exit the link, and disconnect from the server"""
         await self.adisconnect()
 
@@ -182,7 +202,7 @@ class GraphQLWSLink(AsyncTerminatingLink):
     async def websocket_loop(
         self,
         initiating_operation: Operation,
-        initial_connection_future: asyncio.Future,
+        initial_connection_future: asyncio.Future[bool],
         retry: int = 0,
     ) -> None:
         """The main websocket loop
@@ -199,7 +219,7 @@ class GraphQLWSLink(AsyncTerminatingLink):
                     url,
                     subprotocols=[GQL_WS_SUBPROTOCOL],
                     ssl=self.ssl_context if url.startswith("wss") else None,
-                ) as client:
+                ) as client:  # type: ignore
                     logger.info("Websocket successfully connected")
 
                     send_task = asyncio.create_task(
@@ -208,13 +228,11 @@ class GraphQLWSLink(AsyncTerminatingLink):
                             initiating_operation,
                         )
                     )
-                    receive_task = asyncio.create_task(
-                        self.receiving(client, initial_connection_future)
-                    )
+                    receive_task = asyncio.create_task(self.receiving(client, initial_connection_future))
 
                     self._alive = True
                     done, pending = await asyncio.wait(
-                        [send_task, receive_task],
+                        (send_task, receive_task),
                         return_when=asyncio.FIRST_EXCEPTION,
                     )
                     self._alive = False
@@ -227,33 +245,25 @@ class GraphQLWSLink(AsyncTerminatingLink):
                         if exception:
                             raise exception
                         else:
-                            raise CorrectableConnectionFail(
-                                f"Websocket connection closed without exception: This is unexpected behaviours. Results ist {task.result()}"
-                            )
+                            raise CorrectableConnectionFail(f"Websocket connection closed without exception: This is unexpected behaviours. Results ist {task.result()}")
 
             except Exception as e:
                 logger.warning(
-                    f"Websocket excepted. Trying to recover for the {retry+1}/{self.max_retries} time",
+                    f"Websocket excepted. Trying to recover for the {retry + 1}/{self.max_retries} time",
                     exc_info=True,
                 )
                 raise CorrectableConnectionFail from e
 
         except CorrectableConnectionFail as e:
-            logger.info(
-                f"Trying to Recover from Exception {e} Reconnect is {self.allow_reconnect} Retry: {retry}"
-            )
+            logger.info(f"Trying to Recover from Exception {e} Reconnect is {self.allow_reconnect} Retry: {retry}")
             if retry > self.max_retries or not self.allow_reconnect:
                 logger.error("Max retries reached. Aborting")
                 raise DefiniteConnectionFail("Exceeded Number of Retries")
 
             await asyncio.sleep(self.time_between_retries)
             logger.info("Retrying to connect")
-            await self.broadcast(
-                {"type": WEBSOCKET_DEAD, "error": e}, initial_connection_future
-            )
-            await self.websocket_loop(
-                initiating_operation, initial_connection_future, retry=retry + 1
-            )
+            await self.broadcast({"type": WEBSOCKET_DEAD, "error": e}, initial_connection_future)
+            await self.websocket_loop(initiating_operation, initial_connection_future, retry=retry + 1)
 
         except DefiniteConnectionFail as e:
             logger.error("Websocket excepted closed definetely", exc_info=True)
@@ -266,9 +276,7 @@ class GraphQLWSLink(AsyncTerminatingLink):
                 send_task.cancel()
                 receive_task.cancel()
 
-                await asyncio.gather(
-                    send_task, receive_task, return_exceptions=True
-                )  # wait for the tasks to finish
+                await asyncio.gather(send_task, receive_task, return_exceptions=True)  # wait for the tasks to finish
             raise e
 
         except Exception as e:
@@ -293,7 +301,7 @@ class GraphQLWSLink(AsyncTerminatingLink):
 
         """
 
-        payload = {
+        payload: Dict[str, Any] = {
             "type": GQL_CONNECTION_INIT,
             "payload": initiating_operation.context.initial_payload,
         }
@@ -312,9 +320,7 @@ class GraphQLWSLink(AsyncTerminatingLink):
             logger.debug("Sending Task sucessfully Cancelled")  #
             raise e
 
-    async def receiving(
-        self, client: Any, initial_connection_future: asyncio.Future
-    ) -> None:
+    async def receiving(self, client: Any, initial_connection_future: asyncio.Future[bool]) -> None:
         """The receiving task
 
         This method is the receiving task. It will receive messages from the websocket
@@ -345,9 +351,7 @@ class GraphQLWSLink(AsyncTerminatingLink):
             logger.warning("Websocket excepted. Trying to recover", exc_info=True)
             raise e
 
-    async def broadcast(
-        self, message: dict, initial_connection_future: asyncio.Future
-    ) -> None:
+    async def broadcast(self, message: TransportMessage, initial_connection_future: asyncio.Future[bool]) -> None:
         """Broadcasts a message to all subscriptions"""
         type = message["type"]
 
@@ -384,9 +388,7 @@ class GraphQLWSLink(AsyncTerminatingLink):
                 raise InvalidPayload(f"Protocol Violation. Expected 'id' in {message}")
 
             id = message["id"]
-            assert (
-                id in self._ongoing_subscriptions
-            ), "Received Result for subscription that is no longer or was never active"
+            assert id in self._ongoing_subscriptions, "Received Result for subscription that is no longer or was never active"
             await self._ongoing_subscriptions[id].put(message)
 
     async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
@@ -413,26 +415,24 @@ class GraphQLWSLink(AsyncTerminatingLink):
                 # we need to start a new connection
                 await self.aconnect(operation)
 
-        assert (
-            operation.node.operation == OperationType.SUBSCRIPTION
-        ), "Operation is not a subscription"
+        assert operation.node.operation == OperationType.SUBSCRIPTION, "Operation is not a subscription"
         assert not operation.context.files, "We cannot send files through websockets"
 
         id = operation.id
-        subscribe_queue = asyncio.Queue()  # type: ignore
+        subscribe_queue: asyncio.Queue[TransportMessage] = asyncio.Queue()  # type: ignore
         if not self._ongoing_subscriptions:
             self._ongoing_subscriptions = {}
 
         self._ongoing_subscriptions[id] = subscribe_queue
 
-        send_payload = {
+        send_payload: Dict[str, Any] = {
             "headers": operation.context.headers,
             "query": operation.document,
             "variables": operation.variables,
         }
 
         try:
-            frame = {"id": id, "type": GQL_START, "payload": send_payload}
+            frame: Dict[str, Any] = {"id": id, "type": GQL_START, "payload": send_payload}
             await self.aforward(json.dumps(frame))
             logger.debug(f"Subcription started {operation}")
 
@@ -440,32 +440,28 @@ class GraphQLWSLink(AsyncTerminatingLink):
                 answer = await subscribe_queue.get()
 
                 if answer["type"] == GQL_ERROR:
+                    assert "payload" in answer, "Protocol Violation. Expected 'payload' in GQL_ERROR"
                     payload = answer["payload"]
                     if isinstance(payload, list):
-                        error_list = payload
+                        error_list: list[Dict[str, Any]] = payload
                     else:
-                        error_list = [payload]
+                        error_list: list[Dict[str, Any]] = [payload]
 
-                    raise GraphQLException(
-                        "\n".join([e["message"] for e in error_list])
-                    )
+                    raise GraphQLException("\n".join([e["message"] for e in error_list]))
 
                 if answer["type"] == GQL_DATA:
+                    assert "payload" in answer, "Protocol Violation. Expected 'payload' in GQL_DATA"
                     payload = answer["payload"]
 
                     if "errors" in payload:
-                        raise GraphQLException(
-                            "\n".join([e["message"] for e in payload["errors"]])
-                        )
+                        raise GraphQLException("\n".join([e["message"] for e in payload["errors"]]))
 
                     if "data" in payload:
                         yield GraphQLResult(data=payload["data"])
                         subscribe_queue.task_done()
 
                 if answer["type"] == WEBSOCKET_DEAD:
-                    raise SubscriptionDisconnect(
-                        f"Subcription {id} failed propagating Error {operation}"
-                    )
+                    raise SubscriptionDisconnect(f"Subcription {id} failed propagating Error {operation}")
 
                 if answer["type"] == GQL_COMPLETE:
                     logger.info(f"Subcription done {operation}")

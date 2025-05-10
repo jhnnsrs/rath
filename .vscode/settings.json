@@ -39,7 +39,8 @@
   "errorLens.enabledDiagnosticLevels": ["error"],
   "python.linting.enabled": false,
   "[python]": {
-    "editor.defaultFormatter": "ms-python.black-formatter"
+    "editor.defaultFormatter": "charliermarsh.ruff"
   },
-  "python.formatting.provider": "none"
+  "python.formatting.provider": "none",
+  "python.analysis.typeCheckingMode": "strict"
 }
