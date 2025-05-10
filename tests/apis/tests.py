@@ -14,13 +14,17 @@ class Beast(BaseModel):
 
 class Get_beasts(BaseModel):
     beasts: Optional[List[Optional[Beast]]]
+    
+    
+    class Arguments(BaseModel):
+        pass
 
     class Meta:
         domain = "default"
         document = "fragment Beast on Beast {\n  commonName\n  taxClass\n}\n\nquery get_beasts {\n  beasts {\n    ...Beast\n  }\n}"
 
 
-def get_beasts() -> Optional[List[Beast]]:
+def get_beasts() -> Optional[List[Optional[Beast]]]:
     """get_beasts
 
 
@@ -32,7 +36,7 @@ def get_beasts() -> Optional[List[Beast]]:
     return execute(Get_beasts, {}).beasts
 
 
-async def aget_beasts() -> Optional[List[Beast]]:
+async def aget_beasts() -> Optional[List[Optional[Beast]]]:
     """get_beasts
 
 

@@ -1,29 +1,34 @@
 from rath.rath import Rath, current_rath
-from typing import Optional, Dict, Any, Protocol, AsyncIterator, Iterator, Type, TypeVar, Self
+from typing import AsyncIterator, Iterator, Protocol, Type, TypeVar, Any, Dict, Optional
 from pydantic import BaseModel
 
 
-TArgs = TypeVar("TArgs", bound=BaseModel)
-
-
+# --- Base meta description ---
 class TurmsMeta(Protocol):
+    """Meta class for Turms operations"""
+
     document: str
-    operation: str
 
 
-class TurmsOperation(Protocol[TArgs]):
+TArgs = TypeVar("TArgs", bound=BaseModel)
+TMeta = TypeVar("TMeta", bound=TurmsMeta)
+
+
+class TurmsOperation(Protocol[TArgs, TMeta]):
     """Represents a Turms operation that is both callable and its own return type."""
 
-    Meta: TurmsMeta
+    Meta: Type[TMeta]
     Arguments: Type[TArgs]
 
-    def __call__(self, *args: Any, **kwargs: Any) -> Self: ...
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """A pydantic constructor"""
+        ...
 
-    @property
-    def __name__(self) -> str: ...
+
+TOperation = TypeVar("TOperation", bound=TurmsOperation[Any, Any])
 
 
-def execute(operation: TurmsOperation[TArgs], variables: Dict[str, Any], rath: Optional[Rath] = None) -> TurmsOperation[TArgs]:
+def execute(operation: Type[TOperation], variables: Dict[str, Any], rath: Optional[Rath] = None) -> TOperation:
     """Synchronously Executes an a query or mutation using rath
 
 
@@ -55,7 +60,7 @@ def execute(operation: TurmsOperation[TArgs], variables: Dict[str, Any], rath: O
     )
 
 
-async def aexecute(operation: TurmsOperation[TArgs], variables: Dict[str, Any], rath: Optional[Rath] = None) -> TurmsOperation[TArgs]:
+async def aexecute(operation: Type[TOperation], variables: Dict[str, Any], rath: Optional[Rath] = None) -> TOperation:
     """Asynchronously Executes a query or mutation using rath
 
 
@@ -86,7 +91,7 @@ async def aexecute(operation: TurmsOperation[TArgs], variables: Dict[str, Any], 
     return operation(**x.data)
 
 
-def subscribe(operation: TurmsOperation[TArgs], variables: Dict[str, Any], rath: Optional[Rath] = None) -> Iterator[TurmsOperation[TArgs]]:
+def subscribe(operation: Type[TOperation], variables: Dict[str, Any], rath: Optional[Rath] = None) -> Iterator[TOperation]:
     """Synchronously subscribte to a subscription using rath
 
 
@@ -118,7 +123,7 @@ def subscribe(operation: TurmsOperation[TArgs], variables: Dict[str, Any], rath:
         yield operation(**event.data)
 
 
-async def asubscribe(operation: TurmsOperation[TArgs], variables: Dict[str, Any], rath: Optional[Rath] = None) -> AsyncIterator[TurmsOperation[TArgs]]:
+async def asubscribe(operation: Type[TOperation], variables: Dict[str, Any], rath: Optional[Rath] = None) -> AsyncIterator[TOperation]:
     """Asynchronously subscribte to a subscription using rath
 
 
