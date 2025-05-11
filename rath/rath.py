@@ -1,12 +1,12 @@
 from koil.composition import KoiledModel
-from pydantic import Field
+from pydantic import Field, field_validator
 from rath.errors import NotConnectedError
-from rath.links.base import TerminatingLink
+from rath.links.base import Link, TerminatingLink, ContinuationLink
 from typing import (
-    AsyncIterator,
+    AsyncGenerator,
     Dict,
     Any,
-    Iterator,
+    Generator,
     Optional,
     Type,
 )
@@ -60,6 +60,28 @@ class Rath(KoiledModel):
     """An internal flag flag that indicates whether the Rath is currently in the context manager."""
     _context_token: Optional[Token[Optional["Rath"]]] = None
     """A context token that is used to keep track of the current rath in the context manager."""
+
+    @field_validator("link", mode="before")
+    def validate_link(cls, link: TerminatingLink | list[ContinuationLink | TerminatingLink] | Any) -> TerminatingLink:
+        """Validates the link and ensures it is a terminating link or a list of links."""
+        if isinstance(link, list):
+            # If the link is a list, we assume it is a chain of links
+            # and we compose them into a single link
+            from rath.links.compose import compose
+
+            for lin in link:  # type: ignore
+                if not isinstance(lin, (ContinuationLink, TerminatingLink)):
+                    raise ValueError("All links in the list must be of type Link")
+
+            if not isinstance(link[-1], TerminatingLink):
+                raise ValueError("The last link in the list must be a TerminatingLink")
+
+            return compose(*link)  # type: ignore
+
+        if not isinstance(link, TerminatingLink):
+            raise ValueError("Link must be a TerminatingLink or a list of TerminatingLinks")
+
+        return link
 
     async def aquery(
         self,
@@ -140,7 +162,7 @@ class Rath(KoiledModel):
         headers: Optional[Dict[str, Any]] = None,
         operation_name: Optional[str] = None,
         **kwargs: Any,
-    ) -> Iterator[GraphQLResult]:
+    ) -> Generator[GraphQLResult, None, None]:
         """Subscripe to a GraphQL API.
 
         Takes a querystring, variables, and headers and returns an async iterator
@@ -168,7 +190,7 @@ class Rath(KoiledModel):
         headers: Optional[Dict[str, Any]] = None,
         operation_name: Optional[str] = None,
         **kwargs: Any,
-    ) -> AsyncIterator[GraphQLResult]:
+    ) -> AsyncGenerator[GraphQLResult, None]:
         """Subscripe to a GraphQL API.
 
         Takes a querystring, variables, and headers and returns an async iterator

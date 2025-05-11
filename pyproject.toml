@@ -48,6 +48,11 @@ include = ["rath"]
 [tool.hatch.build.targets.wheel]
 include = ["rath"]
 
+[tool.hatch.build]
+include = [
+    "rath/py.typed"
+]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
