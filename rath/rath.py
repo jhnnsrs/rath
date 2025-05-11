@@ -76,7 +76,7 @@ class Rath(KoiledModel):
             if not isinstance(link[-1], TerminatingLink):
                 raise ValueError("The last link in the list must be a TerminatingLink")
 
-            return compose(*link)
+            return compose(*link)  # type: ignore
 
         if not isinstance(link, TerminatingLink):
             raise ValueError("Link must be a TerminatingLink or a list of TerminatingLinks")
