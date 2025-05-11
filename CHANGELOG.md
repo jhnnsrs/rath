@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v3.2.0 (2025-05-11)
+
+### Bug Fixes
+
+- Add DirectSucceedingLink for enhanced testing capabilities
+  ([`b8b83d9`](https://github.com/jhnnsrs/rath/commit/b8b83d9f7e389ff08c7195291527b902f09db287))
+
+### Features
+
+- Yield result in TimeoutLink's aexecute method for proper async handling
+  ([`2282d8e`](https://github.com/jhnnsrs/rath/commit/2282d8eba705f79c3886502222c83ddf4d9d5b6d))
+
+
 ## v3.1.0 (2025-05-11)
 
 ### Features
