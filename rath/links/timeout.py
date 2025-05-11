@@ -50,6 +50,7 @@ class TimeoutLink(ContinuationLink):
                     # Wait for the next item from the async iterator
                     try:
                         result = await asyncio.wait_for(aiter.__anext__(), timeout=self.timeout)
+                        yield result
                     except StopAsyncIteration:
                         break
             except asyncio.TimeoutError as e:
