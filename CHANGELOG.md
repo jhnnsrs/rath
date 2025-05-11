@@ -1,6 +1,17 @@
 # CHANGELOG
 
 
+## v3.1.0 (2025-05-11)
+
+### Features
+
+- Add NeverSucceedingLink and TimeoutLink for enhanced testing capabilities
+  ([`e683ad7`](https://github.com/jhnnsrs/rath/commit/e683ad72dbf625db06c5a7b11b8d66e0578aa650))
+
+- Add py.typed file and update pyproject.toml for type hinting support
+  ([`260da3c`](https://github.com/jhnnsrs/rath/commit/260da3ca293814a013e410799168b290f7541717))
+
+
 ## v3.0.0 (2025-05-10)
 
 ### Features
