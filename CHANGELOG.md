@@ -1,6 +1,41 @@
 # CHANGELOG
 
 
+## v3.2.0 (2025-05-11)
+
+### Bug Fixes
+
+- Add DirectSucceedingLink for enhanced testing capabilities
+  ([`b8b83d9`](https://github.com/jhnnsrs/rath/commit/b8b83d9f7e389ff08c7195291527b902f09db287))
+
+### Features
+
+- Yield result in TimeoutLink's aexecute method for proper async handling
+  ([`2282d8e`](https://github.com/jhnnsrs/rath/commit/2282d8eba705f79c3886502222c83ddf4d9d5b6d))
+
+
+## v3.1.0 (2025-05-11)
+
+### Features
+
+- Add NeverSucceedingLink and TimeoutLink for enhanced testing capabilities
+  ([`e683ad7`](https://github.com/jhnnsrs/rath/commit/e683ad72dbf625db06c5a7b11b8d66e0578aa650))
+
+- Add py.typed file and update pyproject.toml for type hinting support
+  ([`260da3c`](https://github.com/jhnnsrs/rath/commit/260da3ca293814a013e410799168b290f7541717))
+
+
+## v3.0.0 (2025-05-10)
+
+### Features
+
+- Refactor Turms operation protocols and update beast models for clarity
+  ([`68b794b`](https://github.com/jhnnsrs/rath/commit/68b794ba65ba036dae25457c8333f16fe9fbd4a4))
+
+- Remove Transpile link and add typing
+  ([`87eae6e`](https://github.com/jhnnsrs/rath/commit/87eae6e0e296d216d78f63dc012c40c74b440e95))
+
+
 ## v2.0.0 (2025-05-09)
 
 ### Features
