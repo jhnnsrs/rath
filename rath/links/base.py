@@ -1,4 +1,4 @@
-from typing import Any, AsyncIterator, Optional, Type
+from typing import Any, AsyncIterator, Optional, Self, Type
 from koil.composition import KoiledModel
 from rath.operation import GraphQLResult, Operation
 from rath.errors import NotComposedError
@@ -23,18 +23,25 @@ class Link(KoiledModel):
         """A coroutine that is called when the link is disconnected."""
         pass
 
-    async def __aenter__(self) -> None:
+    async def __aenter__(self) -> Self:
         """A coroutine that is called when the link is entered."""
-        pass
+        return self
 
-    async def __aexit__(self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], traceback: Optional[Any]) -> None:
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        traceback: Optional[Any],
+    ) -> None:
         """A coroutine that is called when the link is exited."""
         pass
 
     def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
         """A coroutine that takes an operation and returns an AsyncIterator
         of GraphQLResults. This method should be implemented by subclasses."""
-        raise NotImplementedError(f"Please overwrite the asubscribe method in {self.__class__.__name__}")
+        raise NotImplementedError(
+            f"Please overwrite the asubscribe method in {self.__class__.__name__}"
+        )
 
 
 class TerminatingLink(Link):

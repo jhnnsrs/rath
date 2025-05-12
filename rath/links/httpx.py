@@ -31,7 +31,11 @@ class HttpxLink(AsyncTerminatingLink):
     endpoint_url: str
     """endpoint_url is the URL to send operations to."""
 
-    auth_errors: List[HTTPStatus] = Field(default_factory=lambda: (HTTPStatus.FORBIDDEN,))
+    auth_errors: List[HTTPStatus] = Field(
+        default_factory=lambda: [
+            HTTPStatus.FORBIDDEN,
+        ]
+    )
     """auth_errors is a list of HTTPStatus codes that indicate an authentication error."""
     json_encoder: Type[json.JSONEncoder] = Field(default=DateTimeEncoder, exclude=True)
 
@@ -56,7 +60,9 @@ class HttpxLink(AsyncTerminatingLink):
         payload: Payload = {"query": operation.document}
 
         if operation.node.operation == OperationType.SUBSCRIPTION:
-            raise NotImplementedError("Aiohttp Transport does not support subscriptions")
+            raise NotImplementedError(
+                "Aiohttp Transport does not support subscriptions"
+            )
 
         if len(operation.context.files.items()) > 0:
             payload["variables"] = operation.variables
@@ -84,16 +90,22 @@ class HttpxLink(AsyncTerminatingLink):
             post_kwargs = {"json": payload}
 
         async with httpx.AsyncClient() as client:
-            response = await client.post(self.endpoint_url, headers=operation.context.headers, **post_kwargs)
+            response = await client.post(
+                self.endpoint_url, headers=operation.context.headers, **post_kwargs
+            )
 
             if response.status_code in self.auth_errors:
-                raise AuthenticationError(f"Token Expired Error {operation.context.headers}")
+                raise AuthenticationError(
+                    f"Token Expired Error {operation.context.headers}"
+                )
 
             if response.status_code == HTTPStatus.OK:
                 json_response = response.json()
 
                 if "errors" in json_response:
-                    raise GraphQLException("\n".join([e["message"] for e in json_response["errors"]]))
+                    raise GraphQLException(
+                        "\n".join([e["message"] for e in json_response["errors"]])
+                    )
 
                 if "data" not in json_response:
                     raise Exception(f"Response does not contain data {json_response}")

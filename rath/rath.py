@@ -1,7 +1,8 @@
+from types import TracebackType
 from koil.composition import KoiledModel
 from pydantic import Field, field_validator
 from rath.errors import NotConnectedError
-from rath.links.base import Link, TerminatingLink, ContinuationLink
+from rath.links.base import TerminatingLink, ContinuationLink
 from typing import (
     AsyncGenerator,
     Dict,
@@ -62,7 +63,9 @@ class Rath(KoiledModel):
     """A context token that is used to keep track of the current rath in the context manager."""
 
     @field_validator("link", mode="before")
-    def validate_link(cls, link: TerminatingLink | list[ContinuationLink | TerminatingLink] | Any) -> TerminatingLink:
+    def validate_link(
+        cls, link: TerminatingLink | list[ContinuationLink | TerminatingLink] | Any
+    ) -> TerminatingLink:
         """Validates the link and ensures it is a terminating link or a list of links."""
         if isinstance(link, list):
             # If the link is a list, we assume it is a chain of links
@@ -79,7 +82,9 @@ class Rath(KoiledModel):
             return compose(*link)  # type: ignore
 
         if not isinstance(link, TerminatingLink):
-            raise ValueError("Link must be a TerminatingLink or a list of TerminatingLinks")
+            raise ValueError(
+                "Link must be a TerminatingLink or a list of TerminatingLinks"
+            )
 
         return link
 
@@ -181,7 +186,9 @@ class Rath(KoiledModel):
         Yields:
             Iterator[GraphQLResult]: The result of the query as an async iterator
         """
-        return unkoil_gen(self.asubscribe, query, variables, headers, operation_name, **kwargs)
+        return unkoil_gen(
+            self.asubscribe, query, variables, headers, operation_name, **kwargs
+        )
 
     async def asubscribe(
         self,
@@ -221,7 +228,12 @@ class Rath(KoiledModel):
         await self.link.__aenter__()
         return self
 
-    async def __aexit__(self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], traceback: Optional[Any]) -> None:
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> None:
         """Exits the context manager of the link"""
         await self.link.__aexit__(exc_type, exc_val, traceback)
         self._entered = False

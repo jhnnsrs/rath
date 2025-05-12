@@ -1,4 +1,4 @@
-from typing import Any, Callable, AsyncIterator, Optional, Type
+from typing import Any, Callable, AsyncIterator, Optional, Self, Type
 
 from pydantic import Field
 from rath.operation import Operation, GraphQLResult
@@ -34,23 +34,35 @@ class SplitLink(TerminatingLink):
             The result of the operation by one of the links
         """
 
-        iterator = self.left.aexecute(operation) if self.split(operation) else self.right.aexecute(operation)
+        iterator = (
+            self.left.aexecute(operation)
+            if self.split(operation)
+            else self.right.aexecute(operation)
+        )
 
         async for res in iterator:
             yield res
 
-    async def __aenter__(self) -> None:
+    async def __aenter__(self) -> Self:
         """Enters the context manager of the link"""
         await self.left.__aenter__()
         await self.right.__aenter__()
+        return self
 
-    async def __aexit__(self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], traceback: Optional[Any]) -> None:
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        traceback: Optional[Any],
+    ) -> None:
         """Exits the context manager of the link"""
         await self.left.__aexit__(exc_type, exc_val, traceback)
         await self.right.__aexit__(exc_type, exc_val, traceback)
 
 
-def split(left: TerminatingLink, right: TerminatingLink, split: Callable[[Operation], bool]) -> SplitLink:
+def split(
+    left: TerminatingLink, right: TerminatingLink, split: Callable[[Operation], bool]
+) -> SplitLink:
     """
     Splits a Link into two paths. Acording to a predicate function. If predicate returns
     true, the operation is sent to the left path, otherwise to the right path.

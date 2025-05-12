@@ -1,5 +1,15 @@
 from ssl import SSLContext
-from typing import AsyncIterator, Dict, NotRequired, Optional, Any, Literal, Type, TypedDict
+from typing import (
+    AsyncIterator,
+    Dict,
+    NotRequired,
+    Optional,
+    Any,
+    Literal,
+    Self,
+    Type,
+    TypedDict,
+)
 from graphql import OperationType
 from pydantic import Field
 import websockets
@@ -108,7 +118,9 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
     """ The sleep time between retries """
     max_retries: int = 3
     """ The maximum amount of retries before giving up """
-    ssl_context: SSLContext = Field(default_factory=lambda: ssl.create_default_context(cafile=certifi.where()))
+    ssl_context: SSLContext = Field(
+        default_factory=lambda: ssl.create_default_context(cafile=certifi.where())
+    )
     """ The SSL Context to use for the connection """
     payload_token_to_querystring: bool = True
     """Should the payload token be sent as a querystring instead (as connection params
@@ -138,11 +150,12 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
             raise LinkNotConnectedError("Link is not connected")
         await self._send_queue.put(message)
 
-    async def __aenter__(self) -> None:
+    async def __aenter__(self) -> Self:
         """Enters the context manager of the link"""
         self._ongoing_subscriptions = {}
         self._send_queue = asyncio.Queue()
         self._connection_lock = asyncio.Lock()
+        return self
 
     async def aconnect(self, operation: Operation) -> None:
         """Connects the websocket
@@ -161,7 +174,9 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
         """
         logger.info("Connecting Websockets")
         connection_future = asyncio.get_running_loop().create_future()
-        self._connection_task = asyncio.create_task(self.websocket_loop(operation, connection_future))
+        self._connection_task = asyncio.create_task(
+            self.websocket_loop(operation, connection_future)
+        )
         await connection_future
 
     async def adisconnect(self) -> None:
@@ -174,7 +189,12 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
             except asyncio.CancelledError:
                 logger.info(f"Websocket Transport {self} succesfully disconnected")
 
-    async def __aexit__(self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], traceback: Optional[Any]) -> None:
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        traceback: Optional[Any],
+    ) -> None:
         """Exits the context manager of the link"""
         await self.adisconnect()
 
@@ -197,7 +217,11 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
         """
         if self.payload_token_to_querystring:
             token = initiating_operation.context.initial_payload.get("token", None)
-            return f"{self.ws_endpoint_url}?token={token}" if token else self.ws_endpoint_url
+            return (
+                f"{self.ws_endpoint_url}?token={token}"
+                if token
+                else self.ws_endpoint_url
+            )
         else:
             return self.ws_endpoint_url
 
@@ -221,13 +245,15 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
                 url = await self.build_url(operation)
                 async with websockets.connect(  # type: ignore
                     url,
-                    subprotocols=[GQL_WS_SUBPROTOCOL],
+                    subprotocols=[GQL_WS_SUBPROTOCOL],  # type: ignore
                     ssl=self.ssl_context if url.startswith("wss") else None,
                 ) as client:  # type: ignore
                     logger.info("Websocket successfully connected")
 
                     send_task = asyncio.create_task(self.sending(client, operation))
-                    receive_task = asyncio.create_task(self.receiving(client, operation, connection_future))
+                    receive_task = asyncio.create_task(
+                        self.receiving(client, operation, connection_future)
+                    )
 
                     self._alive = True
                     done, pending = await asyncio.wait(
@@ -244,21 +270,27 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
                         if exception:
                             raise exception
                         else:
-                            raise CorrectableConnectionFail(f"Websocket connection closed without exception: This is unexpected behaviours. Results ist {task.result()}")
+                            raise CorrectableConnectionFail(
+                                f"Websocket connection closed without exception: This is unexpected behaviours. Results ist {task.result()}"
+                            )
 
             except Exception as e:
                 logger.warning("Websocket excepted. Trying to recover", exc_info=True)
                 raise CorrectableConnectionFail from e
 
         except CorrectableConnectionFail as e:
-            logger.info(f"Trying to Recover from Exception {e} Reconnect is {self.allow_reconnect} Retry: {retry}")
+            logger.info(
+                f"Trying to Recover from Exception {e} Reconnect is {self.allow_reconnect} Retry: {retry}"
+            )
             if retry > self.max_retries or not self.allow_reconnect:
                 logger.error("Max retries reached. Aborting")
                 raise DefiniteConnectionFail("Exceeded Number of Retries")
 
             await asyncio.sleep(self.time_between_retries)
             logger.info("Retrying to connect")
-            await self.broadcast({"type": WEBSOCKET_DEAD, "error": e}, connection_future)
+            await self.broadcast(
+                {"type": WEBSOCKET_DEAD, "error": e}, connection_future
+            )
             await self.websocket_loop(operation, connection_future, retry=retry + 1)
 
         except DefiniteConnectionFail as e:
@@ -359,7 +391,9 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
             logger.warning("Websocket excepted. Trying to recover", exc_info=True)
             raise e
 
-    async def broadcast(self, message: TransportMessage, connection_future: asyncio.Future[bool]) -> None:
+    async def broadcast(
+        self, message: TransportMessage, connection_future: asyncio.Future[bool]
+    ) -> None:
         """Broadcasts a message to the subscriptions, or handles it internally
         e.g if it is a connection ack message.
 
@@ -399,7 +433,9 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
             if not self._ongoing_subscriptions:
                 self._ongoing_subscriptions = {}
 
-            assert id in self._ongoing_subscriptions, "Received Result for subscription that is no longer or was never active"
+            assert id in self._ongoing_subscriptions, (
+                "Received Result for subscription that is no longer or was never active"
+            )
             await self._ongoing_subscriptions[id].put(message)
 
     async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
@@ -419,13 +455,17 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
             The result of the operation
         """
         if not self._connection_lock:
-            raise Exception("WebsocketLink not entered yet. Please us this in an async context manager")
+            raise Exception(
+                "WebsocketLink not entered yet. Please us this in an async context manager"
+            )
 
         async with self._connection_lock:
             if self._connection_task is None or self._connection_task.done():
                 await self.aconnect(operation)
 
-        assert operation.node.operation == OperationType.SUBSCRIPTION, "Operation is not a subscription"
+        assert operation.node.operation == OperationType.SUBSCRIPTION, (
+            "Operation is not a subscription"
+        )
         assert not operation.context.files, "We cannot send files through websockets"
 
         id = operation.id
@@ -443,7 +483,11 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
         }
 
         try:
-            frame: Dict[str, Any] = {"id": id, "type": GQL_START, "payload": send_payload}
+            frame: Dict[str, Any] = {
+                "id": id,
+                "type": GQL_START,
+                "payload": send_payload,
+            }
             await self.aforward(json.dumps(frame))
             logger.debug(f"Subcription started {operation}")
 
@@ -451,18 +495,24 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
                 answer = await subscribe_queue.get()
 
                 if answer["type"] == GQL_DATA:
-                    assert "payload" in answer, "Protocol Violation. Expected 'payload' in GQL_DATA"
+                    assert "payload" in answer, (
+                        "Protocol Violation. Expected 'payload' in GQL_DATA"
+                    )
                     payload = answer["payload"]
 
                     if "errors" in payload:
-                        raise GraphQLException("\n".join([e["message"] for e in payload["errors"]]))
+                        raise GraphQLException(
+                            "\n".join([e["message"] for e in payload["errors"]])
+                        )
 
                     if "data" in payload:
                         yield GraphQLResult(data=payload["data"])
                         subscribe_queue.task_done()
 
                 if answer["type"] == WEBSOCKET_DEAD:
-                    raise SubscriptionDisconnect(f"Subcription {id} failed propagating Error {operation}")
+                    raise SubscriptionDisconnect(
+                        f"Subcription {id} failed propagating Error {operation}"
+                    )
 
                 if answer["type"] == GQL_COMPLETE:
                     logger.info(f"Subcription done {operation}")
