@@ -1,5 +1,16 @@
 import asyncio
-from typing import AsyncIterator, Awaitable, Callable, Dict, Optional, Type, Any
+from types import TracebackType
+from typing import (
+    AsyncIterator,
+    Awaitable,
+    Callable,
+    Dict,
+    Optional,
+    Self,
+    Tuple,
+    Type,
+    Any,
+)
 
 from pydantic import Field, field_validator
 from rath.links.base import AsyncTerminatingLink
@@ -28,6 +39,9 @@ class ConfigurationError(TerminatingLinkError):
     """A Configuration Error"""
 
 
+ResolverDict = Dict[str, Callable[[Operation], Awaitable[Dict[str, Any]]]]
+
+
 class AsyncStatefulMockLink(AsyncTerminatingLink):
     """A Stateful Mocklink
 
@@ -41,24 +55,16 @@ class AsyncStatefulMockLink(AsyncTerminatingLink):
 
     timeout: float = 2
 
-    query_resolver: Dict[str, Callable[[Operation], Awaitable[Dict]]] = Field(
-        default_factory=dict, exclude=True
-    )
-    mutation_resolver: Dict[str, Callable[[Operation], Awaitable[Dict]]] = Field(
-        default_factory=dict, exclude=True
-    )
-    subscription_resolver: Dict[str, Callable[[Operation], Awaitable[Dict]]] = Field(
-        default_factory=dict, exclude=True
-    )
-    resolver: Dict[str, Callable[[Operation], Awaitable[Dict]]] = Field(
-        default_factory=dict, exclude=True
-    )
+    query_resolver: ResolverDict = Field(default_factory=dict, exclude=True)
+    mutation_resolver: ResolverDict = Field(default_factory=dict, exclude=True)
+    subscription_resolver: ResolverDict = Field(default_factory=dict, exclude=True)
+    resolver: ResolverDict = Field(default_factory=dict, exclude=True)
 
     _connection_lock: Optional[asyncio.Lock] = None
     _connected: bool = False
-    _futures: Optional[Dict[str, asyncio.Future]] = None
-    _inqueue: Optional[asyncio.Queue] = None
-    _connection_task: Optional[asyncio.Task] = None
+    _futures: Optional[Dict[str, asyncio.Future[GraphQLResult]]] = None
+    _inqueue: Optional[asyncio.Queue[Tuple[Operation, str]]] = None
+    _connection_task: Optional[asyncio.Task[None]] = None
 
     @field_validator(
         "query_resolver",
@@ -74,7 +80,7 @@ class AsyncStatefulMockLink(AsyncTerminatingLink):
             return v.to_dict()
         return v
 
-    async def __aenter__(self) -> None:
+    async def __aenter__(self) -> Self:
         """Aenter the link and set up the internal state"""
         self._connection_lock = asyncio.Lock()
         return await super().__aenter__()
@@ -83,7 +89,7 @@ class AsyncStatefulMockLink(AsyncTerminatingLink):
         """Connect the link and set up the internal state"""
         self._futures = {}
         self._inqueue = asyncio.Queue()
-        _connection_future = asyncio.Future()  # type: ignore
+        _connection_future: asyncio.Future[bool] = asyncio.Future()  # type: ignore
         self._connection_task = asyncio.create_task(self.resolving(_connection_future))
         await _connection_future
 
@@ -98,11 +104,16 @@ class AsyncStatefulMockLink(AsyncTerminatingLink):
             except asyncio.CancelledError:
                 pass
 
-    async def __aexit__(self, *args, **kwargs) -> None:
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Aexit the link and clean up the internal state"""
         await self.adisconnect()
 
-    async def resolving(self, connection_future: asyncio.Future) -> None:
+    async def resolving(self, connection_future: asyncio.Future[bool]) -> None:
         """A coroutine that resolves the incoming operations in
         an inifite Loop
 
@@ -118,11 +129,13 @@ class AsyncStatefulMockLink(AsyncTerminatingLink):
 
             operation, id = await self._inqueue.get()
 
-            resolve_futures = []
+            resolve_futures: list[Awaitable[Dict[str, Any]]] = []
 
             try:
                 if operation.node.operation == OperationType.QUERY:
                     for op in operation.node.selection_set.selections:
+                        if not isinstance(op, FieldNode):  # pragma: no cover
+                            raise NotImplementedError("Only FieldNode are supported")
                         if op.name.value in self.query_resolver:
                             resolve_futures.append(
                                 self.query_resolver[op.name.value](operation)
@@ -139,6 +152,8 @@ class AsyncStatefulMockLink(AsyncTerminatingLink):
 
                 if operation.node.operation == OperationType.MUTATION:
                     for op in operation.node.selection_set.selections:
+                        if not isinstance(op, FieldNode):  # pragma: no cover
+                            raise NotImplementedError("Only FieldNode are supported")
                         if op.name.value in self.mutation_resolver:
                             resolve_futures.append(
                                 self.mutation_resolver[op.name.value](operation)
@@ -164,11 +179,12 @@ class AsyncStatefulMockLink(AsyncTerminatingLink):
                             for i, op in enumerate(
                                 operation.node.selection_set.selections
                             )
+                            if isinstance(op, FieldNode)
                         }
                     )
                 )
             except AttributeError as t:
-                raise ConfigurationError(f"No resolver for operation {op}") from t
+                raise ConfigurationError("No resolver for operation") from t
 
             except Exception as e:
                 if not self._futures:
@@ -223,9 +239,9 @@ class AsyncStatefulMockLink(AsyncTerminatingLink):
             yield await asyncio.wait_for(self._futures[uniqueid], timeout=self.timeout)
 
         if operation.node.operation == OperationType.SUBSCRIPTION:
-            assert (
-                len(operation.node.selection_set.selections) == 1
-            ), "Only one Subscription at a time possible"
+            assert len(operation.node.selection_set.selections) == 1, (
+                "Only one Subscription at a time possible"
+            )
 
             op = operation.node.selection_set.selections[0]
             if not isinstance(op, FieldNode):  # pragma: no cover

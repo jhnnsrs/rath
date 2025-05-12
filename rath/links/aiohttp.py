@@ -2,7 +2,7 @@ from datetime import datetime
 from http import HTTPStatus
 import json
 from ssl import SSLContext
-from typing import Any, Dict, List, Optional, Type, AsyncIterator
+from typing import Any, Dict, List, Optional, Self, Type, AsyncIterator
 from rath.links.types import Payload
 import aiohttp
 from graphql import OperationType
@@ -43,7 +43,11 @@ class AIOHttpLink(AsyncTerminatingLink):
     """ssl_context is the SSLContext to use for the aiohttp session. By default, this
     is a context that uses the certifi CA bundle."""
 
-    auth_errors: List[HTTPStatus] = Field(default_factory=lambda: (HTTPStatus.FORBIDDEN,))
+    auth_errors: List[HTTPStatus] = Field(
+        default_factory=lambda: [
+            HTTPStatus.FORBIDDEN,
+        ]
+    )
     """auth_errors is a list of HTTPStatus codes that indicate that the request was
     unauthorized. By default, this is just HTTPStatus.FORBIDDEN, but you can
     override this to include other status codes that indicate that the request was
@@ -56,9 +60,9 @@ class AIOHttpLink(AsyncTerminatingLink):
 
     _connected = False
 
-    async def __aenter__(self) -> None:
+    async def __aenter__(self) -> Self:
         """Entery point for the async context manager"""
-        pass
+        return self
 
     async def aconnect(self, operation: Operation) -> None:
         """Connects the link to the server
@@ -69,7 +73,12 @@ class AIOHttpLink(AsyncTerminatingLink):
         """
         self._connected = True
 
-    async def __aexit__(self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], traceback: Optional[Any]) -> None:
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        traceback: Optional[Any],
+    ) -> None:
         """Exit point for the async context manager"""
         pass
 

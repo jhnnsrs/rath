@@ -30,7 +30,9 @@ class SignLocalLink(AuthTokenLink):
             except Exception as e:
                 raise ValueError("Could not read file") from e
 
-            key = serialization.load_pem_private_key(v, password=None, backend=default_backend())
+            key = serialization.load_pem_private_key(
+                v, password=None, backend=default_backend()
+            )
 
             # Check if it is an RSA key
             if not isinstance(key, rsa.RSAPrivateKey):

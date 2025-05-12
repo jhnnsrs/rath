@@ -1,5 +1,5 @@
 import asyncio
-from typing import AsyncIterator, Awaitable, Callable, Dict, Type, Any
+from typing import AsyncIterator, Awaitable, Callable, Dict, Type, Any, List
 
 from pydantic import Field, field_validator
 from rath.links.base import AsyncTerminatingLink
@@ -22,7 +22,7 @@ class AsyncMockResolver:
     for the corresponding field.
     """
 
-    def to_dict(self) -> Dict[str, Callable[[Operation], Awaitable[Dict]]]:
+    def to_dict(self) -> Dict[str, Callable[[Operation], Awaitable[Dict[str, Any]]]]:
         """Convert the Mock Resolver to a dict of resolvers
 
         Returns
@@ -36,7 +36,7 @@ class AsyncMockResolver:
         return {i[8:]: getattr(self, i) for i in methods}
 
 
-ResolverDict = Dict[str, Callable[[Operation], Awaitable[Dict]]]
+ResolverDict = Dict[str, Callable[[Operation], Awaitable[Dict[str, Any]]]]
 
 
 class AsyncMockLink(AsyncTerminatingLink):
@@ -46,15 +46,11 @@ class AsyncMockLink(AsyncTerminatingLink):
     You need to pass resolvers to the constructor.
     """
 
-    query_resolver: Dict[str, Callable[[Operation], Awaitable[Dict]]] = Field(
-        default_factory=dict, exclude=True
-    )
-    mutation_resolver: Dict[str, Callable[[Operation], Awaitable[Dict]]] = Field(
-        default_factory=dict, exclude=True
-    )
-    subscription_resolver: Dict[str, Callable[[Operation], AsyncIterator[Dict]]] = (
-        Field(default_factory=dict, exclude=True)
-    )
+    query_resolver: ResolverDict = Field(default_factory=dict, exclude=True)
+    mutation_resolver: ResolverDict = Field(default_factory=dict, exclude=True)
+    subscription_resolver: Dict[
+        str, Callable[[Operation], AsyncIterator[Dict[str, Any]]]
+    ] = Field(default_factory=dict, exclude=True)
     resolver: ResolverDict = Field(default_factory=dict, exclude=True)
 
     @field_validator(
@@ -86,7 +82,7 @@ class AsyncMockLink(AsyncTerminatingLink):
         """
 
         if operation.node.operation == OperationType.QUERY:
-            futures = []
+            futures: List[Awaitable[Dict[str, Any]]] = []
 
             for op in operation.node.selection_set.selections:
                 if isinstance(op, FieldNode):
@@ -109,7 +105,7 @@ class AsyncMockLink(AsyncTerminatingLink):
             )
 
         if operation.node.operation == OperationType.MUTATION:
-            futures = []
+            futures: List[Awaitable[Dict[str, Any]]] = []
 
             for op in operation.node.selection_set.selections:
                 if isinstance(op, FieldNode):
@@ -133,10 +129,9 @@ class AsyncMockLink(AsyncTerminatingLink):
             )
 
         if operation.node.operation == OperationType.SUBSCRIPTION:
-            futures = []
-            assert (
-                len(operation.node.selection_set.selections) == 1
-            ), "Only one Subscription at a time possible"
+            assert len(operation.node.selection_set.selections) == 1, (
+                "Only one Subscription at a time possible"
+            )
 
             op = operation.node.selection_set.selections[0]
             if isinstance(op, FieldNode):
@@ -144,7 +139,7 @@ class AsyncMockLink(AsyncTerminatingLink):
                     iterator = self.subscription_resolver[op.name.value](operation)
 
                     async for event in iterator:
-                        if isinstance(op, FieldNode):
+                        if isinstance(op, FieldNode):  # type: ignore
                             yield GraphQLResult(data={target_from_node(op): event})
                 else:
                     raise NotImplementedError(
@@ -152,9 +147,8 @@ class AsyncMockLink(AsyncTerminatingLink):
                         f": {self.subscription_resolver}, {self.resolver}  for AsyncMockLink"
                     )
 
-            async for event in iterator:
-                if isinstance(op, FieldNode):
-                    yield GraphQLResult(data={target_from_node(op): event})
+            else:
+                raise NotImplementedError()
 
         else:
             raise NotImplementedError("Only subscription are mocked")

@@ -1,5 +1,5 @@
 import asyncio
-from typing import AsyncIterator, Callable, List
+from typing import AsyncIterator
 from rath.links.base import AsyncTerminatingLink
 from rath.operation import GraphQLResult, Operation
 

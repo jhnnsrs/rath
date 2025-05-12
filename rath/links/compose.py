@@ -1,4 +1,4 @@
-from typing import AsyncIterator, List, Optional, Type, Union, Any
+from typing import AsyncIterator, List, Optional, Self, Type, Union, Any
 
 from pydantic import field_validator
 from rath.links.base import ContinuationLink, Link, TerminatingLink
@@ -15,12 +15,12 @@ class ComposedLink(TerminatingLink):
     the operation to the server.
     """
 
-    links: List[Union[ContinuationLink, TerminatingLink]] = []
+    links: List[Union[ContinuationLink, TerminatingLink]]
     """The links that are composed to form the chain. pydantic will validate 
     that the last link is a terminating link."""
 
-    @field_validator("links")
-    def validate(cls, value: Any) -> List[Link]:
+    @field_validator("links", mode="before")
+    def validate_links(cls, value: Any) -> List[Union[ContinuationLink, TerminatingLink]]:
         """Validate that the links are valid"""
         if not value:
             raise ValueError("ComposedLink requires at least one link")
@@ -44,7 +44,7 @@ class ComposedLink(TerminatingLink):
         for link in self.links:
             await link.adisconnect()
 
-    async def __aenter__(self) -> None:
+    async def __aenter__(self) -> Self:
         """Compose the links together and set the first link as the first link"""
         # We need to make sure that the links are connected in the correct order
         for i in range(len(self.links) - 1):
@@ -55,7 +55,14 @@ class ComposedLink(TerminatingLink):
         for link in self.links:
             await link.__aenter__()
 
-    async def __aexit__(self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], traceback: Optional[Any]) -> None:
+        return self
+
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        traceback: Optional[Any],
+    ) -> None:
         """Exit the links in reverse order"""
         for link in self.links:
             await link.__aexit__(exc_type, exc_val, traceback)
@@ -80,7 +87,7 @@ class TypedComposedLink(TerminatingLink):
 
     _firstlink: Optional[Link] = None
 
-    async def __aenter__(self) -> None:
+    async def __aenter__(self) -> Self:
         """Compose the links together and set the first link as the first link"""
 
         current_link = None
@@ -102,9 +109,16 @@ class TypedComposedLink(TerminatingLink):
         else:
             raise NotComposedError("No links set")
 
-    async def __aexit__(self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], traceback: Optional[Any]) -> None:
+        return self
+
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        traceback: Optional[Any],
+    ) -> None:
         """Exit the links in reverse order"""
-        for key, link in self:
+        for _, link in self:
             if isinstance(link, Link):
                 await link.__aexit__(exc_type, exc_val, traceback)
 
@@ -126,4 +140,4 @@ def compose(*links: ContinuationLink | TerminatingLink) -> ComposedLink:
         ComposedLink: The composed link
     """
 
-    return ComposedLink(links=links)
+    return ComposedLink(links=list(links))

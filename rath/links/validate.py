@@ -1,4 +1,4 @@
-from typing import AsyncIterator, Optional, cast, Dict, Any, Type
+from typing import AsyncIterator, Optional, cast
 from graphql import (
     GraphQLSchema,
     build_ast_schema,
@@ -15,7 +15,9 @@ from rath.operation import GraphQLResult, Operation, opify
 from glob import glob
 
 
-def schemify(schema_dsl: Optional[str] = None, schema_glob: Optional[str] = None) -> GraphQLSchema:
+def schemify(
+    schema_dsl: Optional[str] = None, schema_glob: Optional[str] = None
+) -> GraphQLSchema:
     """Schemify creates a GraphQLSchema from a schema dsl or a glob to a set of graphql files
 
     Parameters
@@ -78,7 +80,9 @@ class ValidatingLink(ContinuationLink):
         """Validates and checks that either a schema_dsl or schema_glob is provided, or that allow_introspection is set to True"""
         if not v.schema_dsl and not v.schema_glob:
             if not v.allow_introspection:
-                raise ValueError("Please provide either a schema_dsl or schema_glob or allow introspection")
+                raise ValueError(
+                    "Please provide either a schema_dsl or schema_glob or allow introspection"
+                )
 
         else:
             v.graphql_schema = schemify(
@@ -136,7 +140,10 @@ class ValidatingLink(ContinuationLink):
 
         errors = validate(self.graphql_schema, operation.document_node)
         if len(errors) > 0:
-            raise ValidationError(f"{operation} does not comply with the schema!\n Errors: \n\n" + "\n".join([e.message for e in errors]))
+            raise ValidationError(
+                f"{operation} does not comply with the schema!\n Errors: \n\n"
+                + "\n".join([e.message for e in errors])
+            )
 
         async for result in self.next.aexecute(operation):
             yield result
