@@ -1,20 +1,21 @@
 # CHANGELOG
 
 
+## v3.3.0 (2025-05-12)
+
+
 ## v3.2.0 (2025-05-11)
+
+
+## v3.1.0 (2025-05-11)
+
+
+## v3.0.0 (2025-05-10)
 
 ### Bug Fixes
 
 - Add DirectSucceedingLink for enhanced testing capabilities
   ([`b8b83d9`](https://github.com/jhnnsrs/rath/commit/b8b83d9f7e389ff08c7195291527b902f09db287))
-
-### Features
-
-- Yield result in TimeoutLink's aexecute method for proper async handling
-  ([`2282d8e`](https://github.com/jhnnsrs/rath/commit/2282d8eba705f79c3886502222c83ddf4d9d5b6d))
-
-
-## v3.1.0 (2025-05-11)
 
 ### Features
 
@@ -24,16 +25,24 @@
 - Add py.typed file and update pyproject.toml for type hinting support
   ([`260da3c`](https://github.com/jhnnsrs/rath/commit/260da3ca293814a013e410799168b290f7541717))
 
+- Refactor and enhance type hints across multiple modules
+  ([`a75ddcc`](https://github.com/jhnnsrs/rath/commit/a75ddccf847b6458c59bfa79fe2a1699e175e2e4))
 
-## v3.0.0 (2025-05-10)
-
-### Features
+- Improved type hints in `graphql_ws.py`, `httpx.py`, `sign_local_link.py`, `split.py`,
+  `subscription_transport_ws.py`, `mock.py`, `never_succeeding_link.py`, `statefulmock.py`,
+  `utils.py`, `validate.py`, `helpers.py`, and `rath.py` for better clarity and type safety. -
+  Updated async context manager methods to return `Self` for improved type inference. - Enhanced
+  error handling and logging messages for better debugging. - Cleaned up code formatting for
+  consistency and readability.
 
 - Refactor Turms operation protocols and update beast models for clarity
   ([`68b794b`](https://github.com/jhnnsrs/rath/commit/68b794ba65ba036dae25457c8333f16fe9fbd4a4))
 
 - Remove Transpile link and add typing
   ([`87eae6e`](https://github.com/jhnnsrs/rath/commit/87eae6e0e296d216d78f63dc012c40c74b440e95))
+
+- Yield result in TimeoutLink's aexecute method for proper async handling
+  ([`2282d8e`](https://github.com/jhnnsrs/rath/commit/2282d8eba705f79c3886502222c83ddf4d9d5b6d))
 
 
 ## v2.0.0 (2025-05-09)
