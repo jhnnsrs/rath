@@ -1,7 +1,15 @@
 # CHANGELOG
 
 
+## v3.4.0 (2025-05-13)
+
+
 ## v3.3.0 (2025-05-12)
+
+### Features
+
+- Upgrade to koil > 2, for typed support
+  ([`6098587`](https://github.com/jhnnsrs/rath/commit/6098587a37e12fc351ce028de52624d92aa32771))
 
 
 ## v3.2.0 (2025-05-11)
