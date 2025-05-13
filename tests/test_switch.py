@@ -5,7 +5,6 @@ from rath.links.testing.statefulmock import AsyncStatefulMockLink
 from rath import Rath
 from .mocks import MutationAsync, QueryAsync, SubscriptionAsync
 from koil import Koil
-from koil.vars import current_loop
 
 
 @pytest.fixture()
@@ -134,8 +133,7 @@ def test_stateful_link_subscription_sync_no_sideffects(stateful_rath):
             assert x.data, "No data received"
 
 
-def test_stateful_link_execution_sync_same_koil(stateful_rath):
-    print(current_loop.get())
+def test_stateful_link_execution_sync_same_koil(stateful_rath: Rath):
     with Koil():
         with stateful_rath:
             x = stateful_rath.query(

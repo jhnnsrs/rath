@@ -469,8 +469,8 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
         assert not operation.context.files, "We cannot send files through websockets"
 
         id = operation.id
-        subscribe_queue: asyncio.Queue[TransportMessage] = asyncio.Queue()  # type: asyncio.Queue
-
+        subscribe_queue: asyncio.Queue[TransportMessage] = asyncio.Queue()
+        
         if not self._ongoing_subscriptions:
             self._ongoing_subscriptions = {}
 

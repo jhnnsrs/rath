@@ -598,15 +598,15 @@ wheels = [
 
 [[package]]
 name = "koil"
-version = "1.0.0"
+version = "2.0.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "janus", marker = "python_full_version < '4'" },
-    { name = "qtpy", marker = "python_full_version < '4'" },
+    { name = "pydantic", marker = "python_full_version < '4'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8f/24/be75a3c8e5b1e3ac69e027c96d69120bcb0ed55b496a32c8d728c8052976/koil-1.0.0.tar.gz", hash = "sha256:8be00945a27415fa9606f97206779a26a099d478409fe7699a9c229f1ccd07cc", size = 19240 }
+sdist = { url = "https://files.pythonhosted.org/packages/23/3c/28621ba03dad7b355b072dd1161363b89ed1c7acde4b0fed750d4dae5240/koil-2.0.3.tar.gz", hash = "sha256:1dd9efe0dc39fe651137d5d7728903969f46d195725cf2435ab7cd6cc494c243", size = 15671 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/32/bb/c82832ff853403214bbfbed66ffc8cee5ac63b708b8d0bea74f996a27408/koil-1.0.0-py3-none-any.whl", hash = "sha256:3b15cde8037b201b6490ced277e9bf5c32f7c0e1c77d1d3db878fac747511eb8", size = 21712 },
+    { url = "https://files.pythonhosted.org/packages/82/31/8f9c27ad3c3087e3fe27f300e89a59a59a2a4a791553bdd77602578dcd3d/koil-2.0.3-py3-none-any.whl", hash = "sha256:e002be1440ec25ee9ec1e7d7268ecc011de51750353aae5a8174de8dee950d47", size = 19241 },
 ]
 
 [[package]]
@@ -1093,7 +1093,7 @@ wheels = [
 
 [[package]]
 name = "rath"
-version = "2.0.0"
+version = "3.2.0"
 source = { editable = "." }
 dependencies = [
     { name = "graphql-core", marker = "python_full_version < '4'" },
@@ -1145,7 +1145,7 @@ requires-dist = [
     { name = "cryptography", marker = "extra == 'signing'", specifier = ">=41.0.3,<42" },
     { name = "graphql-core", specifier = ">=3.2.0,<4" },
     { name = "httpx", marker = "extra == 'httpx'", specifier = ">=0.23.0,<0.24" },
-    { name = "koil", specifier = ">=1.0.0" },
+    { name = "koil", specifier = ">=2.0.3" },
     { name = "pydantic", specifier = ">2" },
     { name = "websockets", marker = "extra == 'websockets'", specifier = "~=10.2" },
 ]
