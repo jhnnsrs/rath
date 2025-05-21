@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v3.5.0 (2025-05-21)
+
+### Features
+
+- Adding in the IDCoercible type for turms generated functions
+  ([`cd1622c`](https://github.com/jhnnsrs/rath/commit/cd1622c5c2d5c297bf1de41f3ef8cd847cec7bb2))
+
+
 ## v3.4.0 (2025-05-13)
 
 
