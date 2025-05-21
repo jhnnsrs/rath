@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Any, Type
+from typing import Any, Type, Protocol
 from pydantic import GetCoreSchemaHandler
 from pydantic_core import CoreSchema, core_schema
 
@@ -8,9 +8,9 @@ class ID(str):
     """A custom scalar for IDs. If passed a pydantic model it an id property
     it will automatically validate to that models id"""
 
-    def __init__(self, value: str) -> None:
-        """Initialize the ID"""
-        self.value = value
+    def __get__(self, instance, owner) -> "ID": ...
+
+    def __set__(self, instance, value: "IDCoercible") -> None: ...
 
     @classmethod
     def __get_pydantic_core_schema__(
@@ -22,7 +22,7 @@ class ID(str):
         return core_schema.no_info_before_validator_function(cls.validate, handler(str))
 
     @classmethod
-    def validate(cls: Type["ID"], v: Any) -> "ID":
+    def validate(cls: Type["ID"], v: "IDCoercible") -> "ID":
         """Validate the ID"""
         if isinstance(v, BaseModel):
             if hasattr(v, "id"):
@@ -36,4 +36,13 @@ class ID(str):
         if isinstance(v, int):
             return cls(str(v))
 
-        raise TypeError(f"Needs to be either a instance of BaseModel (with an id) or a string got {type(v)}")
+        raise TypeError(
+            f"Needs to be either a instance of BaseModel (with an id) or a string got {type(v)}"
+        )
+
+
+class WithId(Protocol):
+    id: ID
+
+
+IDCoercible = str | ID | WithId
