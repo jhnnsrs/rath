@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v3.5.1 (2025-07-08)
+
+### Bug Fixes
+
+- Update idcoerciable to accept int
+  ([`3915e4e`](https://github.com/jhnnsrs/rath/commit/3915e4ed404ef6d61e27d04be11564721d56c91d))
+
+
 ## v3.5.0 (2025-05-21)
 
 ### Features
