@@ -42,7 +42,10 @@ class ID(str):
 
 
 class WithId(Protocol):
+    "A protocol for objects that have an id attribute."
+
     id: ID
 
 
-IDCoercible = str | ID | WithId
+IDCoercible = str | ID | WithId | int
+""" A type that can be coerced into an ID."""
