@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v3.6.0 (2025-07-11)
+
+### Features
+
+- Made exception have operation inside
+  ([`4458041`](https://github.com/jhnnsrs/rath/commit/4458041d64cf7574cacd71967cab21564c1d84cb))
+
+
 ## v3.5.1 (2025-07-08)
 
 ### Bug Fixes
