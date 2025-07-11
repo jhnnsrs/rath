@@ -86,8 +86,6 @@ class AuthTokenLink(ContinuationLink):
         token = await self.aload_token(operation)
         operation.context.headers["Authorization"] = f"Bearer {token}"
         operation.context.initial_payload["token"] = token
-        
-        
 
         try:
             async for result in self.next.aexecute(operation):
@@ -95,7 +93,8 @@ class AuthTokenLink(ContinuationLink):
 
         except AuthenticationError as e:
             retry = retry + 1
-            await self.arefresh_token(operation)
+            token = await self.arefresh_token(operation)
+
             if retry > self.maximum_refresh_attempts:
                 raise AuthenticationError("Maximum refresh attempts reached") from e
 

@@ -54,7 +54,17 @@ class GraphQLResult(BaseModel):
 class GraphQLException(Exception):
     """GraphQLException is the base exception for all GraphQL errors."""
 
-    pass
+    def __init__(
+        self,
+        message: str,
+        operation: Optional[Operation] = None,
+        errors: Optional[Dict[str, Any]] = None,
+    ):
+        """Initialize the GraphQLException with a message and optional errors."""
+        super().__init__(message)
+        self.message = message
+        self.errors = errors or {}
+        self.operation = operation
 
 
 class SubscriptionDisconnect(GraphQLException):
