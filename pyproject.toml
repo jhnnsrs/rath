@@ -1,6 +1,6 @@
 [project]
 name = "rath"
-version = "3.6.0"
+version = "3.7.0"
 description = "async transport-agnostic graphql client"
 authors = [{ name = "jhnnsrs", email = "jhnnsrs@gmail.com" }]
 requires-python = ">=3.11"

@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v3.7.0 (2025-08-22)
+
+### Features
+
+- Add fragment options
+  ([`cbdc576`](https://github.com/jhnnsrs/rath/commit/cbdc5769414c9e6a12a5174dff757b73030ba0dd))
+
+
 ## v3.6.0 (2025-07-11)
 
 ### Features
