@@ -47,5 +47,5 @@ class WithId(Protocol):
     id: "IDCoercible"
 
 
-IDCoercible = str | ID | WithId | int
+IDCoercible = int | str | ID | WithId
 """ A type that can be coerced into an ID."""

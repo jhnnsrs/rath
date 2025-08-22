@@ -15,7 +15,7 @@ from typing import Union
 from graphql import (
     DocumentNode,
 )
-from rath.operation import GraphQLResult, opify
+from rath.operation import GraphQLResult, Operation, opify
 from contextvars import ContextVar, Token
 from koil import unkoil_gen, unkoil
 
@@ -88,6 +88,22 @@ class Rath(KoiledModel):
 
         return link
 
+    async def aquery_operation(self, operation: Operation) -> GraphQLResult:
+        """Asynchronously executes a query or mutation using the Rath client."""
+        result = None
+
+        async for data in self.link.aexecute(operation):
+            result = data
+            break
+
+        if not result:
+            raise NotConnectedError("Could not retrieve data from the server.")
+            # This is to account for the fact that mypy apparently doesn't
+            # understand that a return statement in a generator is valid.
+            # This is a workaround to make mypy happy.
+
+        return result
+
     async def aquery(
         self,
         query: Union[str, DocumentNode],
@@ -117,19 +133,7 @@ class Rath(KoiledModel):
         """
         op = opify(query, variables, headers, operation_name, **kwargs)
 
-        result = None
-
-        async for data in self.link.aexecute(op):
-            result = data
-            break
-
-        if not result:
-            raise NotConnectedError("Could not retrieve data from the server.")
-            # This is to account for the fact that mypy apparently doesn't
-            # understand that a return statement in a generator is valid.
-            # This is a workaround to make mypy happy.
-
-        return result
+        return await self.aquery_operation(op)
 
     def query(
         self,
