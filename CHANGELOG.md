@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v3.8.0 (2025-11-29)
+
+### Features
+
+- Add typemap apply recursive helpers
+  ([`9d164bd`](https://github.com/jhnnsrs/rath/commit/9d164bd94bc8aa7a1893a901ca388f8a47c1a437))
+
+
 ## v3.7.0 (2025-08-22)
 
 ### Features
