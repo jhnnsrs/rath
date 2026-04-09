@@ -1,7 +1,20 @@
 # CHANGELOG
 
 
+## v3.9.0 (2026-04-09)
+
+### Features
+
+- Better exception description
+  ([`f8d1e82`](https://github.com/jhnnsrs/rath/commit/f8d1e8271ba61f593555f8e4de98606e5ffb394f))
+
+
 ## v3.8.0 (2025-11-29)
+
+### Chores
+
+- Preliminary apq query
+  ([`458db29`](https://github.com/jhnnsrs/rath/commit/458db298124c882f99dee45bd3b4719447841cd9))
 
 ### Features
 
