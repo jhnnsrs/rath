@@ -164,6 +164,7 @@ class AIOHttpLink(AsyncTerminatingLink):
                     raise GraphQLException(
                         "\n".join([e["message"] for e in json_response["errors"]]),
                         operation=operation,
+                        endpoint_url=self.endpoint_url,
                         errors=json_response["errors"],
                     )
 

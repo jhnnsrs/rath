@@ -58,6 +58,7 @@ class GraphQLException(Exception):
         self,
         message: str,
         operation: Optional[Operation] = None,
+        endpoint_url: Optional[str] = None,
         errors: Optional[Dict[str, Any]] = None,
     ):
         """Initialize the GraphQLException with a message and optional errors."""
@@ -65,6 +66,20 @@ class GraphQLException(Exception):
         self.message = message
         self.errors = errors or {}
         self.operation = operation
+        self.endpoint_url = endpoint_url
+
+    def __str__(self) -> str:
+        """Return a string representation of the GraphQLException."""
+        base_message = f"GraphQLException: {self.message}"
+        if self.endpoint_url:
+            base_message += f" (Endpoint: {self.endpoint_url})"
+        if self.operation:
+            base_message += (
+                f" (Operation: {self.operation.operation_name or 'Unnamed Operation'})"
+            )
+        if self.errors:
+            base_message += f" (Errors: {self.errors})"
+        return base_message
 
 
 class SubscriptionDisconnect(GraphQLException):

@@ -44,8 +44,9 @@ class ID(str):
 class WithId(Protocol):
     "A protocol for objects that have an id attribute."
 
-    id: "IDCoercible"
+    @property
+    def id(self) -> int | str | ID: ...
 
 
-IDCoercible = int | str | ID | WithId
+type IDCoercible = int | str | ID | WithId
 """ A type that can be coerced into an ID."""
