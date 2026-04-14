@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v3.9.1 (2026-04-14)
+
+### Bug Fixes
+
+- 3.11 compatibility without type ar
+  ([`21e6ce3`](https://github.com/jhnnsrs/rath/commit/21e6ce358a3c6b842eda1a93577ae34c38080584))
+
+
 ## v3.9.0 (2026-04-09)
 
 ### Features
