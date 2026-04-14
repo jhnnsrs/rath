@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Any, Type, Protocol
+from typing import Any, Type, Protocol, TypeAlias
 from pydantic import GetCoreSchemaHandler
 from pydantic_core import CoreSchema, core_schema
 
@@ -36,17 +36,17 @@ class ID(str):
         if isinstance(v, int):
             return cls(str(v))
 
-        raise TypeError(
-            f"Needs to be either a instance of BaseModel (with an id) or a string got {type(v)}"
-        )
+        raise TypeError(f"Needs to be either a instance of BaseModel (with an id) or a string got {type(v)}")
 
 
 class WithId(Protocol):
     "A protocol for objects that have an id attribute."
 
     @property
-    def id(self) -> int | str | ID: ...
+    def id(self) -> int | str | ID:
+        "The id of the object."
+        ...
 
 
-type IDCoercible = int | str | ID | WithId
+IDCoercible: TypeAlias = int | str | ID | WithId
 """ A type that can be coerced into an ID."""
