@@ -6,7 +6,7 @@ authors = [{ name = "jhnnsrs", email = "jhnnsrs@gmail.com" }]
 requires-python = ">=3.11"
 readme = "README.md"
 dependencies = [
-    "koil>=2.0.3",
+    "koil>=3",
     "graphql-core>=3.2.0,<4",
     "pydantic>2",
 ]
