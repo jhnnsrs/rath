@@ -16,6 +16,8 @@ class Context(BaseModel):
     files: Dict[str, Any] = Field(default_factory=dict)
     initial_payload: Dict[str, Any] = Field(default_factory=dict)
     kwargs: Dict[str, Any] = Field(default_factory=dict)
+    extensions: Dict[str, Any] = Field(default_factory=dict)
+    omit_document: bool = False
 
 
 class Extensions(BaseModel):

@@ -109,10 +109,10 @@ class ComposedAuthLink(AuthTokenLink):
     functions as composition elements not as class attributes.
     """
 
-    token_loader: Optional[Callable[[], Awaitable[str]]]
+    token_loader: Optional[Callable[[], Awaitable[str]]] = None
     """The function used to load the authentication token. This function should
         return a string containing the authentication token."""
-    token_refresher: Optional[Callable[[], Awaitable[str]]]
+    token_refresher: Optional[Callable[[], Awaitable[str]]] = None
     """The function used to refresh the authentication token. This function should
         return a string containing the authentication token."""
 
