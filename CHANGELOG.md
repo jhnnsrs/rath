@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v3.10.0 (2026-06-08)
+
+### Features
+
+- Add CLAUDE.md with project guide and commit conventions
+  ([`d09babd`](https://github.com/jhnnsrs/rath/commit/d09babd0f994014d29ba4b97ffa63da51b867a1e))
+
+Documents repo layout, code style, test patterns, and enforces Conventional Commits so Semantic
+  Release can version correctly.
+
+https://claude.ai/code/session_014EK7JtPbiN9hUt2LvrZQUX
+
+
 ## v3.9.1 (2026-04-14)
 
 ### Bug Fixes
