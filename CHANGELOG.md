@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v3.11.0 (2026-06-09)
+
+### Features
+
+- Update readme
+  ([`83424e4`](https://github.com/jhnnsrs/rath/commit/83424e4c30b1a6558cd7f0868df322e9a7a0e9c9))
+
+
 ## v3.10.0 (2026-06-08)
 
 ### Features
