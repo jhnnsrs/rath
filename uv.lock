@@ -396,6 +396,21 @@ wheels = [
 ]
 
 [[package]]
+name = "dokker"
+version = "2.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "aiohttp" },
+    { name = "certifi" },
+    { name = "koil" },
+    { name = "pydantic" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/77/c5/05305ef07ee88a1e163df105d0fba0360ffe478c35235255fde3bb32e1dc/dokker-2.4.0.tar.gz", hash = "sha256:759632f702299931c447ad762fd4a53187e30bdeb4fb03fdeda9622825c8d62b", size = 22946, upload-time = "2026-06-09T15:30:13.086Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3a/af/870e55023fe498b6af470048744b76144a70832f5e64b42f06a712b73814/dokker-2.4.0-py3-none-any.whl", hash = "sha256:35e28345b679027708520bd3a28d7ae482f856aaafafa1cd7fd8b4d7a112783c", size = 28618, upload-time = "2026-06-09T15:30:13.949Z" },
+]
+
+[[package]]
 name = "dotty-dict"
 version = "1.3.1"
 source = { registry = "https://pypi.org/simple" }
@@ -587,14 +602,14 @@ wheels = [
 
 [[package]]
 name = "koil"
-version = "3.0.0"
+version = "3.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d0/33/93d970bc79a90ba8dad1773230d9ab85476df28d32411aa65986eb58a95e/koil-3.0.0.tar.gz", hash = "sha256:9d375a258a3e232a84c1505f9383bfc241c084b3bcd0b2bf1a5d412ff83d2a72", size = 23767, upload-time = "2026-06-08T10:38:01.339Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5f/13/4b8166c293abb99cb6723b70616ab45cd47252eb903c41dcead518d547f1/koil-3.1.1.tar.gz", hash = "sha256:6a2dc1d0644fa1df90880d4966445618a66a93edc1bf6b6b2da00f66ae4a6ec7", size = 27495, upload-time = "2026-06-09T15:16:44.304Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/98/bd/d9c4064de94b50f2b3d0b6d1abc27b806c64055a94603fb3ca089045faf9/koil-3.0.0-py3-none-any.whl", hash = "sha256:14e08ba395df419106b52b0e49199192c7dd17c7f205df061fa68116c90b32c2", size = 28322, upload-time = "2026-06-08T10:38:02.221Z" },
+    { url = "https://files.pythonhosted.org/packages/dc/76/b0f377b446677ded337e50812c2c6bdd00065780b057eca5fe07ae2055e8/koil-3.1.1-py3-none-any.whl", hash = "sha256:a8ef58298bdb813bfa6506833c6491651549c6cb7542ba247d82ddd0ebf0c30b", size = 32388, upload-time = "2026-06-09T15:16:43.19Z" },
 ]
 
 [[package]]
@@ -1079,6 +1094,7 @@ dev = [
     { name = "autoflake" },
     { name = "black" },
     { name = "cryptography" },
+    { name = "dokker" },
     { name = "fakts" },
     { name = "herre" },
     { name = "httpx" },
@@ -1101,7 +1117,7 @@ requires-dist = [
     { name = "cryptography", marker = "extra == 'signing'", specifier = ">=41.0.3,<42" },
     { name = "graphql-core", specifier = ">=3.2.0,<4" },
     { name = "httpx", marker = "extra == 'httpx'", specifier = ">=0.23.0,<0.24" },
-    { name = "koil", specifier = ">=3" },
+    { name = "koil", specifier = ">=3.1.1" },
     { name = "pydantic", specifier = ">2" },
     { name = "websockets", marker = "extra == 'websockets'", specifier = "~=10.2" },
 ]
@@ -1113,6 +1129,7 @@ dev = [
     { name = "autoflake", specifier = ">=1.7.7,<2" },
     { name = "black", specifier = ">=22.10.0,<23" },
     { name = "cryptography", specifier = ">=41.0.3,<42" },
+    { name = "dokker", specifier = ">=2.4.0" },
     { name = "fakts", specifier = "==1.0.0" },
     { name = "herre", specifier = "==1.0.0" },
     { name = "httpx", specifier = ">=0.23.0,<0.24" },

@@ -6,7 +6,7 @@ authors = [{ name = "jhnnsrs", email = "jhnnsrs@gmail.com" }]
 requires-python = ">=3.11"
 readme = "README.md"
 dependencies = [
-    "koil>=3",
+    "koil>=3.1.1",
     "graphql-core>=3.2.0,<4",
     "pydantic>2",
 ]
@@ -39,6 +39,7 @@ dev-dependencies = [
     "herre==1.0.0",
     "pyqt5==5.15.11",
     "python-semantic-release>=9.21.1",
+    "dokker>=2.4.0",
 ]
 
 [tool.hatch.build.targets.sdist]
