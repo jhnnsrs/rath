@@ -18,16 +18,52 @@ middleware objects that transform or forward an operation until a terminating li
 over the network. Need auth headers, retries, schema validation, persisted queries, or a websocket
 transport for subscriptions? Each is just another link you drop into the chain.
 
+
+## Installation
+
+```bash
+pip install rath
+```
+
+Or with [uv](https://docs.astral.sh/uv/):
+
+```bash
+uv add rath
+```
+
+## Quickstart
+
+```python
+from rath import Rath
+from rath.links.aiohttp import AIOHttpLink
+
+link = AIOHttpLink(endpoint_url="https://countries.trevorblades.com/")
+
+with Rath(link=link) as rath:
+    result = rath.query(
+        """
+        query {
+            countries {
+                native
+                capital
+            }
+        }
+        """
+    )
+    print(result.data)  # GraphQLResult — the payload lives on .data
+```
+
+
 ## Features
 
-- 🔌 **Pluggable transports** — aiohttp, httpx and websockets out of the box.
-- 🧩 **Composable links** — build your request pipeline from small, reusable pieces.
-- ⚡ **Async-first, sync-friendly** — call `aquery`/`asubscribe` from async code, or `query`/`subscribe` from sync code (powered by Koil).
-- 🔐 **Auth with automatic refresh** — re-fetch the token and retry on a `401`/`403`.
-- ✅ **Schema validation** — validate operations locally before they hit the wire.
-- 🚀 **Automatic Persisted Queries (APQ)** — send a hash instead of the full document.
-- 📦 **Typed operations** — pairs beautifully with [turms](https://github.com/jhnnsrs/turms) generated Pydantic models.
-- 🧪 **First-class testing** — mock terminating links so unit tests never touch the network.
+-  **Pluggable transports** — aiohttp, httpx and websockets out of the box.
+-  **Composable links** — build your request pipeline from small, reusable pieces.
+-  **Async-first, sync-friendly** — call `aquery`/`asubscribe` from async code, or `query`/`subscribe` from sync code (powered by Koil).
+-  **Auth with automatic refresh** — re-fetch the token and retry on a `401`/`403`.
+-  **Schema validation** — validate operations locally before they hit the wire.
+-  **Automatic Persisted Queries (APQ)** — send a hash instead of the full document.
+-  **Typed operations** — pairs beautifully with [turms](https://github.com/jhnnsrs/turms) generated Pydantic models.
+-  **First-class testing** — mock terminating links so unit tests never touch the network.
 
 ## Table of contents
 
@@ -47,17 +83,6 @@ transport for subscriptions? Each is just another link you drop into the chain.
 - [Typed operations with turms](#typed-operations-with-turms)
 - [Included links](#included-links)
 
-## Installation
-
-```bash
-pip install rath
-```
-
-Or with [uv](https://docs.astral.sh/uv/):
-
-```bash
-uv add rath
-```
 
 ## The link concept
 
@@ -95,27 +120,6 @@ terminating link:
 rath = Rath(link=[auth, retry, AIOHttpLink(endpoint_url="...")])
 ```
 
-## Quickstart
-
-```python
-from rath import Rath
-from rath.links.aiohttp import AIOHttpLink
-
-link = AIOHttpLink(endpoint_url="https://countries.trevorblades.com/")
-
-with Rath(link=link) as rath:
-    result = rath.query(
-        """
-        query {
-            countries {
-                native
-                capital
-            }
-        }
-        """
-    )
-    print(result.data)  # GraphQLResult — the payload lives on .data
-```
 
 ## Async usage
 
