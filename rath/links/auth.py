@@ -2,7 +2,11 @@ from typing import AsyncIterator, Awaitable, Callable, Optional
 
 from rath.links.base import ContinuationLink
 from rath.operation import GraphQLResult, Operation
-from rath.links.errors import AuthenticationError
+from rath.links.errors import (
+    AuthenticationError,
+    TokenLoaderNotSetError,
+    TokenRefresherNotSetError,
+)
 from rath.errors import NotComposedError
 
 
@@ -36,10 +40,13 @@ class AuthTokenLink(ContinuationLink):
 
         Raises
         ------
-        Exception
-            When the token cannot be loaded
+        TokenLoaderNotSetError
+            When the token cannot be loaded because no loader is configured
         """
-        raise Exception("No Token loader specified")
+        raise TokenLoaderNotSetError(
+            "No Token loader specified. Subclass AuthTokenLink and override aload_token, "
+            "or use ComposedAuthLink with a token_loader."
+        )
 
     async def arefresh_token(self, operation: Operation) -> str:
         """A function that refreshes the authentication token.
@@ -56,10 +63,13 @@ class AuthTokenLink(ContinuationLink):
 
         Raises
         ------
-        Exception
-            When the token cannot be refreshed
+        TokenRefresherNotSetError
+            When the token cannot be refreshed because no refresher is configured
         """
-        raise Exception("No Token refresher specified")
+        raise TokenRefresherNotSetError(
+            "No Token refresher specified. Subclass AuthTokenLink and override arefresh_token, "
+            "or use ComposedAuthLink with a token_refresher."
+        )
 
     async def aexecute(
         self, operation: Operation, retry: int = 0
@@ -92,11 +102,10 @@ class AuthTokenLink(ContinuationLink):
                 yield result
 
         except AuthenticationError as e:
-            retry = retry + 1
-            token = await self.arefresh_token(operation)
-
-            if retry > self.maximum_refresh_attempts:
+            if retry >= self.maximum_refresh_attempts:
                 raise AuthenticationError("Maximum refresh attempts reached") from e
+
+            await self.arefresh_token(operation)
 
             async for result in self.aexecute(operation, retry=retry + 1):
                 yield result
@@ -119,11 +128,15 @@ class ComposedAuthLink(AuthTokenLink):
     async def aload_token(self, operation: Operation) -> str:
         """Forwards the operation to the token_loader function."""
         if self.token_loader is None:
-            raise Exception("No Token loader specified")
+            raise TokenLoaderNotSetError(
+                "No Token loader specified. Pass a token_loader to ComposedAuthLink."
+            )
         return await self.token_loader()
 
     async def arefresh_token(self, operation: Operation) -> str:
         """Forwards the operation to the token_refresher function."""
         if self.token_refresher is None:
-            raise Exception("No Token refresher specified")
+            raise TokenRefresherNotSetError(
+                "No Token refresher specified. Pass a token_refresher to ComposedAuthLink."
+            )
         return await self.token_refresher()

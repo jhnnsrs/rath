@@ -18,7 +18,11 @@ import asyncio
 import logging
 import ssl
 import certifi
-from rath.links.errors import LinkNotConnectedError, TerminatingLinkError
+from rath.links.errors import (
+    LinkNotConnectedError,
+    TerminatingLinkError,
+    TokenLoaderNotSetError,
+)
 
 
 from rath.operation import (
@@ -71,7 +75,7 @@ class InvalidPayload(TerminatingLinkError):
 
 async def none_token_loader() -> None:
     """A token loader that always excepts"""
-    raise Exception("Token loader was not set")
+    raise TokenLoaderNotSetError("Token loader was not set")
 
 
 class TransportMessage(TypedDict):
@@ -455,8 +459,8 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
             The result of the operation
         """
         if not self._connection_lock:
-            raise Exception(
-                "WebsocketLink not entered yet. Please us this in an async context manager"
+            raise LinkNotConnectedError(
+                "WebsocketLink not entered yet. Please use this in an async context manager"
             )
 
         async with self._connection_lock:

@@ -37,7 +37,6 @@ dev-dependencies = [
     "pyjwt>=2.8.0,<3",
     "fakts==1.0.0",
     "herre==1.0.0",
-    "mypy>=1.7.1,<2",
     "pyqt5==5.15.11",
     "python-semantic-release>=9.21.1",
 ]
@@ -57,11 +56,6 @@ include = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.mypy]
-plugins = ["pydantic.mypy"]
-exclude = ["venv/", "tests/", "examples/"]
-ignore_missing_imports = true
-
 [tool.ruff]
 extend-select = ["ANN", "D1"]
 extend-ignore = ["ANN101", "ANN002", "ANN003", "D100", "ANN401"]
@@ -73,7 +67,6 @@ exclude = [
     ".eggs",
     ".git",
     ".hg",
-    ".mypy_cache",
     ".nox",
     ".pants.d",
     ".pytype",

@@ -6,7 +6,7 @@ from graphql import OperationType
 from pydantic import Field
 from rath.operation import GraphQLException, GraphQLResult, Operation
 from rath.links.base import AsyncTerminatingLink
-from rath.links.errors import AuthenticationError
+from rath.links.errors import AuthenticationError, MalformedResponseError
 import logging
 from rath.links.types import Payload
 from datetime import datetime
@@ -61,7 +61,8 @@ class HttpxLink(AsyncTerminatingLink):
 
         if operation.node.operation == OperationType.SUBSCRIPTION:
             raise NotImplementedError(
-                "Aiohttp Transport does not support subscriptions"
+                "Httpx Transport does not support subscriptions. Use a websocket link "
+                "(e.g. GraphQLWSLink) for subscriptions, e.g. via a SplitLink."
             )
 
         if len(operation.context.files.items()) > 0:
@@ -104,10 +105,17 @@ class HttpxLink(AsyncTerminatingLink):
 
                 if "errors" in json_response:
                     raise GraphQLException(
-                        "\n".join([e["message"] for e in json_response["errors"]])
+                        "\n".join([e["message"] for e in json_response["errors"]]),
+                        operation=operation,
+                        endpoint_url=self.endpoint_url,
+                        errors=json_response["errors"],
                     )
 
                 if "data" not in json_response:
-                    raise Exception(f"Response does not contain data {json_response}")
+                    raise MalformedResponseError(
+                        f"Response from {self.endpoint_url} for operation "
+                        f"'{operation.display_name}' contains neither "
+                        f"'data' nor 'errors': {json_response}"
+                    )
 
                 yield GraphQLResult(data=json_response["data"])

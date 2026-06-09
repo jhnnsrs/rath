@@ -37,7 +37,6 @@ tests/                 # pytest suite (mirrors rath/ structure)
 - Links inherit from `Link`, `ContinuationLink`, or `AsyncTerminatingLink`; implement `aexecute(self, operation) -> AsyncIterator[GraphQLResult]`.
 - Keep methods short. No inline comments unless the _why_ is non-obvious.
 - Formatting: [Ruff](https://docs.astral.sh/ruff/) (`ruff check .`), line length 300.
-- Type checking: `mypy` (see `[tool.mypy]` in `pyproject.toml`).
 
 ## Tests
 

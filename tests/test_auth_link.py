@@ -4,7 +4,11 @@ from typing import AsyncIterator
 
 from rath.links.auth import AuthTokenLink, ComposedAuthLink
 from rath.links.base import AsyncTerminatingLink
-from rath.links.errors import AuthenticationError
+from rath.links.errors import (
+    AuthenticationError,
+    TokenLoaderNotSetError,
+    TokenRefresherNotSetError,
+)
 from rath.links import compose
 from rath.errors import NotComposedError
 from rath.operation import opify, GraphQLResult, Operation
@@ -233,18 +237,18 @@ async def test_composed_auth_link_uses_token_refresher():
 
 
 async def test_composed_auth_raises_without_loader():
-    """ComposedAuthLink raises when token_loader is None."""
+    """ComposedAuthLink raises an informative TokenLoaderNotSetError when token_loader is None."""
     terminal, _ = _make_capturing_link()
     link = compose(ComposedAuthLink(token_loader=None), terminal)
 
     async with link:
-        with pytest.raises(Exception, match="No Token loader specified"):
+        with pytest.raises(TokenLoaderNotSetError, match="No Token loader specified"):
             async for _ in link.aexecute(opify(QUERY)):
                 pass
 
 
 async def test_composed_auth_raises_without_refresher_on_auth_error():
-    """ComposedAuthLink raises when token_refresher is None and auth fails."""
+    """ComposedAuthLink raises TokenRefresherNotSetError when token_refresher is None and auth fails."""
     terminal, _ = _make_failing_then_succeeding_link(fail_times=999)
 
     async def loader() -> str:
@@ -255,6 +259,84 @@ async def test_composed_auth_raises_without_refresher_on_auth_error():
     )
 
     async with link:
-        with pytest.raises(Exception):
+        with pytest.raises(TokenRefresherNotSetError, match="No Token refresher specified"):
             async for _ in link.aexecute(opify(QUERY)):
                 pass
+
+
+# ---------------------------------------------------------------------------
+# AuthTokenLink – base class without overrides
+# ---------------------------------------------------------------------------
+
+
+async def test_base_auth_link_raises_token_loader_not_set():
+    """The un-subclassed AuthTokenLink.aload_token raises an informative error."""
+    terminal, _ = _make_capturing_link()
+    link = compose(AuthTokenLink(), terminal)
+
+    async with link:
+        with pytest.raises(TokenLoaderNotSetError, match="override aload_token"):
+            async for _ in link.aexecute(opify(QUERY)):
+                pass
+
+
+async def test_base_auth_link_arefresh_token_raises():
+    """The un-subclassed AuthTokenLink.arefresh_token raises an informative error."""
+    op = opify(QUERY)
+    with pytest.raises(TokenRefresherNotSetError, match="override arefresh_token"):
+        await AuthTokenLink().arefresh_token(op)
+
+
+@pytest.mark.parametrize("max_attempts,expected_refreshes", [(1, 1), (2, 2), (3, 3)])
+async def test_refresh_count_matches_maximum_refresh_attempts(
+    max_attempts: int, expected_refreshes: int
+):
+    """maximum_refresh_attempts maps one-to-one to the number of refresh calls.
+
+    The link refreshes-and-retries up to maximum_refresh_attempts times before giving
+    up, so the refresher is invoked exactly that many times when every attempt fails.
+    """
+    terminal, _ = _make_failing_then_succeeding_link(fail_times=999)
+    refresh_calls: list[str] = []
+
+    class CountingAuth(AuthTokenLink):
+        maximum_refresh_attempts: int = max_attempts
+
+        async def aload_token(self, operation: Operation) -> str:
+            return "tok"
+
+        async def arefresh_token(self, operation: Operation) -> str:
+            refresh_calls.append("r")
+            return "new"
+
+    link = compose(CountingAuth(), terminal)
+    async with link:
+        with pytest.raises(AuthenticationError, match="Maximum refresh attempts reached"):
+            async for _ in link.aexecute(opify(QUERY)):
+                pass
+
+    assert len(refresh_calls) == expected_refreshes
+
+
+async def test_no_refresh_when_max_attempts_is_zero():
+    """maximum_refresh_attempts=0 means the link never refreshes and fails immediately."""
+    terminal, _ = _make_failing_then_succeeding_link(fail_times=999)
+    refresh_calls: list[str] = []
+
+    class NoRetryAuth(AuthTokenLink):
+        maximum_refresh_attempts: int = 0
+
+        async def aload_token(self, operation: Operation) -> str:
+            return "tok"
+
+        async def arefresh_token(self, operation: Operation) -> str:
+            refresh_calls.append("r")
+            return "new"
+
+    link = compose(NoRetryAuth(), terminal)
+    async with link:
+        with pytest.raises(AuthenticationError, match="Maximum refresh attempts reached"):
+            async for _ in link.aexecute(opify(QUERY)):
+                pass
+
+    assert refresh_calls == []

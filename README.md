@@ -1,30 +1,51 @@
 # rath
 
-[![codecov](https://codecov.io/gh/jhnnsrs/rath/branch/master/graph/badge.svg?token=UGXEA2THBV)](https://codecov.io/gh/jhnnsrs/rath)
+[![codecov](https://codecov.io/gh/jhnnsrs/rath/branch/main/graph/badge.svg?token=UGXEA2THBV)](https://codecov.io/gh/jhnnsrs/rath)
 [![PyPI version](https://badge.fury.io/py/rath.svg)](https://pypi.org/project/rath/)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://pypi.org/project/rath/)
 ![Maintainer](https://img.shields.io/badge/maintainer-jhnnsrs-blue)
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/rath.svg)](https://pypi.python.org/pypi/rath/)
 [![PyPI status](https://img.shields.io/pypi/status/rath.svg)](https://pypi.python.org/pypi/rath/)
 [![PyPI download month](https://img.shields.io/pypi/dm/rath.svg)](https://pypi.python.org/pypi/rath/)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Checked with mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
-[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/jhnnsrs/rath)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
+Rath is a **transport-agnostic GraphQL client for Python** focused on composability. Built on
+[Pydantic v2](https://docs.pydantic.dev/) and [Koil](https://github.com/jhnnsrs/koil), it works
+seamlessly in both async and sync code.
 
+Inspired by Apollo Client, Rath composes request logic out of **links** — small, chainable
+middleware objects that transform or forward an operation until a terminating link dispatches it
+over the network. Need auth headers, retries, schema validation, persisted queries, or a websocket
+transport for subscriptions? Each is just another link you drop into the chain.
 
-## Inspiration
+## Features
 
-Rath is a transportation agnostic graphql client for python focused on composability. It utilizes `Links` to
-compose GraphQL request logic, similar to the apollo client in typescript. It comes with predefined links to
-enable transports like aiohttp, websockets and httpx, as well as links to retrieve auth tokens, enable retry logic
-or validating requests on a schema.
+- 🔌 **Pluggable transports** — aiohttp, httpx and websockets out of the box.
+- 🧩 **Composable links** — build your request pipeline from small, reusable pieces.
+- ⚡ **Async-first, sync-friendly** — call `aquery`/`asubscribe` from async code, or `query`/`subscribe` from sync code (powered by Koil).
+- 🔐 **Auth with automatic refresh** — re-fetch the token and retry on a `401`/`403`.
+- ✅ **Schema validation** — validate operations locally before they hit the wire.
+- 🚀 **Automatic Persisted Queries (APQ)** — send a hash instead of the full document.
+- 📦 **Typed operations** — pairs beautifully with [turms](https://github.com/jhnnsrs/turms) generated Pydantic models.
+- 🧪 **First-class testing** — mock terminating links so unit tests never touch the network.
 
-## Supported Transports
+## Table of contents
 
-- aiohttp
-- httpx
-- websockets (both  graphql-ws and subscriptions-transport-ws)
+- [Installation](#installation)
+- [The link concept](#the-link-concept)
+- [Quickstart](#quickstart)
+- [Async usage](#async-usage)
+- [Variables and headers](#variables-and-headers)
+- [Handling errors](#handling-errors)
+- [Authentication with refresh](#authentication-with-refresh)
+- [Subscriptions and transport splitting](#subscriptions-and-transport-splitting)
+- [Retries](#retries)
+- [Timeouts](#timeouts)
+- [Schema validation](#schema-validation)
+- [Automatic Persisted Queries](#automatic-persisted-queries-apq)
+- [Testing without a server](#testing-without-a-server)
+- [Typed operations with turms](#typed-operations-with-turms)
+- [Included links](#included-links)
 
 ## Installation
 
@@ -32,179 +53,356 @@ or validating requests on a schema.
 pip install rath
 ```
 
-## Usage Example
+Or with [uv](https://docs.astral.sh/uv/):
 
-```python
-from rath.links.auth import ComposedAuthLink
-from rath.links.aiohttp import AIOHttpLink
-from rath.links import compose
-from rath import Rath
-
-async def aload_token():
-    return "SERVER_TOKEN"
-
-
-auth = ComposedAuthLink(token_loader=aload_token)
-link = AIOHttpLink(endpoint_url="https://countries.trevorblades.com/")
-
-
-with Rath(link=compose(auth,link)) as rath:
-    query = """query {
-        countries {
-            native
-            capital
-        }
-        }
-
-    """
-
-    result = rath.query(query)
-    print(result)
+```bash
+uv add rath
 ```
 
-This example composes both the AuthToken and AIOHttp link: During each query the Bearer headers are set to the retrieved token, and the query is sent to the specified endpoint.
-(Additionally if the servers raises a 401, the token is refreshed and the query is retried)
+## The link concept
 
+A Rath client is configured with a single **terminating link** — the link that actually sends the
+operation over the network (e.g. `AIOHttpLink`, `HttpxLink`, `GraphQLWSLink`).
 
-## Async Usage
+To add behaviour, you wrap the terminating link with **continuation links** using `compose()`.
+Operations flow left → right through the chain; results flow back right → left:
 
-Rath is build for async usage but uses koil, for async/sync compatibility
+```
+operation ─▶ AuthTokenLink ─▶ RetryLink ─▶ AIOHttpLink ─▶ server
+result    ◀────────────────────────────────────────────◀
+```
 
 ```python
-from rath.links.auth import ComposedAuthLink
-from rath.links.aiohttp import AIOHttpLink
-from rath.links import compose
 from rath import Rath
+from rath.links import compose
+from rath.links.auth import ComposedAuthLink
+from rath.links.retry import RetryLink
+from rath.links.aiohttp import AIOHttpLink
 
-async def aload_token():
-    return "SERVER_TOKEN"
+link = compose(
+    ComposedAuthLink(token_loader=...),   # add the Bearer header
+    RetryLink(maximum_retry_attempts=3),  # retry on failure
+    AIOHttpLink(endpoint_url="..."),      # terminating link
+)
 
+rath = Rath(link=link)
+```
 
-auth = ComposedAuthLink(token_loader=aload_token)
+`Rath(link=...)` also accepts a plain list — it is composed for you, and the last element must be a
+terminating link:
+
+```python
+rath = Rath(link=[auth, retry, AIOHttpLink(endpoint_url="...")])
+```
+
+## Quickstart
+
+```python
+from rath import Rath
+from rath.links.aiohttp import AIOHttpLink
+
 link = AIOHttpLink(endpoint_url="https://countries.trevorblades.com/")
 
+with Rath(link=link) as rath:
+    result = rath.query(
+        """
+        query {
+            countries {
+                native
+                capital
+            }
+        }
+        """
+    )
+    print(result.data)  # GraphQLResult — the payload lives on .data
+```
+
+## Async usage
+
+Rath is built for async; the sync API above is just a thin wrapper. In async code use `aquery`,
+`aquery_operation` and `asubscribe`:
+
+```python
+import asyncio
+from rath import Rath
+from rath.links.aiohttp import AIOHttpLink
+
+link = AIOHttpLink(endpoint_url="https://countries.trevorblades.com/")
+
+
 async def main():
-
-  async with Rath(link=compose(auth,link)) as rath:
-      query = """query {
-          countries {
-              native
-              capital
-          }
-          }
-
-      """
-
-      result = await rath.aquery(query)
-      print(result)
+    async with Rath(link=link) as rath:
+        result = await rath.aquery(
+            """
+            query {
+                countries {
+                    native
+                    capital
+                }
+            }
+            """
+        )
+        print(result.data)
 
 
 asyncio.run(main())
 ```
 
-## Example Transport Switch
+## Variables and headers
 
-Links allow the composition of additional logic based on your graphql operation. For example you might want
-to use different grapqhl transports for different kind of operations (e.g using websockets for subscriptions,
-but using standard http requests for potential caching on queries and mutations). This can be easily
-accomplished by providing a split link.
+Pass `variables` and per-operation `headers` directly to `query`/`aquery`:
 
 ```python
+with Rath(link=link) as rath:
+    result = rath.query(
+        """
+        query Country($code: ID!) {
+            country(code: $code) {
+                name
+                capital
+            }
+        }
+        """,
+        variables={"code": "DE"},
+        headers={"X-Tenant": "acme"},
+    )
+    print(result.data["country"])
+```
+
+## Handling errors
+
+When the server returns GraphQL errors, Rath raises a `GraphQLException` carrying the messages and
+the offending operation:
+
+```python
+from rath.operation import GraphQLException
+
+with Rath(link=link) as rath:
+    try:
+        result = rath.query("query { doesNotExist }")
+    except GraphQLException as exc:
+        print("GraphQL error:", exc.message)
+        print("Operation:", exc.operation.operation_name)
+```
+
+## Authentication with refresh
+
+`ComposedAuthLink` injects a `Bearer` token (returned by `token_loader`) into every request. If the
+terminating link reports an authentication error (e.g. a `403`), the `token_refresher` is called and
+the operation is retried — up to `maximum_refresh_attempts` times.
+
+```python
+from rath import Rath
+from rath.links import compose
+from rath.links.auth import ComposedAuthLink
+from rath.links.aiohttp import AIOHttpLink
+
+
+async def aload_token() -> str:
+    return "SERVER_TOKEN"
+
+
+async def arefresh_token() -> str:
+    # e.g. exchange a refresh token for a fresh access token
+    return "REFRESHED_TOKEN"
+
+
+auth = ComposedAuthLink(token_loader=aload_token, token_refresher=arefresh_token)
+http = AIOHttpLink(endpoint_url="https://countries.trevorblades.com/")
+
+with Rath(link=compose(auth, http)) as rath:
+    result = rath.query("query { countries { capital } }")
+    print(result.data)
+```
+
+## Subscriptions and transport splitting
+
+Different operation types often want different transports: websockets for subscriptions, plain HTTP
+for queries and mutations (so they stay cacheable). `split` routes each operation to one of two
+links based on a predicate.
+
+```python
+from graphql import OperationType
+from rath import Rath
+from rath.links import compose, split
 from rath.links.auth import ComposedAuthLink
 from rath.links.aiohttp import AIOHttpLink
 from rath.links.graphql_ws import GraphQLWSLink
-from rath.links import compose, split
 
-from rath import Rath
 
-async def aload_token():
+async def aload_token() -> str:
     return "SERVER_TOKEN"
 
 
 auth = ComposedAuthLink(token_loader=aload_token)
-link = AIOHttpLink(endpoint_url="https://countries.trevorblades.com/")
-ws = GraphQLWSLink(ws_endpoint_url="wss://countries.trevorblades.com/") # 
+http = AIOHttpLink(endpoint_url="https://api.example.com/graphql")
+ws = GraphQLWSLink(ws_endpoint_url="wss://api.example.com/graphql")
 
+# Predicate True  -> first link (http)
+# Predicate False -> second link (ws)
+transport = split(http, ws, lambda op: op.node.operation != OperationType.SUBSCRIPTION)
 
-end_link = split(link, ws, lambda op: op.node.operation != "subscription")
+with Rath(link=compose(auth, transport)) as rath:
+    # queries and mutations go over HTTP
+    print(rath.query("query { countries { capital } }").data)
 
-
-with Rath(link=end_link) as rath:
-    query = """query {
-        countries {
-            native
-            capital
-        }
-        }
-
-    """
-
-    result = rath.query(query) # uses the http link
-    print(result)
-
-    subscription = """subscription {
-        newCountry {
-            native
-            capital
-        }
-        }
-
-    """
-
-    for i in rath.subscribe(subscription): # uses the ws link
-        print(i) # will fail because the server does not support subscriptions
-
-  
+    # subscriptions go over the websocket link
+    for event in rath.subscribe("subscription { newCountry { capital } }"):
+        print(event.data)
 ```
 
-## Included Links
+> **Note:** `op.node.operation` is a graphql-core `OperationType` enum — compare against
+> `OperationType.SUBSCRIPTION`, not the string `"subscription"`.
 
-- Validating Link (validate query against local schema (or introspect the schema))
-- Reconnecting WebsocketLink
-- AioHttpLink (with multi-part upload support)
-- SplitLink (allows to split the terminating link - Subscription into WebsocketLink, Query, Mutation into Aiohttp)
-- AuthTokenLink (Token insertion with automatic refreshs)
+## Retries
+
+`RetryLink` retries an operation when the terminating link fails (handy for flaky connections and
+dropped subscriptions):
+
+```python
+from rath.links import compose
+from rath.links.retry import RetryLink
+from rath.links.aiohttp import AIOHttpLink
+
+link = compose(
+    RetryLink(maximum_retry_attempts=5, sleep_interval=1),  # wait 1s between attempts
+    AIOHttpLink(endpoint_url="https://countries.trevorblades.com/"),
+)
+```
+
+## Timeouts
+
+`TimeoutLink` aborts an operation that takes longer than `timeout` seconds:
+
+```python
+from rath.links import compose
+from rath.links.timeout import TimeoutLink
+from rath.links.aiohttp import AIOHttpLink
+
+link = compose(
+    TimeoutLink(timeout=10),  # seconds
+    AIOHttpLink(endpoint_url="https://countries.trevorblades.com/"),
+)
+```
+
+## Schema validation
+
+`ValidatingLink` validates each operation against a GraphQL schema *before* it is sent, so malformed
+queries fail fast with a clear error. Provide the schema as a DSL string, a glob of `.graphql`
+files, or let it introspect the remote schema.
+
+```python
+from rath.links import compose
+from rath.links.validate import ValidatingLink
+from rath.links.aiohttp import AIOHttpLink
+
+link = compose(
+    ValidatingLink(schema_glob="schemas/**/*.graphql"),
+    AIOHttpLink(endpoint_url="https://countries.trevorblades.com/"),
+)
+```
+
+## Automatic Persisted Queries (APQ)
+
+`ApqLink` sends a SHA-256 hash of the query instead of the full document. If the server hasn't seen
+the query yet it transparently retries with the full text. This shrinks request payloads and plays
+well with CDN caching.
+
+```python
+from rath.links import compose
+from rath.links.apq import ApqLink
+from rath.links.aiohttp import AIOHttpLink
+
+link = compose(
+    ApqLink(),
+    AIOHttpLink(endpoint_url="https://countries.trevorblades.com/"),
+)
+```
+
+## Testing without a server
+
+The `rath.links.testing` package provides terminating links that resolve operations locally, so unit
+tests never hit the network. `AsyncMockLink` takes a dict of resolvers keyed by field name; each
+resolver receives the `Operation` and returns the value for that field:
+
+```python
+from rath import Rath
+from rath.links.testing.mock import AsyncMockLink
+from rath.operation import Operation
 
 
-## Typed Operations
+async def resolve_countries(operation: Operation):
+    return [{"capital": "Berlin", "native": "Deutschland"}]
 
-Searching for a solution to generate typed operations for your graphql api? Look no further, rath + turms has you covered. [Turms](https://github.com/jhnnsrs/turms) is a graphql code generator that allows you to generate typed operations for your graphql api.
 
-Rath works especially well with turms generated typed operations:
+link = AsyncMockLink(query_resolver={"countries": resolve_countries})
+
+with Rath(link=link) as rath:
+    result = rath.query("query { countries { native capital } }")
+    assert result.data == {"countries": [{"capital": "Berlin", "native": "Deutschland"}]}
+```
+
+Use `AsyncStatefulMockLink` when you also need to mock subscriptions, and `AssertLink` together with
+`compose()` to assert that upstream links transformed an operation as expected.
+
+## Typed operations with turms
+
+Looking for fully typed operations for your GraphQL API? Rath pairs with
+[turms](https://github.com/jhnnsrs/turms), a code generator that turns your `.graphql` documents
+into typed, Pydantic-powered functions:
 
 ```python
 import asyncio
-from examples.api.schema import aget_capsules
-from rath.rath import Rath
+from examples.api.schema import aget_capsules  # turms-generated
+from rath import Rath
+from rath.links import compose
+from rath.links.auth import ComposedAuthLink
 from rath.links.aiohttp import AIOHttpLink
-from rath.links.auth import AuthTokenLink
-from rath.links.compose import compose
 
 
-async def token_loader():
+async def aload_token() -> str:
     return ""
 
 
-link = compose(
-    AuthTokenLink(token_loader), AIOHttpLink("https://api.spacex.land/graphql/")
-)
-
-
 rath = Rath(
-    link=link,
-    register=True, # allows global access (singleton-antipattern, but rath has no state)
+    link=compose(
+        ComposedAuthLink(token_loader=aload_token),
+        AIOHttpLink(endpoint_url="https://api.spacex.land/graphql/"),
+    ),
 )
 
 
 async def main():
-
+    # Entering the client registers it as the current Rath, so turms-generated
+    # functions can find it without passing the client explicitly.
     async with rath:
-        capsules = await aget_capsules() # fully typed pydantic powered dataclasses generated through turms
+        capsules = await aget_capsules()  # fully typed result
         print(capsules)
 
 
 asyncio.run(main())
-
 ```
 
-This github repository also contains an example client with a turms generated query with the public SpaceX api, as well as a sample of the generated api.
+This repository contains an example turms-generated client (`examples/`) querying the public SpaceX
+API, plus a sample of the generated code.
+
+## Included links
+
+| Link | Purpose |
+|------|---------|
+| `AIOHttpLink` | HTTP transport via aiohttp (with multi-part file upload support) |
+| `HttpxLink` | HTTP transport via httpx |
+| `GraphQLWSLink` | WebSocket transport (`graphql-ws` protocol), with reconnection |
+| `SubscriptionTransportWsLink` | Legacy `subscriptions-transport-ws` protocol |
+| `SplitLink` (`split`) | Route operations to different terminating links by type |
+| `ComposedAuthLink` / `AuthTokenLink` | Bearer-token insertion with automatic refresh |
+| `RetryLink` | Retry failed operations with optional back-off |
+| `TimeoutLink` | Abort operations that exceed a deadline |
+| `ValidatingLink` | Validate operations against a schema before sending |
+| `ApqLink` | Automatic Persisted Queries |
+| `FileExtraction` | Extract (nested) file-like objects from variables for upload |
+| Testing links | `AsyncMockLink`, `AsyncStatefulMockLink`, `AssertLink`, … |
+
+## License
+
+See [LICENSE](LICENSE).

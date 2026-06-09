@@ -98,9 +98,6 @@ class Rath(KoiledModel):
 
         if not result:
             raise NotConnectedError("Could not retrieve data from the server.")
-            # This is to account for the fact that mypy apparently doesn't
-            # understand that a return statement in a generator is valid.
-            # This is a workaround to make mypy happy.
 
         return result
 

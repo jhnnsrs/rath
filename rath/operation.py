@@ -46,6 +46,19 @@ class Operation(BaseModel):
     extensions: Extensions
     context: Context
 
+    @property
+    def display_name(self) -> str:
+        """A human-readable name for the operation, for use in logs and errors.
+
+        Falls back to the name on the operation's document node (e.g. ``GetBeast``
+        in ``query GetBeast { ... }``) when no explicit ``operation_name`` was passed,
+        and finally to ``"Unnamed Operation"`` for anonymous operations."""
+        if self.operation_name:
+            return self.operation_name
+        if self.node.name:
+            return self.node.name.value
+        return "Unnamed Operation"
+
 
 class GraphQLResult(BaseModel):
     """GraphQLResult is the result of a GraphQL operation."""
@@ -76,9 +89,7 @@ class GraphQLException(Exception):
         if self.endpoint_url:
             base_message += f" (Endpoint: {self.endpoint_url})"
         if self.operation:
-            base_message += (
-                f" (Operation: {self.operation.operation_name or 'Unnamed Operation'})"
-            )
+            base_message += f" (Operation: {self.operation.display_name})"
         if self.errors:
             base_message += f" (Errors: {self.errors})"
         return base_message

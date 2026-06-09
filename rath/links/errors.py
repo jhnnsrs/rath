@@ -42,3 +42,30 @@ class AuthenticationError(TerminatingLinkError):
     """Signals that the authentication failed."""
 
     pass
+
+
+class TokenLoaderNotSetError(ContinuationLinkError):
+    """Raised when an auth link needs to load a token but no token_loader is configured.
+
+    Either pass a ``token_loader`` to ``ComposedAuthLink`` or subclass ``AuthTokenLink``
+    and override ``aload_token``."""
+
+    pass
+
+
+class TokenRefresherNotSetError(ContinuationLinkError):
+    """Raised when an auth link needs to refresh an expired token but no token_refresher is configured.
+
+    Either pass a ``token_refresher`` to ``ComposedAuthLink`` or subclass ``AuthTokenLink``
+    and override ``arefresh_token``."""
+
+    pass
+
+
+class MalformedResponseError(TerminatingLinkError):
+    """Raised when the server returns a 200 response that contains neither ``data`` nor ``errors``.
+
+    This usually indicates that the endpoint is not a GraphQL endpoint, or that a
+    proxy/load-balancer returned an unexpected body."""
+
+    pass

@@ -9,7 +9,7 @@ from graphql import OperationType
 from pydantic import Field
 from rath.operation import GraphQLException, GraphQLResult, Operation
 from rath.links.base import AsyncTerminatingLink
-from rath.links.errors import AuthenticationError
+from rath.links.errors import AuthenticationError, MalformedResponseError
 import logging
 import certifi
 import ssl
@@ -108,7 +108,8 @@ class AIOHttpLink(AsyncTerminatingLink):
 
         if operation.node.operation == OperationType.SUBSCRIPTION:
             raise NotImplementedError(
-                "Aiohttp Transport does not support subscriptions"
+                "Aiohttp Transport does not support subscriptions. Use a websocket link "
+                "(e.g. GraphQLWSLink) for subscriptions, e.g. via a SplitLink."
             )
 
         if len(operation.context.files.items()) > 0:
@@ -169,6 +170,10 @@ class AIOHttpLink(AsyncTerminatingLink):
                     )
 
                 if "data" not in json_response:
-                    raise Exception(f"Response does not contain data {json_response}")
+                    raise MalformedResponseError(
+                        f"Response from {self.endpoint_url} for operation "
+                        f"'{operation.display_name}' contains neither "
+                        f"'data' nor 'errors': {json_response}"
+                    )
 
                 yield GraphQLResult(data=json_response["data"])
