@@ -1,7 +1,15 @@
 # CHANGELOG
 
 
+## v3.11.1 (2026-06-09)
+
+
 ## v3.11.0 (2026-06-09)
+
+### Bug Fixes
+
+- Update koil
+  ([`0b89c72`](https://github.com/jhnnsrs/rath/commit/0b89c724f82af1057f7e48888296aef325e76981))
 
 ### Features
 
