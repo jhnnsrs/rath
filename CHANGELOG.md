@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v3.12.0 (2026-06-21)
+
+### Features
+
+- Update to koil 3.3 that fixes major task leakage and better error reporting
+  ([`3cbcbb1`](https://github.com/jhnnsrs/rath/commit/3cbcbb1bd6071085862355ff767c864c28dadcfd))
+
+
 ## v3.11.1 (2026-06-09)
 
 
