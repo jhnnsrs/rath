@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v3.13.0 (2026-09-01)
+
+### Features
+
+- Better auth errors
+  ([`d034203`](https://github.com/jhnnsrs/rath/commit/d0342030902266c0070fd1269934456e60e0696d))
+
+
 ## v3.12.0 (2026-06-21)
 
 ### Features
