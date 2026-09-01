@@ -55,7 +55,7 @@ def execute(operation: Type[TOperation], variables: Dict[str, Any], rath: Option
     return operation(
         **rath.query(
             operation.Meta.document,
-            operation.Arguments(**variables).model_dump(by_alias=True),
+            operation.Arguments(**variables).model_dump(by_alias=True, exclude_unset=True),
         ).data
     )
 
@@ -86,7 +86,7 @@ async def aexecute(operation: Type[TOperation], variables: Dict[str, Any], rath:
     assert rath is not None, "No rath client provided and no rath client in current_rath context"
     x = await rath.aquery(
         operation.Meta.document,
-        operation.Arguments(**variables).model_dump(by_alias=True),
+        operation.Arguments(**variables).model_dump(by_alias=True, exclude_unset=True),
     )
     return operation(**x.data)
 
@@ -118,7 +118,7 @@ def subscribe(operation: Type[TOperation], variables: Dict[str, Any], rath: Opti
 
     for event in rath.subscribe(
         operation.Meta.document,
-        operation.Arguments(**variables).model_dump(by_alias=True),
+        operation.Arguments(**variables).model_dump(by_alias=True, exclude_unset=True),
     ):
         yield operation(**event.data)
 
@@ -150,6 +150,6 @@ async def asubscribe(operation: Type[TOperation], variables: Dict[str, Any], rat
 
     async for event in rath.asubscribe(
         operation.Meta.document,
-        operation.Arguments(**variables).model_dump(by_alias=True),
+        operation.Arguments(**variables).model_dump(by_alias=True, exclude_unset=True),
     ):
         yield operation(**event.data)

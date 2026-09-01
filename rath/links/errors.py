@@ -1,3 +1,4 @@
+from typing import Any
 from rath.errors import RathException
 
 
@@ -69,3 +70,33 @@ class MalformedResponseError(TerminatingLinkError):
     proxy/load-balancer returned an unexpected body."""
 
     pass
+
+
+def is_auth_error(errors: "list[dict[str, Any]]", codes: "list[str]") -> bool:
+    """Whether a GraphQL ``errors`` array is really an authentication failure.
+
+    Servers are free to answer an expired token with ``200 OK`` and an error in the
+    body rather than a ``401``/``403`` — that is what a GraphQL error *is*, and it is
+    what arkitekt's services do::
+
+        {"errors": [{"message": "...",
+                     "extensions": {"code": "UNAUTHENTICATED",
+                                    "reason": "TOKEN_EXPIRED"}}]}
+
+    Read as an ordinary ``GraphQLException`` that never reaches
+    :class:`~rath.links.auth.AuthTokenLink`, so the token is never refreshed and every
+    later operation fails the same way for as long as the process lives.
+
+    Matched on ``code`` alone. ``reason`` names the specific failure and exists so new
+    ones can be added without breaking clients, so switching on it would be the
+    fragile choice. ``PERMISSION_DENIED`` is deliberately not in the default set: a
+    missing scope is not fixed by a new token, and treating it as one buys a refresh
+    loop that ends at ``maximum_refresh_attempts``.
+    """
+    for error in errors:
+        if not isinstance(error, dict):
+            continue
+        extensions = error.get("extensions")
+        if isinstance(extensions, dict) and extensions.get("code") in codes:
+            return True
+    return False

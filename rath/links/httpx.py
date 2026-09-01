@@ -6,7 +6,11 @@ from graphql import OperationType
 from pydantic import Field
 from rath.operation import GraphQLException, GraphQLResult, Operation
 from rath.links.base import AsyncTerminatingLink
-from rath.links.errors import AuthenticationError, MalformedResponseError
+from rath.links.errors import (
+    AuthenticationError,
+    MalformedResponseError,
+    is_auth_error,
+)
 import logging
 from rath.links.types import Payload
 from datetime import datetime
@@ -37,6 +41,13 @@ class HttpxLink(AsyncTerminatingLink):
         ]
     )
     """auth_errors is a list of HTTPStatus codes that indicate an authentication error."""
+
+    auth_error_codes: List[str] = Field(
+        default_factory=lambda: ["UNAUTHENTICATED"],
+    )
+    """GraphQL ``extensions.code`` values that mean "refresh the token and retry",
+    for a server that reports an expired token as a 200 with an error in the body
+    rather than as a 401 or 403. See :func:`rath.links.errors.is_auth_error`."""
     json_encoder: Type[json.JSONEncoder] = Field(default=DateTimeEncoder, exclude=True)
 
     async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
@@ -104,6 +115,14 @@ class HttpxLink(AsyncTerminatingLink):
                 json_response = response.json()
 
                 if "errors" in json_response:
+                    if is_auth_error(json_response["errors"], self.auth_error_codes):
+                        raise AuthenticationError(
+                            "Server rejected the token: "
+                            + "; ".join(
+                                str(e.get("message", ""))
+                                for e in json_response["errors"]
+                            )
+                        )
                     raise GraphQLException(
                         "\n".join([e["message"] for e in json_response["errors"]]),
                         operation=operation,

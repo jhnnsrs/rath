@@ -9,7 +9,11 @@ from graphql import OperationType
 from pydantic import Field
 from rath.operation import GraphQLException, GraphQLResult, Operation
 from rath.links.base import AsyncTerminatingLink
-from rath.links.errors import AuthenticationError, MalformedResponseError
+from rath.links.errors import (
+    AuthenticationError,
+    MalformedResponseError,
+    is_auth_error,
+)
 import logging
 import certifi
 import ssl
@@ -54,6 +58,13 @@ class AIOHttpLink(AsyncTerminatingLink):
     unauthorized. By default, this is just HTTPStatus.FORBIDDEN, but you can
     override this to include other status codes that indicate that the request was
     unauthorized."""
+
+    auth_error_codes: List[str] = Field(
+        default_factory=lambda: ["UNAUTHENTICATED"],
+    )
+    """GraphQL ``extensions.code`` values that mean "refresh the token and retry",
+    for a server that reports an expired token as a 200 with an error in the body
+    rather than as a 401 or 403. See :func:`rath.links.errors.is_auth_error`."""
 
     json_encoder: Type[json.JSONEncoder] = Field(default=DateTimeEncoder, exclude=True)
     """json_encoder is the JSONEncoder to use when serializing the payload. By default,
@@ -162,6 +173,14 @@ class AIOHttpLink(AsyncTerminatingLink):
                 json_response = await response.json()
 
                 if "errors" in json_response:
+                    if is_auth_error(json_response["errors"], self.auth_error_codes):
+                        raise AuthenticationError(
+                            "Server rejected the token: "
+                            + "; ".join(
+                                str(e.get("message", ""))
+                                for e in json_response["errors"]
+                            )
+                        )
                     raise GraphQLException(
                         "\n".join([e["message"] for e in json_response["errors"]]),
                         operation=operation,
