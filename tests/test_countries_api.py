@@ -17,7 +17,7 @@ async def test_query_async(real_world_link):
     rath = Rath(link=real_world_link)
 
     async with rath:
-        countries = await acountries()
+        countries = await acountries(rath)
 
     assert isinstance(countries, list), "Not a list"
 
@@ -27,7 +27,7 @@ def test_query_sync(real_world_link):
     rath = Rath(link=real_world_link)
 
     with rath:
-        xcountries = countries()
+        xcountries = countries(rath)
 
     assert isinstance(xcountries, list), "Not a list"
 

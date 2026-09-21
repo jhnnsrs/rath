@@ -32,7 +32,7 @@ class QtRathWidget(QtWidgets.QWidget):
         self.button_greet.clicked.connect(self.greet)
 
     def greet(self):
-        self.countries_query.run()
+        self.countries_query.run(self.rath)
 
 
 class QtFuncWidget(QtWidgets.QWidget):

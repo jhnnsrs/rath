@@ -1,3 +1,4 @@
+from rath.rath import Rath
 from typing_extensions import Literal
 from typing import List, Optional
 from rath.turms.funcs import execute, aexecute
@@ -25,7 +26,7 @@ class Countries(BaseModel):
         )
 
 
-def countries() -> List[CountriesCountries]:
+def countries(rath: Rath) -> List[CountriesCountries]:
     """Countries
 
 
@@ -34,10 +35,10 @@ def countries() -> List[CountriesCountries]:
 
     Returns:
         CountriesCountries"""
-    return execute(Countries, {}).countries
+    return execute(Countries, {}, rath).countries
 
 
-async def acountries() -> List[CountriesCountries]:
+async def acountries(rath: Rath) -> List[CountriesCountries]:
     """Countries
 
 
@@ -46,4 +47,4 @@ async def acountries() -> List[CountriesCountries]:
 
     Returns:
         CountriesCountries"""
-    return (await aexecute(Countries, {})).countries
+    return (await aexecute(Countries, {}, rath)).countries

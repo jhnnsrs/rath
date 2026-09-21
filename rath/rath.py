@@ -16,11 +16,9 @@ from graphql import (
     DocumentNode,
 )
 from rath.operation import GraphQLResult, Operation, opify
-from contextvars import ContextVar, Token
 from koil import unkoil_gen, unkoil
 
 
-current_rath: ContextVar[Optional["Rath"]] = ContextVar("current_rath", default=None)
 
 
 class Rath(KoiledModel):
@@ -59,7 +57,6 @@ class Rath(KoiledModel):
 
     _entered = False
     """An internal flag flag that indicates whether the Rath is currently in the context manager."""
-    _context_token: Optional[Token[Optional["Rath"]]] = None
     """A context token that is used to keep track of the current rath in the context manager."""
 
     @field_validator("link", mode="before")
@@ -159,7 +156,9 @@ class Rath(KoiledModel):
         Returns:
             GraphQLResult: The result of the query
         """
-        return unkoil(self.aquery, query, variables, headers, operation_name)
+        return unkoil(
+            self.aquery, query, variables, headers, operation_name, **kwargs
+        )
 
     def subscribe(
         self,
@@ -225,7 +224,6 @@ class Rath(KoiledModel):
     async def __aenter__(self) -> "Rath":
         """Enters the context manager of the link"""
         self._entered = True
-        self._context_token = current_rath.set(self)
         await self.link.__aenter__()
         return self
 
@@ -238,5 +236,3 @@ class Rath(KoiledModel):
         """Exits the context manager of the link"""
         await self.link.__aexit__(exc_type, exc_val, traceback)
         self._entered = False
-        if self._context_token:
-            current_rath.set(None)

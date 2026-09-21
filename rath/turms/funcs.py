@@ -1,4 +1,4 @@
-from rath.rath import Rath, current_rath
+from rath.rath import Rath
 from typing import AsyncIterator, Iterator, Protocol, Type, TypeVar, Any, Dict, Optional
 from pydantic import BaseModel
 
@@ -28,13 +28,10 @@ class TurmsOperation(Protocol[TArgs, TMeta]):
 TOperation = TypeVar("TOperation", bound=TurmsOperation[Any, Any])
 
 
-def execute(operation: Type[TOperation], variables: Dict[str, Any], rath: Optional[Rath] = None) -> TOperation:
+def execute(operation: Type[TOperation], variables: Dict[str, Any], rath: Rath) -> TOperation:
     """Synchronously Executes an a query or mutation using rath
 
 
-    This function will execute an operation using rath, retrieving
-    the currentliy active rath client from the current_rath context
-    if no rath client is provided.
 
     Parameters
     ----------
@@ -42,16 +39,14 @@ def execute(operation: Type[TOperation], variables: Dict[str, Any], rath: Option
         The turms operation to execute
     variables : Dict[str, Any]
         The variables to use
-    rath : Optional[Rath], optional
-        The rath client, by default the current rath client
+    rath : Rath
+        The rath client to execute through
 
     Returns
     -------
     BaseModel
         The result of the operation
     """
-    rath = rath or current_rath.get()
-    assert rath is not None, "No rath client provided and no rath client in current_rath context"
     return operation(
         **rath.query(
             operation.Meta.document,
@@ -60,13 +55,10 @@ def execute(operation: Type[TOperation], variables: Dict[str, Any], rath: Option
     )
 
 
-async def aexecute(operation: Type[TOperation], variables: Dict[str, Any], rath: Optional[Rath] = None) -> TOperation:
+async def aexecute(operation: Type[TOperation], variables: Dict[str, Any], rath: Rath) -> TOperation:
     """Asynchronously Executes a query or mutation using rath
 
 
-    This function will execute an operation using rath, retrieving
-    the currentliy active rath client from the current_rath context
-    if no rath client is provided.
 
     Parameters
     ----------
@@ -74,16 +66,14 @@ async def aexecute(operation: Type[TOperation], variables: Dict[str, Any], rath:
         The turms operation to execute
     variables : Dict[str, Any]
         The variables to use
-    rath : Optional[Rath], optional
-        The rath client, by default the current rath client
+    rath : Rath
+        The rath client to execute through
 
     Returns
     -------
     BaseModel
         The result of the operation
     """
-    rath = rath or current_rath.get()
-    assert rath is not None, "No rath client provided and no rath client in current_rath context"
     x = await rath.aquery(
         operation.Meta.document,
         operation.Arguments(**variables).model_dump(by_alias=True, exclude_unset=True),
@@ -91,13 +81,10 @@ async def aexecute(operation: Type[TOperation], variables: Dict[str, Any], rath:
     return operation(**x.data)
 
 
-def subscribe(operation: Type[TOperation], variables: Dict[str, Any], rath: Optional[Rath] = None) -> Iterator[TOperation]:
+def subscribe(operation: Type[TOperation], variables: Dict[str, Any], rath: Rath) -> Iterator[TOperation]:
     """Synchronously subscribte to a subscription using rath
 
 
-    This function will execute an operation using rath, retrieving
-    the currentliy active rath client from the current_rath context
-    if no rath client is provided.
 
     Parameters
     ----------
@@ -105,16 +92,14 @@ def subscribe(operation: Type[TOperation], variables: Dict[str, Any], rath: Opti
         The turms operation to execute
     variables : Dict[str, Any]
         The variables to use
-    rath : Optional[Rath], optional
-        The rath client, by default the current rath client
+    rath : Rath
+        The rath client to execute through
 
     Yields
     -------
     BaseModel
         The result of the operation
     """
-    rath = rath or current_rath.get()
-    assert rath is not None, "No rath client provided and no rath client in current_rath context"
 
     for event in rath.subscribe(
         operation.Meta.document,
@@ -123,13 +108,10 @@ def subscribe(operation: Type[TOperation], variables: Dict[str, Any], rath: Opti
         yield operation(**event.data)
 
 
-async def asubscribe(operation: Type[TOperation], variables: Dict[str, Any], rath: Optional[Rath] = None) -> AsyncIterator[TOperation]:
+async def asubscribe(operation: Type[TOperation], variables: Dict[str, Any], rath: Rath) -> AsyncIterator[TOperation]:
     """Asynchronously subscribte to a subscription using rath
 
 
-    This function will execute an operation using rath, retrieving
-    the currentliy active rath client from the current_rath context
-    if no rath client is provided.
 
     Parameters
     ----------
@@ -137,16 +119,14 @@ async def asubscribe(operation: Type[TOperation], variables: Dict[str, Any], rat
         The turms operation to execute
     variables : Dict[str, Any]
         The variables to use
-    rath : Optional[Rath], optional
-        The rath client, by default the current rath client
+    rath : Rath
+        The rath client to execute through
 
     yields
     -------
     BaseModel
         The result of the operation
     """
-    rath = rath or current_rath.get()
-    assert rath is not None, "No rath client provided and no rath client in current_rath context"
 
     async for event in rath.asubscribe(
         operation.Meta.document,

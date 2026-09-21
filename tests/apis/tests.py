@@ -1,3 +1,4 @@
+from rath.rath import Rath
 from typing_extensions import Literal
 from typing import List, Optional
 from rath.turms.funcs import execute, aexecute
@@ -24,7 +25,7 @@ class Get_beasts(BaseModel):
         document = "fragment Beast on Beast {\n  commonName\n  taxClass\n}\n\nquery get_beasts {\n  beasts {\n    ...Beast\n  }\n}"
 
 
-def get_beasts() -> Optional[List[Optional[Beast]]]:
+def get_beasts(rath: "Rath") -> Optional[List[Optional[Beast]]]:
     """get_beasts
 
 
@@ -33,10 +34,10 @@ def get_beasts() -> Optional[List[Optional[Beast]]]:
 
     Returns:
         Beast"""
-    return execute(Get_beasts, {}).beasts
+    return execute(Get_beasts, {}, rath).beasts
 
 
-async def aget_beasts() -> Optional[List[Optional[Beast]]]:
+async def aget_beasts(rath: "Rath") -> Optional[List[Optional[Beast]]]:
     """get_beasts
 
 
@@ -45,4 +46,4 @@ async def aget_beasts() -> Optional[List[Optional[Beast]]]:
 
     Returns:
         Beast"""
-    return (await aexecute(Get_beasts, {})).beasts
+    return (await aexecute(Get_beasts, {}, rath)).beasts

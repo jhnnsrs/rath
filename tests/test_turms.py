@@ -17,7 +17,7 @@ async def test_query_async(mock_link):
     rath = Rath(link=mock_link)
 
     async with rath:
-        beasts = await aget_beasts()
+        beasts = await aget_beasts(rath)
 
         assert isinstance(beasts, list), "Not a list"
 
@@ -26,7 +26,7 @@ def test_query_sync(mock_link):
     rath = Rath(link=mock_link)
 
     with rath:
-        beasts = get_beasts()
+        beasts = get_beasts(rath)
 
         assert isinstance(beasts, list), "Not a list"
         for be in beasts:
