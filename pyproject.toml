@@ -35,7 +35,11 @@ dev-dependencies = [
     "ruff>0.11",
     "cryptography>=41.0.3,<42",
     "pyjwt>=2.8.0,<3",
-    "turms>=2.0.0",
+    "turms>=2.1.0",
+    # `tests/test_qt.py` imports `koil.qt`, which imports qtpy. This used to
+    # arrive by accident through a `fakts==1.0.0` dev-pin nothing imported;
+    # removing that dead pin took qtpy with it. Ask for it directly.
+    "koil[qtpy]>=3.3.3",
     "pyqt5==5.15.11",
     "python-semantic-release>=9.21.1",
     "dokker>=2.5",
