@@ -106,7 +106,6 @@ graphql fragments and operations super easy.
 
 Turms requires a graphl.config.yaml file to generate code, for this
 example we can use the following:
-
 ```yaml
 projects:
   default:
@@ -120,16 +119,41 @@ projects:
         plugins:
           - type: turms.plugins.enums.EnumsPlugin
           - type: turms.plugins.fragments.FragmentsPlugin
-          - type: turms.plugins.operation.OperationsPlugin
-          - type: rath.turms.plugins.funcs.RathFuncsPlugin #this will create functions that we can use with rath
-        processors:
-          - type: turms.processor.black.BlackProcessor
+          - type: turms.plugins.operations.OperationsPlugin
+          - type: turms.plugins.funcs.FuncsPlugin
+            global_kwargs:
+              - key: rath
+                type: rath.rath.Rath
+                description: The rath client to execute the operation on
+            definitions:
+              - type: query
+                use: rath.turms.funcs.execute
+              - type: mutation
+                use: rath.turms.funcs.execute
+              - type: subscription
+                use: rath.turms.funcs.subscribe
+              - type: query
+                is_async: true
+                use: rath.turms.funcs.aexecute
+              - type: mutation
+                is_async: true
+                use: rath.turms.funcs.aexecute
+              - type: subscription
+                is_async: true
+                use: rath.turms.funcs.asubscribe
         scalar_definitions:
           uuid: str
 ```
 
-With this generation rath will generate fully typed classes for enums, fragments, operations and additionally
-because we specify the RathFuncsPlugin, fully typed functions that we you can use in your code (ala useQuery, useMutation in apollo).
+Turms generates fully typed classes for enums, fragments and operations. The
+funcs plugin adds a function per operation on top of them -- a sync one and an
+`a`-prefixed async one -- and `definitions` is where you say what those
+functions should call. Here that is `rath.turms.funcs`, which knows how to run
+an operation on a rath; `global_kwargs` is what puts the `rath=` parameter on
+every generated function.
+
+This is rath's own configuration, near enough: the real one lives in
+`graphql.config.yaml` at the repo root and generates `tests/apis/`.
 
 On running (in your terminal)
 
@@ -140,69 +164,91 @@ turms gen
 Turms generates automatically this pydantic schema for you
 
 ```python title="api/schema.py"
-from typing import Literal, List, Optional
-from pydantic import Field, BaseModel
-from enum import Enum
+from pydantic import BaseModel, Field
+from rath.rath import Rath
 from rath.turms.funcs import aexecute, execute
+from typing import Any, Literal
 
 
 class Beast(BaseModel):
-    typename: Optional[Literal["Beast"]] = Field(alias="__typename")
-    commonName: Optional[str]
+    """No documentation"""
+
+    typename: Literal["Beast"] = Field(alias="__typename", default="Beast")
+    common_name: str | None = Field(default=None, alias="commonName")
     "a beast's name to you and I"
-    taxClass: Optional[str]
+    tax_class: str | None = Field(default=None, alias="taxClass")
     "taxonomy grouping"
+
+    class Meta:
+        """Meta class for Beast"""
+
+        document = "fragment Beast on Beast {\n  commonName\n  taxClass\n  __typename\n}"
+        name = "Beast"
+        type = "Beast"
 
 
 class Get_beasts(BaseModel):
-    beasts: Optional[List[Optional[Beast]]]
+    """No documentation found for this operation."""
+
+    beasts: list[Beast | None] | None = Field(default=None)
+
+    class Arguments(BaseModel):
+        """Arguments for get_beasts"""
+
+        pass
 
     class Meta:
-        domain = "default"
-        document = "fragment Beast on Beast {\n  commonName\n  taxClass\n}\n\nquery get_beasts {\n  beasts {\n    ...Beast\n  }\n}"
+        """Meta class for get_beasts"""
+
+        document = "fragment Beast on Beast {\n  commonName\n  taxClass\n  __typename\n}\n\nquery get_beasts {\n  beasts {\n    ...Beast\n    __typename\n  }\n}"
 
 
-def get_beasts() -> List[Beast]:
+def get_beasts(rath: Rath | None = None) -> list[Beast | None] | None:
     """get_beasts
 
 
-
-    Arguments:
+    Args:
+        rath (rath.rath.Rath): The rath client to execute the operation on
 
     Returns:
-        Beast: The returned Mutation"""
-    return execute(Get_beasts, {}).beasts
+        list[Beast | None] | None
+    """
+    variables: dict[str, Any] = {}
+    return execute(Get_beasts, variables, rath=rath).beasts
 
 
-async def aget_beasts() -> List[Beast]:
+async def aget_beasts(rath: Rath | None = None) -> list[Beast | None] | None:
     """get_beasts
 
 
-
-    Arguments:
+    Args:
+        rath (rath.rath.Rath): The rath client to execute the operation on
 
     Returns:
-        Beast: The returned Mutation"""
-    return (await aexecute(Get_beasts, {})).beasts
+        list[Beast | None] | None
+    """
+    variables: dict[str, Any] = {}
+    return (await aexecute(Get_beasts, variables, rath=rath)).beasts
 ```
 
-Which you can than use easily in your application code, like this
+Which you can then use easily in your application code, like this
 
 ```python
 from rath import Rath
+from rath.links.aiohttp import AIOHttpLink
 from api import get_beasts
 
-rath = Rath(AIOHttpLink(url="..."))
+rath = Rath(link=AIOHttpLink(endpoint_url="..."))
 
 with rath:
-    beasts = get_beasts()
-    first_beast_name = beasts[0].commonName
-
+    beasts = get_beasts(rath=rath)
+    first_beast_name = beasts[0].common_name
 ```
 
-Your Queries are now strongly typed, with comments from your schema.
+Your queries are now strongly typed, with comments from your schema.
 
 :::info
-RathFuncs is just a thin wrapper aorund the OperationsFuncsPlugin that comes with turms,
-check out `rath.turms.funcs` for inspiraiton on writing your own.
+`rath.turms.funcs` is a thin adapter between turms' funcs plugin and a rath --
+four functions, one per operation type and asyncness. If you want the generated
+code to go somewhere else, point `definitions` at your own module instead.
 :::

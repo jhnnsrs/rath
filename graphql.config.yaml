@@ -8,14 +8,31 @@ projects:
         generated_name: tests.py
         stylers:
           - type: turms.stylers.default.DefaultStyler
-        parsers:
-          - type: turms.parsers.polyfill.PolyfillParser
-            python_version: 3.7
         plugins:
           - type: turms.plugins.enums.EnumsPlugin
           - type: turms.plugins.fragments.FragmentsPlugin
           - type: turms.plugins.operations.OperationsPlugin
-          - type: rath.turms.plugins.funcs.RathFuncsPlugin
+          - type: turms.plugins.funcs.FuncsPlugin
+            global_kwargs:
+              - key: rath
+                type: rath.rath.Rath
+                description: The rath client to execute the operation on
+            definitions:
+              - type: query
+                use: rath.turms.funcs.execute
+              - type: mutation
+                use: rath.turms.funcs.execute
+              - type: subscription
+                use: rath.turms.funcs.subscribe
+              - type: query
+                is_async: true
+                use: rath.turms.funcs.aexecute
+              - type: mutation
+                is_async: true
+                use: rath.turms.funcs.aexecute
+              - type: subscription
+                is_async: true
+                use: rath.turms.funcs.asubscribe
         processors:
           - type: turms.processors.black.BlackProcessor
         scalar_definitions:
@@ -29,14 +46,31 @@ projects:
         generated_name: countries.py
         stylers:
           - type: turms.stylers.default.DefaultStyler
-        parsers:
-          - type: turms.parsers.polyfill.PolyfillParser
-            python_version: 3.7
         plugins:
           - type: turms.plugins.enums.EnumsPlugin
           - type: turms.plugins.fragments.FragmentsPlugin
           - type: turms.plugins.operations.OperationsPlugin
-          - type: rath.turms.plugins.funcs.RathFuncsPlugin
+          - type: turms.plugins.funcs.FuncsPlugin
+            global_kwargs:
+              - key: rath
+                type: rath.rath.Rath
+                description: The rath client to execute the operation on
+            definitions:
+              - type: query
+                use: rath.turms.funcs.execute
+              - type: mutation
+                use: rath.turms.funcs.execute
+              - type: subscription
+                use: rath.turms.funcs.subscribe
+              - type: query
+                is_async: true
+                use: rath.turms.funcs.aexecute
+              - type: mutation
+                is_async: true
+                use: rath.turms.funcs.aexecute
+              - type: subscription
+                is_async: true
+                use: rath.turms.funcs.asubscribe
         processors:
           - type: turms.processors.black.BlackProcessor
         scalar_definitions:
@@ -48,9 +82,6 @@ projects:
       turms:
         out_dir: tests/apis
         generated_name: nested_inputs.py
-        parsers:
-          - type: turms.parsers.polyfill.PolyfillParser
-            python_version: 3.7
         stylers:
           - type: turms.stylers.default.DefaultStyler
         plugins:
@@ -58,7 +89,27 @@ projects:
           - type: turms.plugins.inputs.InputsPlugin
           - type: turms.plugins.fragments.FragmentsPlugin
           - type: turms.plugins.operations.OperationsPlugin
-          - type: rath.turms.plugins.funcs.RathFuncsPlugin
+          - type: turms.plugins.funcs.FuncsPlugin
+            global_kwargs:
+              - key: rath
+                type: rath.rath.Rath
+                description: The rath client to execute the operation on
+            definitions:
+              - type: query
+                use: rath.turms.funcs.execute
+              - type: mutation
+                use: rath.turms.funcs.execute
+              - type: subscription
+                use: rath.turms.funcs.subscribe
+              - type: query
+                is_async: true
+                use: rath.turms.funcs.aexecute
+              - type: mutation
+                is_async: true
+                use: rath.turms.funcs.aexecute
+              - type: subscription
+                is_async: true
+                use: rath.turms.funcs.asubscribe
         processors:
           - type: turms.processors.black.BlackProcessor
           - type: turms.processors.isort.IsortProcessor

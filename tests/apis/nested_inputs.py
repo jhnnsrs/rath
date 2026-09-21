@@ -1,126 +1,186 @@
-from typing import List, Optional
+from enum import Enum
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
-from typing_extensions import Literal
 
+from rath.rath import Rath
 from rath.turms.funcs import aexecute, execute
 
 
+class UnsetType:
+    """Sentinel for arguments the caller did not provide. Such fields are omitted on serialization so the GraphQL server applies its own default."""
+
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def __repr__(self):
+        return "UNSET"
+
+    def __bool__(self):
+        return False
+
+
+UNSET = UnsetType()
+
+
 class BeastVector(BaseModel):
-    x: Optional[int] = None
-    y: Optional[int] = None
-    z: Optional[int] = None
+    """No documentation"""
+
+    x: int | None = None
+    y: int | None = None
+    z: int | None = None
 
 
-class CreateBeastCreatebeast(BaseModel):
-    typename: Optional[Literal["Beast"]] = Field("Beast", alias="__typename")
-    binomial: Optional[str] = None
+class CreateBeastCreateBeast(BaseModel):
+    """No documentation"""
+
+    typename: Literal["Beast"] = Field(alias="__typename", default="Beast")
+    binomial: str | None = Field(default=None)
     "a beast's name in Latin"
 
 
 class CreateBeast(BaseModel):
-    create_beast: Optional[CreateBeastCreatebeast] = Field(alias="createBeast")
+    """No documentation found for this operation."""
+
+    create_beast: CreateBeastCreateBeast | None = Field(
+        default=None, alias="createBeast"
+    )
     "Genrates a best which is nice"
 
+    class Arguments(BaseModel):
+        """Arguments for createBeast"""
+
+        nested: list[list[str]] | None = Field(default=None)
+        non_optional_parameter: str = Field(alias="nonOptionalParameter")
+
     class Meta:
-        domain = "nested_inputs"
-        document = "mutation createBeast($nested: [[String!]!], $nonOptionalParameter: String!) {\n  createBeast(nested: $nested, nonOptionalParameter: $nonOptionalParameter) {\n    binomial\n  }\n}"
+        """Meta class for createBeast"""
+
+        document = "mutation createBeast($nested: [[String!]!], $nonOptionalParameter: String!) {\n  createBeast(nested: $nested, nonOptionalParameter: $nonOptionalParameter) {\n    binomial\n    __typename\n  }\n}"
 
 
-class CreateTranspiledBeastCreatetranspiledbeast(BaseModel):
-    typename: Optional[Literal["Beast"]] = Field("Beast", alias="__typename")
-    binomial: Optional[str] = None
+class CreateTranspiledBeastCreateTranspiledBeast(BaseModel):
+    """No documentation"""
+
+    typename: Literal["Beast"] = Field(alias="__typename", default="Beast")
+    binomial: str | None = Field(default=None)
     "a beast's name in Latin"
 
 
 class CreateTranspiledBeast(BaseModel):
-    create_transpiled_beast: Optional[
-        CreateTranspiledBeastCreatetranspiledbeast
-    ] = Field(alias="createTranspiledBeast")
-    
-        
+    """No documentation found for this operation."""
+
+    create_transpiled_beast: CreateTranspiledBeastCreateTranspiledBeast | None = Field(
+        default=None, alias="createTranspiledBeast"
+    )
+
+    class Arguments(BaseModel):
+        """Arguments for createTranspiledBeast"""
+
+        vectors: list[BeastVector | None] | None = Field(default=None)
+        non_optional_parameter: int = Field(alias="nonOptionalParameter")
 
     class Meta:
-        domain = "nested_inputs"
-        document = "mutation createTranspiledBeast($vectors: [BeastVector], $nonOptionalParameter: Int!) {\n  createTranspiledBeast(\n    vectors: $vectors\n    nonOptionalParameter: $nonOptionalParameter\n  ) {\n    binomial\n  }\n}"
+        """Meta class for createTranspiledBeast"""
+
+        document = "mutation createTranspiledBeast($vectors: [BeastVector], $nonOptionalParameter: Int!) {\n  createTranspiledBeast(\n    vectors: $vectors\n    nonOptionalParameter: $nonOptionalParameter\n  ) {\n    binomial\n    __typename\n  }\n}"
 
 
 def create_beast(
-    non_optional_parameter: Optional[str], nested: Optional[List[List[str]]] = None
-) -> Optional[CreateBeastCreatebeast]:
+    non_optional_parameter: str,
+    nested: list[list[str]] | None | UnsetType = UNSET,
+    rath: Rath | None = None,
+) -> CreateBeastCreateBeast | None:
     """createBeast
 
     Genrates a best which is nice
 
-    Arguments:
-        non_optional_parameter (str): nonOptionalParameter
-        nested (Optional[List[List[str]]], optional): nested.
+    Args:
+        non_optional_parameter (str): No description
+        nested (list[list[str]] | None, optional): No description.
+        rath (rath.rath.Rath, optional): The rath client to execute the operation on
 
     Returns:
-        CreateBeastCreatebeast"""
-    return execute(
-        CreateBeast, {"nested": nested, "nonOptionalParameter": non_optional_parameter}
-    ).create_beast
+        CreateBeastCreateBeast | None
+    """
+    variables: dict[str, Any] = {}
+    if nested is not UNSET:
+        variables["nested"] = nested
+    variables["nonOptionalParameter"] = non_optional_parameter
+    return execute(CreateBeast, variables, rath=rath).create_beast
 
 
 async def acreate_beast(
-    non_optional_parameter: Optional[str], nested: Optional[List[List[str]]] = None
-) -> Optional[CreateBeastCreatebeast]:
+    non_optional_parameter: str,
+    nested: list[list[str]] | None | UnsetType = UNSET,
+    rath: Rath | None = None,
+) -> CreateBeastCreateBeast | None:
     """createBeast
 
     Genrates a best which is nice
 
-    Arguments:
-        non_optional_parameter (str): nonOptionalParameter
-        nested (Optional[List[List[str]]], optional): nested.
+    Args:
+        non_optional_parameter (str): No description
+        nested (list[list[str]] | None, optional): No description.
+        rath (rath.rath.Rath, optional): The rath client to execute the operation on
 
     Returns:
-        CreateBeastCreatebeast"""
-    return (
-        await aexecute(
-            CreateBeast,
-            {"nested": nested, "nonOptionalParameter": non_optional_parameter},
-        )
-    ).create_beast
+        CreateBeastCreateBeast | None
+    """
+    variables: dict[str, Any] = {}
+    if nested is not UNSET:
+        variables["nested"] = nested
+    variables["nonOptionalParameter"] = non_optional_parameter
+    return (await aexecute(CreateBeast, variables, rath=rath)).create_beast
 
 
 def create_transpiled_beast(
-    non_optional_parameter: Optional[int],
-    vectors: Optional[List[Optional[BeastVector]]] = None,
-) -> Optional[CreateTranspiledBeastCreatetranspiledbeast]:
+    non_optional_parameter: int,
+    vectors: list[BeastVector | None] | None | UnsetType = UNSET,
+    rath: Rath | None = None,
+) -> CreateTranspiledBeastCreateTranspiledBeast | None:
     """createTranspiledBeast
 
 
-
-    Arguments:
-        non_optional_parameter (int): nonOptionalParameter
-        vectors (Optional[List[Optional[BeastVector]]], optional): vectors.
+    Args:
+        non_optional_parameter (int): No description
+        vectors (list[BeastVector | None] | None, optional): No description.
+        rath (rath.rath.Rath, optional): The rath client to execute the operation on
 
     Returns:
-        CreateTranspiledBeastCreatetranspiledbeast"""
-    return execute(
-        CreateTranspiledBeast,
-        {"vectors": vectors, "nonOptionalParameter": non_optional_parameter},
-    ).create_transpiled_beast
+        CreateTranspiledBeastCreateTranspiledBeast | None
+    """
+    variables: dict[str, Any] = {}
+    if vectors is not UNSET:
+        variables["vectors"] = vectors
+    variables["nonOptionalParameter"] = non_optional_parameter
+    return execute(CreateTranspiledBeast, variables, rath=rath).create_transpiled_beast
 
 
 async def acreate_transpiled_beast(
-    non_optional_parameter: Optional[int],
-    vectors: Optional[List[Optional[BeastVector]]] = None,
-) -> Optional[CreateTranspiledBeastCreatetranspiledbeast]:
+    non_optional_parameter: int,
+    vectors: list[BeastVector | None] | None | UnsetType = UNSET,
+    rath: Rath | None = None,
+) -> CreateTranspiledBeastCreateTranspiledBeast | None:
     """createTranspiledBeast
 
 
-
-    Arguments:
-        non_optional_parameter (int): nonOptionalParameter
-        vectors (Optional[List[Optional[BeastVector]]], optional): vectors.
+    Args:
+        non_optional_parameter (int): No description
+        vectors (list[BeastVector | None] | None, optional): No description.
+        rath (rath.rath.Rath, optional): The rath client to execute the operation on
 
     Returns:
-        CreateTranspiledBeastCreatetranspiledbeast"""
+        CreateTranspiledBeastCreateTranspiledBeast | None
+    """
+    variables: dict[str, Any] = {}
+    if vectors is not UNSET:
+        variables["vectors"] = vectors
+    variables["nonOptionalParameter"] = non_optional_parameter
     return (
-        await aexecute(
-            CreateTranspiledBeast,
-            {"vectors": vectors, "nonOptionalParameter": non_optional_parameter},
-        )
+        await aexecute(CreateTranspiledBeast, variables, rath=rath)
     ).create_transpiled_beast
