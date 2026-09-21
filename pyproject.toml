@@ -42,7 +42,7 @@ dev-dependencies = [
     "koil[qtpy]>=3.3.3",
     "pyqt5==5.15.11",
     "python-semantic-release>=9.21.1",
-    "dokker>=2.5",
+    "dokker>=2.8",
 ]
 
 [tool.hatch.build.targets.sdist]
