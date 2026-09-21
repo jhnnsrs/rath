@@ -1,6 +1,95 @@
 # CHANGELOG
 
 
+## v4.0.0 (2026-09-21)
+
+### Build System
+
+- **deps**: Ask for qtpy directly instead of inheriting it
+  ([`5aaefdc`](https://github.com/jhnnsrs/rath/commit/5aaefdc768299b414168da4cf07ecc7d7f23008b))
+
+`tests/test_qt.py` imports `koil.qt`, which imports `qtpy` at module scope. rath never declared it
+  -- it arrived transitively through a `fakts==1.0.0` dev-pin that nothing imported, and removing
+  that dead pin in the sweep took qtpy with it, so collection failed in CI with
+  `ModuleNotFoundError: No module named 'qtpy'`.
+
+It did not fail locally, because the local venv still had qtpy installed from before the pin was
+  removed. Re-syncing from the lockfile reproduces CI exactly and is what verified this.
+
+`koil[qtpy]>=3.3.3` says what the tests actually need. The turms dev-pin also moves to 2.1.0, which
+  is now released.
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+
+### Chores
+
+- **codegen**: Point graphql.config.yaml at a plugin that exists
+  ([`a250bec`](https://github.com/jhnnsrs/rath/commit/a250bec112e76c75915e2648d7e5f6ff2eef1e40))
+
+`graphql.config.yaml` named `rath.turms.plugins.funcs.RathFuncsPlugin` in all three projects. That
+  plugin was deleted in 87eae6e ("Remove Transpile link and add typing") and the `plugins/` package
+  under `rath/turms/` went with it -- so the config has been unloadable ever since, which is why
+  nobody noticed it also still declared `turms.parsers.polyfill.PolyfillParser`, removed in turms
+  2.0.
+
+It is turms' own `FuncsPlugin` now, with `definitions` pointing at `rath.turms.funcs` (which is very
+  much alive -- it is what the generated functions call). `global_kwargs` rather than `global_args`:
+  turms puts args first, and `execute` takes its rath last, so args would have passed the client as
+  the operation.
+
+`tests/apis/tests.py` and `nested_inputs.py` are regenerated from it. The `countries` project is
+  left as generated -- its schema is a third-party endpoint, so regenerating it needs the network.
+
+`website/docs/turms.md` documented the dead plugin as live, and showed `get_beasts()` reaching for
+  an implicit "currently active client" that no longer exists. Rewritten against what the config
+  actually produces.
+
+Dev-deps: `fakts==1.0.0` and `herre==1.0.0`, which nothing imports (the `herre` in
+  `tests/integration/mini.yaml` is a compose service name), replaced by `turms`, so the config can
+  be run from rath's own venv.
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+
+### Features
+
+- Origin carries the client, not a context variable
+  ([`0224bfa`](https://github.com/jhnnsrs/rath/commit/0224bfa703f2482928246993e0c8bd070bbe0912))
+
+Baseline commit of the in-flight `app-context` work.
+
+`Origin.client` replaces the ambient `current_rath` contextvar, which is deleted along with
+  `rath/resolve.py`. `FederationFetchable.expand(id, client)` and `federated(fragment, origin=)`
+  hand expanders their client explicitly, and `rath.turms.funcs` now requires one.
+
+Tests: 162 pass (QT_QPA_PLATFORM=offscreen).
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+
+- **task**: The task a request is attributed to, ambient or explicit
+  ([`5725492`](https://github.com/jhnnsrs/rath/commit/57254924f91d41cf4673414f47f54bdcae019b22))
+
+`rath.task` holds `current_task`, a `task_scope()` that sets and unwinds it, a one-member `TaskLike`
+  protocol, `token_of()` and the `Rekuest-Task` header name. Additive: nothing reads it yet.
+
+It lives in rath rather than in the package that defines the concrete task because every client
+  depends on rath, while alpaka and fluss deliberately do not depend on that package and still stamp
+  the header. It is the request-side sibling of `rath.origin`, which answers which client an object
+  came *from*.
+
+`token_of` tests `task is None` rather than truthiness, so a task cannot lose to its own `__bool__`
+  -- pinned by a deliberately falsy fake. `TaskLike` is not `runtime_checkable`: `isinstance`
+  against a one-property Protocol only checks that the attribute exists, which is a weaker claim
+  than it looks.
+
+The limits are pinned as tests rather than left to be discovered: a raw `threading.Thread` and a
+  `ThreadPoolExecutor` inherit nothing, while `copy_context().run(...)` does, and the module
+  docstring says so.
+
+rath: 173 pass.
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+
+
 ## v3.13.0 (2026-09-01)
 
 ### Features
