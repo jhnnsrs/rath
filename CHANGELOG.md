@@ -1,6 +1,26 @@
 # CHANGELOG
 
 
+## v4.0.1 (2026-09-21)
+
+### Bug Fixes
+
+- **ci**: Publish only when semantic-release actually cut a release
+  ([`1177d9b`](https://github.com/jhnnsrs/rath/commit/1177d9bdc6c9a17990768b92cb36078ffc1e7b70))
+
+`uv publish` ran unconditionally. `semantic-release version` builds only when it cuts a release, so
+  any push carrying nothing releasable -- a `build:`, `chore:` or `docs:` change -- left `dist/`
+  empty and failed the job on the publish step. Both publish steps are now guarded on
+  `hashFiles('dist/**')`, which is the same shape as the guard the tag-only repos get from the
+  semantic-release action's `released` output.
+
+Also moves the dokker floor to 2.8 with the rest of the wave.
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+
+Claude-Session: https://claude.ai/code/session_01QEr4a9XNWRms96tmxUPXmz
+
+
 ## v4.0.0 (2026-09-21)
 
 ### Build System
