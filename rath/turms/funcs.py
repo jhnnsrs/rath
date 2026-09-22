@@ -1,5 +1,6 @@
 from rath.rath import Rath
-from typing import AsyncIterator, Iterator, Protocol, Type, TypeVar, Any, Dict, Optional
+from collections.abc import Mapping
+from typing import AsyncIterator, Iterator, Protocol, Type, TypeVar, Any, Optional
 from pydantic import BaseModel
 
 
@@ -28,7 +29,7 @@ class TurmsOperation(Protocol[TArgs, TMeta]):
 TOperation = TypeVar("TOperation", bound=TurmsOperation[Any, Any])
 
 
-def execute(operation: Type[TOperation], variables: Dict[str, Any], rath: Rath) -> TOperation:
+def execute(operation: Type[TOperation], variables: Mapping[str, Any], rath: Rath) -> TOperation:
     """Synchronously Executes an a query or mutation using rath
 
 
@@ -37,7 +38,7 @@ def execute(operation: Type[TOperation], variables: Dict[str, Any], rath: Rath) 
     ----------
     operation : TurmsOperation
         The turms operation to execute
-    variables : Dict[str, Any]
+    variables : Mapping[str, Any]
         The variables to use
     rath : Rath
         The rath client to execute through
@@ -55,7 +56,7 @@ def execute(operation: Type[TOperation], variables: Dict[str, Any], rath: Rath) 
     )
 
 
-async def aexecute(operation: Type[TOperation], variables: Dict[str, Any], rath: Rath) -> TOperation:
+async def aexecute(operation: Type[TOperation], variables: Mapping[str, Any], rath: Rath) -> TOperation:
     """Asynchronously Executes a query or mutation using rath
 
 
@@ -64,7 +65,7 @@ async def aexecute(operation: Type[TOperation], variables: Dict[str, Any], rath:
     ----------
     operation : TurmsOperation
         The turms operation to execute
-    variables : Dict[str, Any]
+    variables : Mapping[str, Any]
         The variables to use
     rath : Rath
         The rath client to execute through
@@ -81,7 +82,7 @@ async def aexecute(operation: Type[TOperation], variables: Dict[str, Any], rath:
     return operation(**x.data)
 
 
-def subscribe(operation: Type[TOperation], variables: Dict[str, Any], rath: Rath) -> Iterator[TOperation]:
+def subscribe(operation: Type[TOperation], variables: Mapping[str, Any], rath: Rath) -> Iterator[TOperation]:
     """Synchronously subscribte to a subscription using rath
 
 
@@ -90,7 +91,7 @@ def subscribe(operation: Type[TOperation], variables: Dict[str, Any], rath: Rath
     ----------
     operation : TurmsOperation
         The turms operation to execute
-    variables : Dict[str, Any]
+    variables : Mapping[str, Any]
         The variables to use
     rath : Rath
         The rath client to execute through
@@ -108,7 +109,7 @@ def subscribe(operation: Type[TOperation], variables: Dict[str, Any], rath: Rath
         yield operation(**event.data)
 
 
-async def asubscribe(operation: Type[TOperation], variables: Dict[str, Any], rath: Rath) -> AsyncIterator[TOperation]:
+async def asubscribe(operation: Type[TOperation], variables: Mapping[str, Any], rath: Rath) -> AsyncIterator[TOperation]:
     """Asynchronously subscribte to a subscription using rath
 
 
@@ -117,7 +118,7 @@ async def asubscribe(operation: Type[TOperation], variables: Dict[str, Any], rat
     ----------
     operation : TurmsOperation
         The turms operation to execute
-    variables : Dict[str, Any]
+    variables : Mapping[str, Any]
         The variables to use
     rath : Rath
         The rath client to execute through
