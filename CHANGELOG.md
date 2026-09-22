@@ -1,6 +1,25 @@
 # CHANGELOG
 
 
+## v4.0.2 (2026-09-22)
+
+### Bug Fixes
+
+- **turms**: Accept the variables mapping as Mapping, not Dict
+  ([`3e48d23`](https://github.com/jhnnsrs/rath/commit/3e48d2378e5656423227ac5c973afc22ef391b24))
+
+turms now types its generated argument buffers `Dict[str, object]`, and `Dict` is invariant in its
+  value type, so passing one to a `Dict[str, Any]` parameter is a type error. Every client generated
+  against the current turms calls these four functions with exactly that, so the published signature
+  has to accept it.
+
+`Mapping` is covariant and read-only, which is all these functions ever do with the argument.
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+
+Claude-Session: https://claude.ai/code/session_01QEr4a9XNWRms96tmxUPXmz
+
+
 ## v4.0.1 (2026-09-21)
 
 ### Bug Fixes
