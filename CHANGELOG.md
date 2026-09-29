@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v4.1.1 (2026-09-29)
+
+### Bug Fixes
+
+- Publish the proxy-capable links
+  ([`deba2b6`](https://github.com/jhnnsrs/rath/commit/deba2b6f6cac15f906acb7f4f1224c2071e9c07f))
+
+The 4.1.0 release run bumped the version but GitHub rejected its tag push, so nothing reached PyPI.
+  This releases the same code.
+
+Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+
+
 ## v4.1.0 (2026-09-29)
 
 ### Features
