@@ -1,6 +1,21 @@
 # CHANGELOG
 
 
+## v4.1.0 (2026-09-29)
+
+### Features
+
+- Route a link through an HTTP proxy
+  ([`fb77ecc`](https://github.com/jhnnsrs/rath/commit/fb77eccfac20204cd2b4c7ce8a973185fd9e4361))
+
+AIOHttpLink, HttpxLink, GraphQLWSLink and SubscriptionTransportWsLink take proxy=, for services only
+  reachable over the deployment's mesh (the mesh node's local HTTP proxy). None keeps each library's
+  default. The websocket links share one connect helper on websockets' asyncio client, which needs
+  websockets>=15 for proxy=.
+
+Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+
+
 ## v4.0.2 (2026-09-22)
 
 ### Bug Fixes
