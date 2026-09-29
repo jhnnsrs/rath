@@ -1,6 +1,6 @@
 from http import HTTPStatus
 import json
-from typing import Any, Dict, List, Type, AsyncIterator
+from typing import Any, Dict, List, Optional, Type, AsyncIterator
 import httpx
 from graphql import OperationType
 from pydantic import Field
@@ -49,6 +49,11 @@ class HttpxLink(AsyncTerminatingLink):
     for a server that reports an expired token as a 200 with an error in the body
     rather than as a 401 or 403. See :func:`rath.links.errors.is_auth_error`."""
     json_encoder: Type[json.JSONEncoder] = Field(default=DateTimeEncoder, exclude=True)
+
+    proxy: Optional[str] = None
+    """proxy is an optional HTTP proxy URL (e.g. ``http://127.0.0.1:41234``) that all
+    requests are routed through. When None (the default), httpx's default behaviour
+    is kept untouched."""
 
     async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
         """Executes an operation against the link
@@ -101,7 +106,12 @@ class HttpxLink(AsyncTerminatingLink):
             payload["variables"] = operation.variables
             post_kwargs = {"json": payload}
 
-        async with httpx.AsyncClient() as client:
+        client_kwargs: Dict[str, Any] = {}
+        if self.proxy is not None:
+            # ``proxies=`` is the spelling supported by the pinned httpx (<0.24).
+            client_kwargs["proxies"] = self.proxy
+
+        async with httpx.AsyncClient(**client_kwargs) as client:
             response = await client.post(
                 self.endpoint_url, headers=operation.context.headers, **post_kwargs
             )

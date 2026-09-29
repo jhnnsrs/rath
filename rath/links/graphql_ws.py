@@ -14,7 +14,7 @@ from typing import (
 )
 from graphql import OperationType
 from pydantic import Field
-import websockets
+from rath.links.websocket_connect import ws_connect
 import json
 import asyncio
 import logging
@@ -126,6 +126,10 @@ class GraphQLWSLink(AsyncTerminatingLink):
     ssl_context: SSLContext = Field(
         default_factory=lambda: ssl.create_default_context(cafile=certifi.where())
     )
+    proxy: Optional[str] = None
+    """ An optional HTTP proxy url (e.g. ``http://127.0.0.1:41234``) to tunnel the
+    websocket through via CONNECT (requires websockets>=15). When None (the default),
+    the websockets default behaviour is kept. """
 
     on_connect: Optional[Callable[[InitialConnectPayload], Awaitable[None]]] = Field(
         exclude=True, default=None
@@ -241,13 +245,12 @@ class GraphQLWSLink(AsyncTerminatingLink):
         try:
             try:
                 url = await self.abuild_url(initiating_operation)
-                async with websockets.connect(  # type: ignore
+                async with ws_connect(
                     url,
-                    subprotocols=[
-                        GQL_WS_SUBPROTOCOL,  # type: ignore
-                    ],
+                    subprotocols=[GQL_WS_SUBPROTOCOL],
                     ssl=self.ssl_context if url.startswith("wss") else None,
-                ) as client:  # type: ignore
+                    proxy=self.proxy,
+                ) as client:
                     logger.info("Websocket successfully connected")
 
                     send_task = asyncio.create_task(

@@ -71,6 +71,11 @@ class AIOHttpLink(AsyncTerminatingLink):
     this is a DateTimeEncoder that extends the default python json decoder to serialize 
     datetime objects to ISO 8601 strings."""
 
+    proxy: Optional[str] = None
+    """proxy is an optional HTTP proxy URL (e.g. ``http://127.0.0.1:41234``) that all
+    requests are routed through (absolute-form for http, CONNECT for https). When None
+    (the default), aiohttp's default behaviour is kept untouched."""
+
     _connected = False
 
     async def __aenter__(self) -> Self:
@@ -154,6 +159,9 @@ class AIOHttpLink(AsyncTerminatingLink):
         else:
             payload["variables"] = operation.variables
             post_kwargs = {"json": payload}
+
+        if self.proxy is not None:
+            post_kwargs["proxy"] = self.proxy
 
         async with aiohttp.ClientSession(
             connector=aiohttp.TCPConnector(ssl=self.ssl_context),
