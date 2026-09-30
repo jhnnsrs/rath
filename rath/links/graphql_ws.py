@@ -308,7 +308,6 @@ class GraphQLWSLink(AsyncTerminatingLink):
 
         except DefiniteConnectionFail as e:
             logger.error("Websocket excepted closed definetely", exc_info=True)
-            self.connection_dead = True
             raise e
 
         except asyncio.CancelledError as e:
@@ -324,7 +323,6 @@ class GraphQLWSLink(AsyncTerminatingLink):
 
         except Exception as e:
             logger.error("Websocket excepted", exc_info=True)
-            self.connection_dead = True
             raise e
 
     async def sending(self, client: Any, initiating_operation: Operation) -> None:

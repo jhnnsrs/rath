@@ -304,7 +304,6 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
 
         except DefiniteConnectionFail as e:
             logger.error("Websocket excepted closed definetely", exc_info=True)
-            self.connection_dead = True
             if connection_future and not connection_future.done():
                 connection_future.set_exception(e)
             raise e
@@ -320,7 +319,6 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
 
         except Exception as e:
             logger.error("Websocket excepted", exc_info=True)
-            self.connection_dead = True
             if connection_future and not connection_future.done():
                 connection_future.set_exception(e)
             raise e
