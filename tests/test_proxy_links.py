@@ -107,6 +107,75 @@ async def test_aiohttp_without_proxy_goes_direct(recording_server: RecordingServ
     assert recording_server.request_lines == ["POST /graphql HTTP/1.1"]
 
 
+class KeepAliveServer:
+    """Answers every request on a connection, and counts the connections."""
+
+    def __init__(self) -> None:
+        self.connections = 0
+        self.requests = 0
+        self.server: asyncio.AbstractServer | None = None
+
+    @property
+    def url(self) -> str:
+        assert self.server
+        host, port = self.server.sockets[0].getsockname()[:2]
+        return f"http://{host}:{port}"
+
+    async def handle(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        self.connections += 1
+        try:
+            while await reader.readline():
+                content_length = 0
+                while (line := await reader.readline()) not in (b"\r\n", b"\n", b""):
+                    name, _, value = line.decode().partition(":")
+                    if name.strip().lower() == "content-length":
+                        content_length = int(value.strip())
+                await reader.readexactly(content_length)
+                self.requests += 1
+                writer.write(
+                    b"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n"
+                    + f"Content-Length: {len(RESPONSE)}\r\n\r\n".encode()
+                    + RESPONSE
+                )
+                await writer.drain()
+        finally:
+            writer.close()
+
+
+@pytest.fixture
+async def keepalive_server() -> AsyncIterator[KeepAliveServer]:
+    server = KeepAliveServer()
+    server.server = await asyncio.start_server(server.handle, "127.0.0.1", 0)
+    try:
+        yield server
+    finally:
+        server.server.close()
+
+
+async def test_aiohttp_keeps_its_connection_while_entered(keepalive_server: KeepAliveServer):
+    """Requests that follow each other on an entered link share one connection."""
+    link = AIOHttpLink(endpoint_url=f"{keepalive_server.url}/graphql")
+    async with link:
+        for _ in range(5):
+            results = [result.data async for result in link.aexecute(opify(QUERY))]
+            assert results == [{"beast": {"id": "1"}}]
+        assert (keepalive_server.requests, keepalive_server.connections) == (5, 1)
+        session = link._session
+    assert session is not None and session.closed
+    assert link._session is None
+
+
+async def test_aiohttp_not_entered_opens_a_connection_per_request(
+    keepalive_server: KeepAliveServer,
+):
+    """A link used without being entered keeps nothing open behind it."""
+    link = AIOHttpLink(endpoint_url=f"{keepalive_server.url}/graphql")
+    for _ in range(3):
+        assert [result.data async for result in link.aexecute(opify(QUERY))]
+    assert (keepalive_server.requests, keepalive_server.connections) == (3, 3)
+    assert link._session is None
+
+
 async def test_httpx_routes_through_proxy(recording_server: RecordingServer):
     """With a proxy set, httpx sends an absolute-form request to the proxy."""
     link = HttpxLink(endpoint_url="http://example.mesh:8080/graphql", proxy=recording_server.url)

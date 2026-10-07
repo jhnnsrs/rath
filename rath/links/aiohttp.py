@@ -1,3 +1,5 @@
+import asyncio
+from contextlib import asynccontextmanager
 from datetime import datetime
 from http import HTTPStatus
 import json
@@ -39,6 +41,11 @@ class AIOHttpLink(AsyncTerminatingLink):
     standard aiohttp library to send operations over HTTP, but provides an ssl context
     that is configured to use the certifi CA bundle by default. You can override this
     behavior by passing your own SSLContext to the constructor.
+
+    While the link is entered (``async with``) it keeps one aiohttp session, so
+    requests that follow each other re-use the connection (and its TLS session)
+    instead of opening one each. Used without being entered, it opens a session
+    per request.
     """
 
     endpoint_url: str
@@ -76,11 +83,48 @@ class AIOHttpLink(AsyncTerminatingLink):
     requests are routed through (absolute-form for http, CONNECT for https). When None
     (the default), aiohttp's default behaviour is kept untouched."""
 
+    keepalive_timeout: float = 4.0
+    """keepalive_timeout is how long, in seconds, an unused connection is kept for
+    the next request. It is below the keep-alive of the servers this talks to
+    (uvicorn closes an idle connection after 5 seconds), so that a request is not
+    sent on a connection the server is just closing."""
+
     _connected = False
+    _entered = False
+    _session: Optional[aiohttp.ClientSession] = None
+    _session_loop: Optional[asyncio.AbstractEventLoop] = None
 
     async def __aenter__(self) -> Self:
         """Entery point for the async context manager"""
+        self._entered = True
         return self
+
+    def _new_session(self) -> aiohttp.ClientSession:
+        return aiohttp.ClientSession(
+            connector=aiohttp.TCPConnector(
+                ssl=self.ssl_context, keepalive_timeout=self.keepalive_timeout
+            ),
+            json_serialize=lambda x: json.dumps(x, cls=self.json_encoder),
+        )
+
+    @asynccontextmanager
+    async def _request_session(self) -> AsyncIterator[aiohttp.ClientSession]:
+        """The session to send a request with: the kept one while the link is
+        entered, or one for just this request.
+
+        A session belongs to the event loop it was made on, so a request from
+        another loop gets one of its own as well.
+        """
+        loop = asyncio.get_running_loop()
+        if self._entered:
+            if self._session is None or self._session.closed:
+                self._session = self._new_session()
+                self._session_loop = loop
+            if self._session_loop is loop:
+                yield self._session
+                return
+        async with self._new_session() as session:
+            yield session
 
     async def aconnect(self, operation: Operation) -> None:
         """Connects the link to the server
@@ -98,14 +142,15 @@ class AIOHttpLink(AsyncTerminatingLink):
         traceback: Optional[Any],
     ) -> None:
         """Exit point for the async context manager"""
-        pass
+        self._entered = False
+        session, self._session, self._session_loop = self._session, None, None
+        if session is not None:
+            await session.close()
 
     async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
         """Executes an operation against the link
 
-        This link will create a new aiohttp session for each request. While
-        we could also reuse the session, we currently don't do this. If
-        you feel like this should be changed, please open an issue.
+        The request goes over the link's session (see the class docstring).
 
         Parameters
         ----------
@@ -163,16 +208,10 @@ class AIOHttpLink(AsyncTerminatingLink):
         if self.proxy is not None:
             post_kwargs["proxy"] = self.proxy
 
-        async with aiohttp.ClientSession(
-            connector=aiohttp.TCPConnector(ssl=self.ssl_context),
-            json_serialize=lambda x: json.dumps(x, cls=self.json_encoder),
-        ) as session:
+        async with self._request_session() as session:
             async with session.post(
                 self.endpoint_url, headers=operation.context.headers, **post_kwargs
             ) as response:
-                if response.status == HTTPStatus.OK:
-                    await response.json()
-
                 if response.status in self.auth_errors:
                     raise AuthenticationError(
                         f"Token Expired Error {operation.context.headers}"
