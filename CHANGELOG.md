@@ -1,6 +1,27 @@
 # CHANGELOG
 
 
+## v4.1.2 (2026-10-07)
+
+### Bug Fixes
+
+- The aiohttp link keeps one session while it is connected
+  ([`da83f4c`](https://github.com/jhnnsrs/rath/commit/da83f4c8cce92688da88780f53d9e3a546bcc6da))
+
+A session was made for every request, so every request paid for a new connection, and through a
+  proxy for a new tunnel. The link now keeps one while it is entered, with keepalive_timeout saying
+  how long an unused connection is kept.
+
+Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+
+### Chores
+
+- Drop connection_dead assignments that never ran
+  ([`26f128f`](https://github.com/jhnnsrs/rath/commit/26f128fe4fcbd319665411cf4358266cbd38cb5f))
+
+Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+
+
 ## v4.1.1 (2026-09-29)
 
 ### Bug Fixes
