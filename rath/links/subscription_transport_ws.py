@@ -1,15 +1,12 @@
 from ssl import SSLContext
 from typing import (
-    AsyncIterator,
-    Dict,
     NotRequired,
-    Optional,
     Any,
     Literal,
     Self,
-    Type,
     TypedDict,
 )
+from collections.abc import AsyncIterator
 from graphql import OperationType
 from pydantic import Field
 from rath.links.websocket_connect import ws_connect
@@ -126,7 +123,7 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
         default_factory=lambda: ssl.create_default_context(cafile=certifi.where())
     )
     """ The SSL Context to use for the connection """
-    proxy: Optional[str] = None
+    proxy: str | None = None
     """ An optional HTTP proxy url (e.g. ``http://127.0.0.1:41234``) to tunnel the
     websocket through via CONNECT (requires websockets>=15). When None (the default),
     the websockets default behaviour is kept. """
@@ -134,12 +131,12 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
     """Should the payload token be sent as a querystring instead (as connection params
       is not supported by all servers)"""
 
-    _connection_lock: Optional[asyncio.Lock] = None
+    _connection_lock: asyncio.Lock | None = None
     _connected: bool = False
     _alive: bool = False
-    _send_queue: Optional[asyncio.Queue[str]] = None
-    _connection_task: Optional[asyncio.Task[None]] = None
-    _ongoing_subscriptions: Optional[Dict[str, asyncio.Queue[TransportMessage]]] = None
+    _send_queue: asyncio.Queue[str] | None = None
+    _connection_task: asyncio.Task[None] | None = None
+    _ongoing_subscriptions: dict[str, asyncio.Queue[TransportMessage]] | None = None
 
     async def aforward(self, message: str) -> None:
         """Forwards a message to the websocket
@@ -199,9 +196,9 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
 
     async def __aexit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        traceback: Optional[Any],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        traceback: Any | None,
     ) -> None:
         """Exits the context manager of the link"""
         await self.adisconnect()
@@ -483,14 +480,14 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
 
         self._ongoing_subscriptions[id] = subscribe_queue
 
-        send_payload: Dict[str, Any] = {
+        send_payload: dict[str, Any] = {
             "headers": operation.context.headers,
             "query": operation.document,
             "variables": operation.variables,
         }
 
         try:
-            frame: Dict[str, Any] = {
+            frame: dict[str, Any] = {
                 "id": id,
                 "type": GQL_START,
                 "payload": send_payload,

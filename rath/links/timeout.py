@@ -1,5 +1,5 @@
 import asyncio
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
 from rath.links.base import ContinuationLink
 from rath.operation import GraphQLResult, Operation
@@ -53,7 +53,7 @@ class TimeoutLink(ContinuationLink):
                         yield result
                     except StopAsyncIteration:
                         break
-            except asyncio.TimeoutError as e:
-                raise asyncio.TimeoutError(f"Operation timed out after {self.timeout} seconds") from e
+            except TimeoutError as e:
+                raise TimeoutError(f"Operation timed out after {self.timeout} seconds") from e
             except Exception as e:
                 raise e

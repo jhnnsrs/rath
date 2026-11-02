@@ -1,4 +1,4 @@
-from typing import AsyncIterator, Awaitable, Callable, Optional
+from collections.abc import AsyncIterator, Awaitable, Callable
 
 from rath.links.base import ContinuationLink
 from rath.operation import GraphQLResult, Operation
@@ -118,10 +118,10 @@ class ComposedAuthLink(AuthTokenLink):
     functions as composition elements not as class attributes.
     """
 
-    token_loader: Optional[Callable[[], Awaitable[str]]] = None
+    token_loader: Callable[[], Awaitable[str]] | None = None
     """The function used to load the authentication token. This function should
         return a string containing the authentication token."""
-    token_refresher: Optional[Callable[[], Awaitable[str]]] = None
+    token_refresher: Callable[[], Awaitable[str]] | None = None
     """The function used to refresh the authentication token. This function should
         return a string containing the authentication token."""
 

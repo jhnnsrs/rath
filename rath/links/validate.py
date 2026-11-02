@@ -1,4 +1,5 @@
-from typing import AsyncIterator, Optional, cast
+from typing import cast
+from collections.abc import AsyncIterator
 from graphql import (
     GraphQLSchema,
     build_ast_schema,
@@ -16,7 +17,7 @@ from glob import glob
 
 
 def schemify(
-    schema_dsl: Optional[str] = None, schema_glob: Optional[str] = None
+    schema_dsl: str | None = None, schema_glob: str | None = None
 ) -> GraphQLSchema:
     """Schemify creates a GraphQLSchema from a schema dsl or a glob to a set of graphql files
 
@@ -40,7 +41,7 @@ def schemify(
         files = glob(schema_glob, recursive=True)
         dsl_string = ""
         for file in files:
-            with open(file, "r") as f:
+            with open(file) as f:
                 if file.endswith(".graphql"):
                     dsl_string += f.read()
 
@@ -65,14 +66,14 @@ class ValidatingLink(ContinuationLink):
 
     """
 
-    schema_dsl: Optional[str] = None
+    schema_dsl: str | None = None
     """ The schema (as a string) to validate against. If not provided, the link will introspect the server to get the schema if allow_introspection is set to True."""
-    schema_glob: Optional[str] = None
+    schema_glob: str | None = None
     """ The glob to a set of graphql files to validate against. If not provided, the link will introspect the server to get the schema if allow_introspection is set to True."""
     allow_introspection: bool = False
     """ If set to True, the link will introspect the server to get the schema if it is not provided."""
 
-    graphql_schema: Optional[GraphQLSchema] = None
+    graphql_schema: GraphQLSchema | None = None
     """ The schema to validate against. If not provided, the link will introspect the server to get the schema if allow_introspection is set to True."""
 
     @model_validator(mode="after")  # type: ignore

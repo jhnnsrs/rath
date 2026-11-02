@@ -1,5 +1,5 @@
 import hashlib
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
 from rath.links.base import ContinuationLink
 from rath.operation import GraphQLException, GraphQLResult, Operation

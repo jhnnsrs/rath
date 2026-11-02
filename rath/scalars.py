@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Any, Type, Protocol, TypeAlias
+from typing import Any, Protocol, TypeAlias
 from pydantic import GetCoreSchemaHandler
 from pydantic_core import CoreSchema, core_schema
 
@@ -22,7 +22,7 @@ class ID(str):
         return core_schema.no_info_before_validator_function(cls.validate, handler(str))
 
     @classmethod
-    def validate(cls: Type["ID"], v: "IDCoercible") -> "ID":
+    def validate(cls: type["ID"], v: "IDCoercible") -> "ID":
         """Validate the ID"""
         if isinstance(v, BaseModel):
             if hasattr(v, "id"):

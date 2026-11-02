@@ -1,17 +1,12 @@
 from ssl import SSLContext
 from typing import (
-    AsyncIterator,
-    Awaitable,
-    Callable,
-    Dict,
     Literal,
-    Optional,
     Any,
     Self,
-    Type,
     TypedDict,
     NotRequired,
 )
+from collections.abc import AsyncIterator, Awaitable, Callable
 from graphql import OperationType
 from pydantic import Field
 from rath.links.websocket_connect import ws_connect
@@ -73,8 +68,8 @@ class InvalidPayload(TerminatingLinkError):
     pass
 
 
-InitialConnectPayload = Dict[str, Any]
-PongPayload = Dict[str, Any]
+InitialConnectPayload = dict[str, Any]
+PongPayload = dict[str, Any]
 
 
 class TransportMessage(TypedDict):
@@ -126,30 +121,30 @@ class GraphQLWSLink(AsyncTerminatingLink):
     ssl_context: SSLContext = Field(
         default_factory=lambda: ssl.create_default_context(cafile=certifi.where())
     )
-    proxy: Optional[str] = None
+    proxy: str | None = None
     """ An optional HTTP proxy url (e.g. ``http://127.0.0.1:41234``) to tunnel the
     websocket through via CONNECT (requires websockets>=15). When None (the default),
     the websockets default behaviour is kept. """
 
-    on_connect: Optional[Callable[[InitialConnectPayload], Awaitable[None]]] = Field(
+    on_connect: Callable[[InitialConnectPayload], Awaitable[None]] | None = Field(
         exclude=True, default=None
     )
     """ A function that is called before the connection is established. If an exception is raised, the connection is not established. Return is ignored."""
 
-    on_pong: Optional[Callable[[PongPayload], Awaitable[None]]] = Field(
+    on_pong: Callable[[PongPayload], Awaitable[None]] | None = Field(
         exclude=True, default=None
     )
     """ A function that is called before a pong is received. If an exception is raised, the connection is not established. Return is ignored."""
-    heartbeat_interval_ms: Optional[int] = None
+    heartbeat_interval_ms: int | None = None
     """ The heartbeat interval in milliseconds (None means no heartbeats are 
     being send) """
 
-    _connection_lock: Optional[asyncio.Lock] = None
+    _connection_lock: asyncio.Lock | None = None
     _connected: bool = False
     _alive: bool = False
-    _send_queue: Optional[asyncio.Queue[str]] = None
-    _connection_task: Optional[asyncio.Task[None]] = None
-    _ongoing_subscriptions: Optional[Dict[str, asyncio.Queue[TransportMessage]]] = None
+    _send_queue: asyncio.Queue[str] | None = None
+    _connection_task: asyncio.Task[None] | None = None
+    _ongoing_subscriptions: dict[str, asyncio.Queue[TransportMessage]] | None = None
 
     async def aforward(self, message: str) -> None:
         """Forward a message to the server
@@ -204,9 +199,9 @@ class GraphQLWSLink(AsyncTerminatingLink):
 
     async def __aexit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        traceback: Optional[Any],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        traceback: Any | None,
     ) -> None:
         """Exit the link, and disconnect from the server"""
         await self.adisconnect()
@@ -342,7 +337,7 @@ class GraphQLWSLink(AsyncTerminatingLink):
 
         """
 
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "type": GQL_CONNECTION_INIT,
             "payload": initiating_operation.context.initial_payload,
         }
@@ -474,14 +469,14 @@ class GraphQLWSLink(AsyncTerminatingLink):
 
         self._ongoing_subscriptions[id] = subscribe_queue
 
-        send_payload: Dict[str, Any] = {
+        send_payload: dict[str, Any] = {
             "headers": operation.context.headers,
             "query": operation.document,
             "variables": operation.variables,
         }
 
         try:
-            frame: Dict[str, Any] = {
+            frame: dict[str, Any] = {
                 "id": id,
                 "type": GQL_START,
                 "payload": send_payload,
@@ -498,9 +493,9 @@ class GraphQLWSLink(AsyncTerminatingLink):
                     )
                     payload = answer["payload"]
                     if isinstance(payload, list):
-                        error_list: list[Dict[str, Any]] = payload
+                        error_list: list[dict[str, Any]] = payload
                     else:
-                        error_list: list[Dict[str, Any]] = [payload]
+                        error_list: list[dict[str, Any]] = [payload]
 
                     raise GraphQLException(
                         "\n".join([e["message"] for e in error_list])

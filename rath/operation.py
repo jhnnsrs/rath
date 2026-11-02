@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Any, Union
+from typing import Any
 from graphql.language import OperationDefinitionNode, print_ast
 from graphql import (
     DocumentNode,
@@ -12,19 +12,19 @@ import uuid
 class Context(BaseModel):
     """Context provides a way to pass arbitrary data to resolvers on the context"""
 
-    headers: Dict[str, str] = Field(default_factory=dict)
-    files: Dict[str, Any] = Field(default_factory=dict)
-    initial_payload: Dict[str, Any] = Field(default_factory=dict)
-    kwargs: Dict[str, Any] = Field(default_factory=dict)
-    extensions: Dict[str, Any] = Field(default_factory=dict)
+    headers: dict[str, str] = Field(default_factory=dict)
+    files: dict[str, Any] = Field(default_factory=dict)
+    initial_payload: dict[str, Any] = Field(default_factory=dict)
+    kwargs: dict[str, Any] = Field(default_factory=dict)
+    extensions: dict[str, Any] = Field(default_factory=dict)
     omit_document: bool = False
 
 
 class Extensions(BaseModel):
     """Extensions is a map of additional metadata that can be used by the links in the chain"""
 
-    pollInterval: Optional[int] = None
-    maxPolls: Optional[int] = None
+    pollInterval: int | None = None
+    maxPolls: int | None = None
 
 
 class Operation(BaseModel):
@@ -41,8 +41,8 @@ class Operation(BaseModel):
     document_node: DocumentNode
     node: OperationDefinitionNode
     document: str
-    variables: Dict[str, Any]
-    operation_name: Optional[str]
+    variables: dict[str, Any]
+    operation_name: str | None
     extensions: Extensions
     context: Context
 
@@ -63,7 +63,7 @@ class Operation(BaseModel):
 class GraphQLResult(BaseModel):
     """GraphQLResult is the result of a GraphQL operation."""
 
-    data: Dict[str, Any]
+    data: dict[str, Any]
 
 
 class GraphQLException(Exception):
@@ -72,9 +72,9 @@ class GraphQLException(Exception):
     def __init__(
         self,
         message: str,
-        operation: Optional[Operation] = None,
-        endpoint_url: Optional[str] = None,
-        errors: Optional[Dict[str, Any]] = None,
+        operation: Operation | None = None,
+        endpoint_url: str | None = None,
+        errors: dict[str, Any] | None = None,
     ):
         """Initialize the GraphQLException with a message and optional errors."""
         super().__init__(message)
@@ -102,10 +102,10 @@ class SubscriptionDisconnect(GraphQLException):
 
 
 def opify(
-    query: Union[str, DocumentNode],
-    variables: Optional[Dict[str, Any]] = None,
-    headers: Optional[Dict[str, Any]] = None,
-    operation_name: Optional[str] = None,
+    query: str | DocumentNode,
+    variables: dict[str, Any] | None = None,
+    headers: dict[str, Any] | None = None,
+    operation_name: str | None = None,
     **kwargs: Any,
 ) -> Operation:
     """Opify takes a query, variables, and headers and returns an Operation.

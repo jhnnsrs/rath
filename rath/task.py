@@ -25,7 +25,8 @@ of them deliberately do not depend on that package.
 
 import contextvars
 from contextlib import contextmanager
-from typing import Iterator, Optional, Protocol
+from typing import Protocol
+from collections.abc import Iterator
 
 TASK_HEADER = "Rekuest-Task"
 """The header a request carries its task's provenance token in."""
@@ -42,19 +43,19 @@ class TaskLike(Protocol):
     """
 
     @property
-    def token(self) -> Optional[str]:
+    def token(self) -> str | None:
         """The provenance token, or ``None`` when the task opted out of one."""
         ...
 
 
-current_task: contextvars.ContextVar[Optional[TaskLike]] = contextvars.ContextVar(
+current_task: contextvars.ContextVar[TaskLike | None] = contextvars.ContextVar(
     "rath_current_task", default=None
 )
 """The task requests made right now belong to, if any."""
 
 
 @contextmanager
-def task_scope(task: Optional[TaskLike]) -> Iterator[Optional[TaskLike]]:
+def task_scope(task: TaskLike | None) -> Iterator[TaskLike | None]:
     """Attribute everything done inside the block to ``task``.
 
     Restores the previous value on the way out, including when the body raises,
@@ -70,7 +71,7 @@ def task_scope(task: Optional[TaskLike]) -> Iterator[Optional[TaskLike]]:
         current_task.reset(token)
 
 
-def token_of(task: Optional[TaskLike]) -> Optional[str]:
+def token_of(task: TaskLike | None) -> str | None:
     """The token to attribute a request to: ``task``'s, else the ambient one's.
 
     ``task is None`` rather than a truth test on purpose -- a task object must not

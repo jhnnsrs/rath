@@ -1,4 +1,4 @@
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 from rath.links.base import AsyncTerminatingLink
 from rath.operation import GraphQLResult, Operation
 

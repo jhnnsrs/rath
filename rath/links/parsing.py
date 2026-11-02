@@ -1,12 +1,13 @@
 from rath.links.base import ContinuationLink
 from rath.operation import GraphQLResult, Operation
-from typing import Any, AsyncIterator, Awaitable, Callable, Dict, Tuple, Type, Union
+from typing import Any
+from collections.abc import AsyncIterator, Awaitable, Callable
 from rath.errors import NotComposedError
 import asyncio
 
 
 async def apply_recursive(
-    func, obj, typeguard: Union[Type[Any], Tuple[Type[Any], ...]]
+    func, obj, typeguard: type[Any] | tuple[type[Any], ...]
 ) -> Any:  # type: ignore
     """
     Recursively applies an asynchronous function to elements in a nested structure.
@@ -42,7 +43,7 @@ async def apply_recursive(
 
 
 async def apply_typemap_recursive(
-    obj, typefuncs: Dict[Type[Any], Callable[[Type[Any]], Awaitable[Any]]]
+    obj, typefuncs: dict[type[Any], Callable[[type[Any]], Awaitable[Any]]]
 ) -> Any:  # type: ignore
     """
     Recursively applies an asynchronous function to elements in a nested structure.

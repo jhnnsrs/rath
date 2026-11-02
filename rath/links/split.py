@@ -1,4 +1,5 @@
-from typing import Any, Callable, AsyncIterator, Optional, Self, Type
+from typing import Any, Self
+from collections.abc import Callable, AsyncIterator
 
 from pydantic import Field
 from rath.operation import Operation, GraphQLResult
@@ -51,9 +52,9 @@ class SplitLink(TerminatingLink):
 
     async def __aexit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        traceback: Optional[Any],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        traceback: Any | None,
     ) -> None:
         """Exits the context manager of the link"""
         await self.left.__aexit__(exc_type, exc_val, traceback)

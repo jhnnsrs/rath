@@ -4,14 +4,9 @@ from pydantic import Field, field_validator
 from rath.errors import NotConnectedError
 from rath.links.base import TerminatingLink, ContinuationLink
 from typing import (
-    AsyncGenerator,
-    Dict,
     Any,
-    Generator,
-    Optional,
-    Type,
 )
-from typing import Union
+from collections.abc import AsyncGenerator, Generator
 from graphql import (
     DocumentNode,
 )
@@ -100,10 +95,10 @@ class Rath(KoiledModel):
 
     async def aquery(
         self,
-        query: Union[str, DocumentNode],
-        variables: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, Any]] = None,
-        operation_name: Optional[str] = None,
+        query: str | DocumentNode,
+        variables: dict[str, Any] | None = None,
+        headers: dict[str, Any] | None = None,
+        operation_name: str | None = None,
         **kwargs: Any,
     ) -> GraphQLResult:
         """Query the GraphQL API.
@@ -131,10 +126,10 @@ class Rath(KoiledModel):
 
     def query(
         self,
-        query: Union[str, DocumentNode],
-        variables: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, Any]] = None,
-        operation_name: Optional[str] = None,
+        query: str | DocumentNode,
+        variables: dict[str, Any] | None = None,
+        headers: dict[str, Any] | None = None,
+        operation_name: str | None = None,
         **kwargs: Any,
     ) -> GraphQLResult:
         """Query the GraphQL API.
@@ -163,9 +158,9 @@ class Rath(KoiledModel):
     def subscribe(
         self,
         query: str,
-        variables: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, Any]] = None,
-        operation_name: Optional[str] = None,
+        variables: dict[str, Any] | None = None,
+        headers: dict[str, Any] | None = None,
+        operation_name: str | None = None,
         **kwargs: Any,
     ) -> Generator[GraphQLResult, None, None]:
         """Subscripe to a GraphQL API.
@@ -193,9 +188,9 @@ class Rath(KoiledModel):
     async def asubscribe(
         self,
         query: str,
-        variables: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, Any]] = None,
-        operation_name: Optional[str] = None,
+        variables: dict[str, Any] | None = None,
+        headers: dict[str, Any] | None = None,
+        operation_name: str | None = None,
         **kwargs: Any,
     ) -> AsyncGenerator[GraphQLResult, None]:
         """Subscripe to a GraphQL API.
@@ -229,9 +224,9 @@ class Rath(KoiledModel):
 
     async def __aexit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        traceback: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        traceback: TracebackType | None,
     ) -> None:
         """Exits the context manager of the link"""
         await self.link.__aexit__(exc_type, exc_val, traceback)

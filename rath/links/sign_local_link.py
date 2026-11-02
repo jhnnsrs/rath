@@ -3,7 +3,8 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
 from pydantic import field_validator
 from cryptography.hazmat.primitives.asymmetric import rsa
-from typing import Any, Callable, Awaitable, Dict
+from typing import Any
+from collections.abc import Callable, Awaitable
 import jwt
 from rath.operation import Operation
 
@@ -42,7 +43,7 @@ class SignLocalLink(AuthTokenLink):
         except Exception as e:
             raise ValueError(f"Not a valid PEM key. {str(e)}")
 
-    async def aretrieve_payload(self, operation: Operation) -> Dict[str, Any]:
+    async def aretrieve_payload(self, operation: Operation) -> dict[str, Any]:
         """Abstract method to retrieve the payload to sign
 
         Implement this method to retrieve the payload to sign.
@@ -104,9 +105,9 @@ class ComposedSignTokenLink(SignLocalLink):
     SignLocalLink.
     """
 
-    payload_retriever: Callable[[Operation], Awaitable[Dict[str, Any]]]
+    payload_retriever: Callable[[Operation], Awaitable[dict[str, Any]]]
     """ The payload retriever to use to retrieve the payload to sign"""
 
-    async def aretrieve_payload(self, operation: Operation) -> Dict[str, Any]:
+    async def aretrieve_payload(self, operation: Operation) -> dict[str, Any]:
         """Wraps the payload_retriever method"""
         return await self.payload_retriever(operation)

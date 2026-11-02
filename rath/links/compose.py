@@ -1,4 +1,5 @@
-from typing import AsyncIterator, List, Optional, Self, Type, Union, Any
+from typing import Self, Any
+from collections.abc import AsyncIterator
 
 from pydantic import field_validator
 from rath.links.base import ContinuationLink, Link, TerminatingLink
@@ -15,12 +16,12 @@ class ComposedLink(TerminatingLink):
     the operation to the server.
     """
 
-    links: List[Union[ContinuationLink, TerminatingLink]]
+    links: list[ContinuationLink | TerminatingLink]
     """The links that are composed to form the chain. pydantic will validate 
     that the last link is a terminating link."""
 
     @field_validator("links", mode="before")
-    def validate_links(cls, value: Any) -> List[Union[ContinuationLink, TerminatingLink]]:
+    def validate_links(cls, value: Any) -> list[ContinuationLink | TerminatingLink]:
         """Validate that the links are valid"""
         if not value:
             raise ValueError("ComposedLink requires at least one link")
@@ -59,9 +60,9 @@ class ComposedLink(TerminatingLink):
 
     async def __aexit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        traceback: Optional[Any],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        traceback: Any | None,
     ) -> None:
         """Exit the links in reverse order"""
         for link in self.links:
@@ -85,7 +86,7 @@ class TypedComposedLink(TerminatingLink):
     automatically composed together.
     """
 
-    _firstlink: Optional[Link] = None
+    _firstlink: Link | None = None
 
     async def __aenter__(self) -> Self:
         """Compose the links together and set the first link as the first link"""
@@ -113,9 +114,9 @@ class TypedComposedLink(TerminatingLink):
 
     async def __aexit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        traceback: Optional[Any],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        traceback: Any | None,
     ) -> None:
         """Exit the links in reverse order"""
         for _, link in self:

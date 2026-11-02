@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any
 
 
 class NotQueriedError(Exception):
@@ -7,7 +7,7 @@ class NotQueriedError(Exception):
     pass
 
 
-def get_nested_error(obj: Any, nested: List[str], above: List[str]) -> Any:
+def get_nested_error(obj: Any, nested: list[str], above: list[str]) -> Any:
     """Get a nested attribute or raise an error
 
 

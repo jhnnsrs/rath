@@ -7,7 +7,7 @@ supported.
 
 import inspect
 from ssl import SSLContext
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 try:
     from websockets.asyncio.client import connect as _connect
@@ -23,9 +23,9 @@ SUPPORTS_PROXY = not LEGACY_WEBSOCKETS and "proxy" in inspect.signature(_connect
 
 def ws_connect(
     url: str,
-    subprotocols: List[str],
-    ssl: Optional[SSLContext],
-    proxy: Optional[str] = None,
+    subprotocols: list[str],
+    ssl: SSLContext | None,
+    proxy: str | None = None,
 ) -> Any:
     """Open a websocket connection (use as an async context manager).
 
@@ -49,7 +49,7 @@ def ws_connect(
     Any
         The websockets connect context manager
     """
-    kwargs: Dict[str, Any] = {"subprotocols": subprotocols, "ssl": ssl}
+    kwargs: dict[str, Any] = {"subprotocols": subprotocols, "ssl": ssl}
     if proxy is not None and not SUPPORTS_PROXY:
         raise RuntimeError(
             "Connecting a websocket through a proxy requires websockets>=15, "

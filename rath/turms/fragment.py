@@ -1,6 +1,7 @@
 from rath.origin import origin_context
 from rath.rath import Rath
-from typing import Any, Dict, List, Optional, Protocol, Sequence, Type, TypeVar
+from typing import Any, Protocol, TypeVar
+from collections.abc import Sequence
 
 from rath.errors import EntityNotFound
 
@@ -22,7 +23,7 @@ TMeta = TypeVar("TMeta", bound=TurmsMeta)
 class TurmsFragment(Protocol[TMeta]):
     """Represents a Turms operation that is both callable and its own return type."""
 
-    Meta: Type[TMeta]
+    Meta: type[TMeta]
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         """A pydantic constructor"""
@@ -43,8 +44,8 @@ query Entities($representations: [_Any!]!) {
 
 
 def _entities_request(
-    fragment: Type[TFragment], ids: Sequence[IDCoercible]
-) -> tuple[str, Dict[str, Any]]:
+    fragment: type[TFragment], ids: Sequence[IDCoercible]
+) -> tuple[str, dict[str, Any]]:
     """The ``_entities`` document and variables that fetch ``ids`` as ``fragment``.
 
     The fragment is spread by its *name*, but the representation names the *type*
@@ -58,11 +59,11 @@ def _entities_request(
 
 
 def _build(
-    fragment: Type[TFragment],
+    fragment: type[TFragment],
     entities: Sequence[Any],
     ids: Sequence[IDCoercible],
-    context: Dict[str, Any],
-) -> List[Optional[TFragment]]:
+    context: dict[str, Any],
+) -> list[TFragment | None]:
     if len(entities) != len(ids):
         raise EntityNotFound(
             f"Asked for {len(ids)} {fragment.Meta.type} entities and got "
@@ -75,11 +76,11 @@ def _build(
 
 
 def fetch_fragments_via(
-    fragment: Type[TFragment],
+    fragment: type[TFragment],
     ids: Sequence[IDCoercible],
     rath: Rath,
-    origin: Optional[Dict[str, Any]] = None,
-) -> List[Optional[TFragment]]:
+    origin: dict[str, Any] | None = None,
+) -> list[TFragment | None]:
     """Fetch several entities of one type in a single ``_entities`` request.
 
     The result is in the order of ``ids``, with ``None`` where the server has no
@@ -107,11 +108,11 @@ def fetch_fragments_via(
 
 
 async def afetch_fragments_via(
-    fragment: Type[TFragment],
+    fragment: type[TFragment],
     ids: Sequence[IDCoercible],
     rath: Rath,
-    origin: Optional[Dict[str, Any]] = None,
-) -> List[Optional[TFragment]]:
+    origin: dict[str, Any] | None = None,
+) -> list[TFragment | None]:
     """Fetch several entities of one type in a single ``_entities`` request.
 
     The async twin of :func:`fetch_fragments_via`; see there for the parameters.
@@ -123,7 +124,7 @@ async def afetch_fragments_via(
     return _build(fragment, entities, ids, origin or origin_context(rath=rath))
 
 
-def _only(fragment: Type[TFragment], id: IDCoercible, found: List[Optional[TFragment]]) -> TFragment:
+def _only(fragment: type[TFragment], id: IDCoercible, found: list[TFragment | None]) -> TFragment:
     entity = found[0]
     if entity is None:
         raise EntityNotFound(f"No {fragment.Meta.type} with id {id!r} (or none you may see).")
@@ -131,10 +132,10 @@ def _only(fragment: Type[TFragment], id: IDCoercible, found: List[Optional[TFrag
 
 
 def fetch_fragment_via(
-    fragment: Type[TFragment],
+    fragment: type[TFragment],
     id: IDCoercible,
     rath: Rath,
-    origin: Optional[Dict[str, Any]] = None,
+    origin: dict[str, Any] | None = None,
 ) -> TFragment:
     """Fetch one entity by id through ``_entities``.
 
@@ -149,10 +150,10 @@ def fetch_fragment_via(
 
 
 async def afetch_fragment_via(
-    fragment: Type[TFragment],
+    fragment: type[TFragment],
     id: IDCoercible,
     rath: Rath,
-    origin: Optional[Dict[str, Any]] = None,
+    origin: dict[str, Any] | None = None,
 ) -> TFragment:
     """Fetch one entity by id through ``_entities``.
 

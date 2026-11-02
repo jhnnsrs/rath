@@ -1,5 +1,6 @@
 import asyncio
-from typing import AsyncIterator, Awaitable, Callable, Dict, Type, Any, List
+from typing import Any
+from collections.abc import AsyncIterator, Awaitable, Callable
 
 from pydantic import Field, field_validator
 from rath.links.base import AsyncTerminatingLink
@@ -22,7 +23,7 @@ class AsyncMockResolver:
     for the corresponding field.
     """
 
-    def to_dict(self) -> Dict[str, Callable[[Operation], Awaitable[Dict[str, Any]]]]:
+    def to_dict(self) -> dict[str, Callable[[Operation], Awaitable[dict[str, Any]]]]:
         """Convert the Mock Resolver to a dict of resolvers
 
         Returns
@@ -36,7 +37,7 @@ class AsyncMockResolver:
         return {i[8:]: getattr(self, i) for i in methods}
 
 
-ResolverDict = Dict[str, Callable[[Operation], Awaitable[Dict[str, Any]]]]
+ResolverDict = dict[str, Callable[[Operation], Awaitable[dict[str, Any]]]]
 
 
 class AsyncMockLink(AsyncTerminatingLink):
@@ -48,8 +49,8 @@ class AsyncMockLink(AsyncTerminatingLink):
 
     query_resolver: ResolverDict = Field(default_factory=dict, exclude=True)
     mutation_resolver: ResolverDict = Field(default_factory=dict, exclude=True)
-    subscription_resolver: Dict[
-        str, Callable[[Operation], AsyncIterator[Dict[str, Any]]]
+    subscription_resolver: dict[
+        str, Callable[[Operation], AsyncIterator[dict[str, Any]]]
     ] = Field(default_factory=dict, exclude=True)
     resolver: ResolverDict = Field(default_factory=dict, exclude=True)
 
@@ -61,7 +62,7 @@ class AsyncMockLink(AsyncTerminatingLink):
         mode="before",
     )
     @classmethod
-    def coerce_resolver(cls: Type["AsyncMockLink"], v: Any) -> ResolverDict:
+    def coerce_resolver(cls: type["AsyncMockLink"], v: Any) -> ResolverDict:
         """A validator that coerces AsyncMockResolver to a dict of resolvers"""
         if isinstance(v, AsyncMockResolver):
             return v.to_dict()
@@ -82,7 +83,7 @@ class AsyncMockLink(AsyncTerminatingLink):
         """
 
         if operation.node.operation == OperationType.QUERY:
-            futures: List[Awaitable[Dict[str, Any]]] = []
+            futures: list[Awaitable[dict[str, Any]]] = []
 
             for op in operation.node.selection_set.selections:
                 if isinstance(op, FieldNode):
@@ -105,7 +106,7 @@ class AsyncMockLink(AsyncTerminatingLink):
             )
 
         if operation.node.operation == OperationType.MUTATION:
-            futures: List[Awaitable[Dict[str, Any]]] = []
+            futures: list[Awaitable[dict[str, Any]]] = []
 
             for op in operation.node.selection_set.selections:
                 if isinstance(op, FieldNode):

@@ -1,4 +1,5 @@
-from typing import Any, AsyncIterator, Optional, Self, Type
+from typing import Any, Self
+from collections.abc import AsyncIterator
 from koil.composition import KoiledModel
 from rath.operation import GraphQLResult, Operation
 from rath.errors import NotComposedError
@@ -29,9 +30,9 @@ class Link(KoiledModel):
 
     async def __aexit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        traceback: Optional[Any],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        traceback: Any | None,
     ) -> None:
         """A coroutine that is called when the link is exited."""
         pass
@@ -94,7 +95,7 @@ class ContinuationLink(Link):
     It can be either provided a next link or it can be set once the link is composed together
     """
 
-    next: Optional[Link] = None
+    next: Link | None = None
     """The next link in the chain. This is also set when the link is composed together."""
 
     def set_next(self, next: Link) -> None:

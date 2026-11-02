@@ -1,16 +1,10 @@
 import asyncio
 from types import TracebackType
 from typing import (
-    AsyncIterator,
-    Awaitable,
-    Callable,
-    Dict,
-    Optional,
     Self,
-    Tuple,
-    Type,
     Any,
 )
+from collections.abc import AsyncIterator, Awaitable, Callable
 
 from pydantic import Field, field_validator
 from rath.links.base import AsyncTerminatingLink
@@ -39,7 +33,7 @@ class ConfigurationError(TerminatingLinkError):
     """A Configuration Error"""
 
 
-ResolverDict = Dict[str, Callable[[Operation], Awaitable[Dict[str, Any]]]]
+ResolverDict = dict[str, Callable[[Operation], Awaitable[dict[str, Any]]]]
 
 
 class AsyncStatefulMockLink(AsyncTerminatingLink):
@@ -60,11 +54,11 @@ class AsyncStatefulMockLink(AsyncTerminatingLink):
     subscription_resolver: ResolverDict = Field(default_factory=dict, exclude=True)
     resolver: ResolverDict = Field(default_factory=dict, exclude=True)
 
-    _connection_lock: Optional[asyncio.Lock] = None
+    _connection_lock: asyncio.Lock | None = None
     _connected: bool = False
-    _futures: Optional[Dict[str, asyncio.Future[GraphQLResult]]] = None
-    _inqueue: Optional[asyncio.Queue[Tuple[Operation, str]]] = None
-    _connection_task: Optional[asyncio.Task[None]] = None
+    _futures: dict[str, asyncio.Future[GraphQLResult]] | None = None
+    _inqueue: asyncio.Queue[tuple[Operation, str]] | None = None
+    _connection_task: asyncio.Task[None] | None = None
 
     @field_validator(
         "query_resolver",
@@ -74,7 +68,7 @@ class AsyncStatefulMockLink(AsyncTerminatingLink):
         mode="before",
     )
     @classmethod
-    def coerce_resolver(cls: Type["AsyncStatefulMockLink"], v: Any) -> Dict[str, Any]:
+    def coerce_resolver(cls: type["AsyncStatefulMockLink"], v: Any) -> dict[str, Any]:
         """Coerce the resolver to a dict if it is a AsyncMockResolver"""
         if isinstance(v, AsyncMockResolver):
             return v.to_dict()
@@ -129,7 +123,7 @@ class AsyncStatefulMockLink(AsyncTerminatingLink):
 
             operation, id = await self._inqueue.get()
 
-            resolve_futures: list[Awaitable[Dict[str, Any]]] = []
+            resolve_futures: list[Awaitable[dict[str, Any]]] = []
 
             try:
                 if operation.node.operation == OperationType.QUERY:

@@ -1,14 +1,14 @@
 from rath.errors import NotComposedError
 from rath.links.base import ContinuationLink
 from rath.operation import GraphQLResult, Operation
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
 import io
 import aiohttp
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 from pydantic import Field
 
-from typing import Any, Dict, Tuple, Type, Union, List
+from typing import Any
 
 FILE_CLASSES = (
     io.IOBase,
@@ -17,13 +17,13 @@ FILE_CLASSES = (
 )
 
 
-ValidNestedTypes = Union[Dict[str, Any], List[Any], Any]
+ValidNestedTypes = dict[str, Any] | list[Any] | Any
 
 
 def parse_nested_files(
-    variables: Dict[str, Any],
-    file_classes: Tuple[Type[Any], ...] = FILE_CLASSES,
-) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    variables: dict[str, Any],
+    file_classes: tuple[type[Any], ...] = FILE_CLASSES,
+) -> tuple[dict[str, Any], dict[str, Any]]:
     """Parse nested files
 
     Parameters
@@ -89,7 +89,7 @@ class FileExtraction(ContinuationLink):
     or used through the multipart/form-data encoding in the terminating link (if supported).
     """
 
-    file_classes: Tuple[Type[Any], ...] = Field(default=FILE_CLASSES)
+    file_classes: tuple[type[Any], ...] = Field(default=FILE_CLASSES)
 
     async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
         """Extracts files from the variables dict

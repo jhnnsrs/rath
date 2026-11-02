@@ -11,19 +11,20 @@ the lookup is only as well scoped as the server makes it: check that the service
 scopes ``_entities`` like its ``get_x`` queries before switching a type over.
 """
 
-from typing import Any, Callable, Dict, List, Optional, Sequence, Type
+from typing import Any
+from collections.abc import Callable, Sequence
 
 from rath.scalars import IDCoercible
 from rath.turms.fragment import TFragment, afetch_fragment_via, afetch_fragments_via
 
-OriginBuilder = Callable[[Any], Dict[str, Any]]
+OriginBuilder = Callable[[Any], dict[str, Any]]
 """``origin(client)``: the validation context fetched objects are bound under."""
 
 
 def federated(
-    fragment: Type[TFragment],
-    origin: Optional[OriginBuilder] = None,
-) -> Dict[str, Any]:
+    fragment: type[TFragment],
+    origin: OriginBuilder | None = None,
+) -> dict[str, Any]:
     """The ``aexpand`` and ``aexpand_many`` that fetch ``fragment`` through ``_entities``.
 
     Both take the client first (``aexpand(client, id)``), so a client can use them
@@ -48,7 +49,7 @@ def federated(
     """
     from rath.origin import origin_context
 
-    def bound_to(client: Any) -> Dict[str, Any]:  # noqa: ANN401
+    def bound_to(client: Any) -> dict[str, Any]:  # noqa: ANN401
         if origin is not None:
             return origin(client)
         return origin_context(client=client, rath=client.rath)
@@ -60,7 +61,7 @@ def federated(
 
     async def aexpand_many(
         client: Any, ids: Sequence[IDCoercible]  # noqa: ANN401
-    ) -> List[Optional[TFragment]]:
+    ) -> list[TFragment | None]:
         return await afetch_fragments_via(
             fragment, ids, rath=client.rath, origin=bound_to(client)
         )

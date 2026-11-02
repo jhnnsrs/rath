@@ -1,15 +1,15 @@
 import json
-from typing import Dict, Any, Union
+from typing import Any
 from pydantic import BaseModel
 from rath.operation import Operation
 from rath.links.parsing import ParsingLink
 
 
-ValidNestedTypes = Union[BaseModel, Dict[str, Any], list[Any], Any]
+ValidNestedTypes = BaseModel | dict[str, Any] | list[Any] | Any
 
 
 def parse_variables(
-    variables: Dict[str, Any],
+    variables: dict[str, Any],
     by_alias: bool = True,
 ) -> ValidNestedTypes:
     """Parse Variables

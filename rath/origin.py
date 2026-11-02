@@ -1,6 +1,6 @@
 """Objects that remember the client they were fetched with."""
 
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any
 from pydantic import BaseModel
 
 if TYPE_CHECKING:
@@ -33,13 +33,13 @@ class Origin:
     __slots__ = ("client", "rath", "clients")
 
     def __init__(
-        self, client: Any = None, rath: Optional["Rath"] = None, **clients: Any  # noqa: ANN401
+        self, client: Any = None, rath: "Rath | None" = None, **clients: Any  # noqa: ANN401
     ) -> None:
         self.client = client
         self.rath = rath
-        self.clients: Dict[str, Any] = clients
+        self.clients: dict[str, Any] = clients
 
-    def __deepcopy__(self, memo: Dict[int, Any]) -> "Origin":
+    def __deepcopy__(self, memo: dict[int, Any]) -> "Origin":
         # A deep copy of the object still came from the same client, and the
         # client (its connections) must not be copied along with it.
         return self
@@ -50,8 +50,8 @@ class Origin:
 
 
 def origin_context(
-    client: Any = None, rath: Optional["Rath"] = None, **clients: Any  # noqa: ANN401
-) -> Dict[str, Any]:
+    client: Any = None, rath: "Rath | None" = None, **clients: Any  # noqa: ANN401
+) -> dict[str, Any]:
     """The validation context that binds every object built under it to an origin.
 
     Pass it as ``Model.model_validate(data, context=origin_context(...))``. Pydantic
@@ -61,7 +61,7 @@ def origin_context(
     return {ORIGIN_KEY: Origin(client=client, rath=rath, **clients)}
 
 
-def get_origin(obj: Any) -> Optional[Origin]:  # noqa: ANN401
+def get_origin(obj: Any) -> Origin | None:  # noqa: ANN401
     """The origin of an object, or ``None`` if it was not built under one."""
     return getattr(obj, "__dict__", {}).get(ORIGIN_KEY)
 
@@ -82,7 +82,7 @@ class ContextBound(BaseModel):
         origin = get_origin(self)
         return origin.client if origin is not None else None
 
-    def bound_rath(self) -> Optional["Rath"]:
+    def bound_rath(self) -> "Rath | None":
         """The rath this object was fetched with, or ``None``."""
         origin = get_origin(self)
         return origin.rath if origin is not None else None

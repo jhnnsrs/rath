@@ -4,7 +4,8 @@ from datetime import datetime
 from http import HTTPStatus
 import json
 from ssl import SSLContext
-from typing import Any, Dict, List, Optional, Self, Type, AsyncIterator
+from typing import Any, Self
+from collections.abc import AsyncIterator
 from rath.links.types import Payload
 import aiohttp
 from graphql import OperationType
@@ -56,7 +57,7 @@ class AIOHttpLink(AsyncTerminatingLink):
     """ssl_context is the SSLContext to use for the aiohttp session. By default, this
     is a context that uses the certifi CA bundle."""
 
-    auth_errors: List[HTTPStatus] = Field(
+    auth_errors: list[HTTPStatus] = Field(
         default_factory=lambda: [
             HTTPStatus.FORBIDDEN,
         ]
@@ -66,19 +67,19 @@ class AIOHttpLink(AsyncTerminatingLink):
     override this to include other status codes that indicate that the request was
     unauthorized."""
 
-    auth_error_codes: List[str] = Field(
+    auth_error_codes: list[str] = Field(
         default_factory=lambda: ["UNAUTHENTICATED"],
     )
     """GraphQL ``extensions.code`` values that mean "refresh the token and retry",
     for a server that reports an expired token as a 200 with an error in the body
     rather than as a 401 or 403. See :func:`rath.links.errors.is_auth_error`."""
 
-    json_encoder: Type[json.JSONEncoder] = Field(default=DateTimeEncoder, exclude=True)
+    json_encoder: type[json.JSONEncoder] = Field(default=DateTimeEncoder, exclude=True)
     """json_encoder is the JSONEncoder to use when serializing the payload. By default,
     this is a DateTimeEncoder that extends the default python json decoder to serialize 
     datetime objects to ISO 8601 strings."""
 
-    proxy: Optional[str] = None
+    proxy: str | None = None
     """proxy is an optional HTTP proxy URL (e.g. ``http://127.0.0.1:41234``) that all
     requests are routed through (absolute-form for http, CONNECT for https). When None
     (the default), aiohttp's default behaviour is kept untouched."""
@@ -91,8 +92,8 @@ class AIOHttpLink(AsyncTerminatingLink):
 
     _connected = False
     _entered = False
-    _session: Optional[aiohttp.ClientSession] = None
-    _session_loop: Optional[asyncio.AbstractEventLoop] = None
+    _session: aiohttp.ClientSession | None = None
+    _session_loop: asyncio.AbstractEventLoop | None = None
 
     async def __aenter__(self) -> Self:
         """Entery point for the async context manager"""
@@ -137,9 +138,9 @@ class AIOHttpLink(AsyncTerminatingLink):
 
     async def __aexit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        traceback: Optional[Any],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        traceback: Any | None,
     ) -> None:
         """Exit point for the async context manager"""
         self._entered = False
@@ -199,7 +200,7 @@ class AIOHttpLink(AsyncTerminatingLink):
                     filename=getattr(v, "name", k),
                 )
 
-            post_kwargs: Dict[str, Any] = {"data": data}
+            post_kwargs: dict[str, Any] = {"data": data}
 
         else:
             payload["variables"] = operation.variables

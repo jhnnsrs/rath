@@ -1,6 +1,7 @@
 from rath.rath import Rath
 from collections.abc import Mapping
-from typing import AsyncIterator, Iterator, Protocol, Type, TypeVar, Any, Optional
+from typing import Protocol, TypeVar, Any
+from collections.abc import AsyncIterator, Iterator
 from pydantic import BaseModel
 
 
@@ -18,8 +19,8 @@ TMeta = TypeVar("TMeta", bound=TurmsMeta)
 class TurmsOperation(Protocol[TArgs, TMeta]):
     """Represents a Turms operation that is both callable and its own return type."""
 
-    Meta: Type[TMeta]
-    Arguments: Type[TArgs]
+    Meta: type[TMeta]
+    Arguments: type[TArgs]
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         """A pydantic constructor"""
@@ -29,7 +30,7 @@ class TurmsOperation(Protocol[TArgs, TMeta]):
 TOperation = TypeVar("TOperation", bound=TurmsOperation[Any, Any])
 
 
-def execute(operation: Type[TOperation], variables: Mapping[str, Any], rath: Rath) -> TOperation:
+def execute(operation: type[TOperation], variables: Mapping[str, Any], rath: Rath) -> TOperation:
     """Synchronously Executes an a query or mutation using rath
 
 
@@ -56,7 +57,7 @@ def execute(operation: Type[TOperation], variables: Mapping[str, Any], rath: Rat
     )
 
 
-async def aexecute(operation: Type[TOperation], variables: Mapping[str, Any], rath: Rath) -> TOperation:
+async def aexecute(operation: type[TOperation], variables: Mapping[str, Any], rath: Rath) -> TOperation:
     """Asynchronously Executes a query or mutation using rath
 
 
@@ -82,7 +83,7 @@ async def aexecute(operation: Type[TOperation], variables: Mapping[str, Any], ra
     return operation(**x.data)
 
 
-def subscribe(operation: Type[TOperation], variables: Mapping[str, Any], rath: Rath) -> Iterator[TOperation]:
+def subscribe(operation: type[TOperation], variables: Mapping[str, Any], rath: Rath) -> Iterator[TOperation]:
     """Synchronously subscribte to a subscription using rath
 
 
@@ -109,7 +110,7 @@ def subscribe(operation: Type[TOperation], variables: Mapping[str, Any], rath: R
         yield operation(**event.data)
 
 
-async def asubscribe(operation: Type[TOperation], variables: Mapping[str, Any], rath: Rath) -> AsyncIterator[TOperation]:
+async def asubscribe(operation: type[TOperation], variables: Mapping[str, Any], rath: Rath) -> AsyncIterator[TOperation]:
     """Asynchronously subscribte to a subscription using rath
 
 

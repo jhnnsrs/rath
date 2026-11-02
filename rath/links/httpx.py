@@ -1,6 +1,7 @@
 from http import HTTPStatus
 import json
-from typing import Any, Dict, List, Optional, Type, AsyncIterator
+from typing import Any
+from collections.abc import AsyncIterator
 import httpx
 from graphql import OperationType
 from pydantic import Field
@@ -35,22 +36,22 @@ class HttpxLink(AsyncTerminatingLink):
     endpoint_url: str
     """endpoint_url is the URL to send operations to."""
 
-    auth_errors: List[HTTPStatus] = Field(
+    auth_errors: list[HTTPStatus] = Field(
         default_factory=lambda: [
             HTTPStatus.FORBIDDEN,
         ]
     )
     """auth_errors is a list of HTTPStatus codes that indicate an authentication error."""
 
-    auth_error_codes: List[str] = Field(
+    auth_error_codes: list[str] = Field(
         default_factory=lambda: ["UNAUTHENTICATED"],
     )
     """GraphQL ``extensions.code`` values that mean "refresh the token and retry",
     for a server that reports an expired token as a 200 with an error in the body
     rather than as a 401 or 403. See :func:`rath.links.errors.is_auth_error`."""
-    json_encoder: Type[json.JSONEncoder] = Field(default=DateTimeEncoder, exclude=True)
+    json_encoder: type[json.JSONEncoder] = Field(default=DateTimeEncoder, exclude=True)
 
-    proxy: Optional[str] = None
+    proxy: str | None = None
     """proxy is an optional HTTP proxy URL (e.g. ``http://127.0.0.1:41234``) that all
     requests are routed through. When None (the default), httpx's default behaviour
     is kept untouched."""
@@ -94,7 +95,7 @@ class HttpxLink(AsyncTerminatingLink):
             operations_str = json.dumps(payload, cls=self.json_encoder)
             file_map_str = json.dumps(file_map)
 
-            post_kwargs: Dict[str, Any] = {
+            post_kwargs: dict[str, Any] = {
                 "data": {
                     "operations": operations_str,
                     "map": file_map_str,
@@ -106,7 +107,7 @@ class HttpxLink(AsyncTerminatingLink):
             payload["variables"] = operation.variables
             post_kwargs = {"json": payload}
 
-        client_kwargs: Dict[str, Any] = {}
+        client_kwargs: dict[str, Any] = {}
         if self.proxy is not None:
             # ``proxies=`` is the spelling supported by the pinned httpx (<0.24).
             client_kwargs["proxies"] = self.proxy

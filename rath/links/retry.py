@@ -1,4 +1,4 @@
-from typing import AsyncIterator, Optional
+from collections.abc import AsyncIterator
 
 from rath.links.base import ContinuationLink
 from rath.operation import (
@@ -21,7 +21,7 @@ class RetryLink(ContinuationLink):
 
     maximum_retry_attempts: int = 3
     """The maximum number of times the operation function will be called, before the operation fails."""
-    sleep_interval: Optional[int] = None
+    sleep_interval: int | None = None
     """The number of seconds to wait before retrying the operation."""
 
     async def aexecute(

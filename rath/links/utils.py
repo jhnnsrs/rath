@@ -1,11 +1,12 @@
-from typing import Dict, Any, Callable, Optional
+from typing import Any
+from collections.abc import Callable
 
 
 def recurse_parse_variables(
-    variables: Dict[str, Any],
-    predicate: Callable[[Optional[str], Any], bool],
+    variables: dict[str, Any],
+    predicate: Callable[[str | None, Any], bool],
     apply: Callable[[Any], Any],
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Parse Variables
 
     Recursively traverse variables, applying the apply function to the value if the predicate
@@ -20,7 +21,7 @@ def recurse_parse_variables(
         Dict: _description_
     """
 
-    def recurse_extract(obj: Any, path: Optional[str] = None) -> Any:
+    def recurse_extract(obj: Any, path: str | None = None) -> Any:
         """
         recursively traverse obj, doing a deepcopy, but
         replacing any file-like objects with nulls and
