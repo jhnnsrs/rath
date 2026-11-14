@@ -1,6 +1,44 @@
 # CHANGELOG
 
 
+## v4.1.3 (2026-11-14)
+
+### Bug Fixes
+
+- A subscription socket that connects but is never acknowledged is retried
+  ([`c01837e`](https://github.com/jhnnsrs/rath/commit/c01837e73af406d0a27e770c99c29baa554ab7d2))
+
+A graphql-ws connection that opened and closed before its `connection_ack` counted as a success and
+  reset the retry count, so a server that kept accepting and dropping it was tried forever at full
+  speed. The count now resets only once the server acknowledged.
+
+Co-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>
+
+### Build System
+
+- **deps**: Lock graphql-core 3.3.0
+  ([`289b7a0`](https://github.com/jhnnsrs/rath/commit/289b7a0ac606802cc6f30a71d69b6807f5894f44))
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+- **deps**: Require turms 2.3
+  ([`84823ad`](https://github.com/jhnnsrs/rath/commit/84823adcf3d541edea3bc233c2c1496706aef843))
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+### Refactoring
+
+- Adopt Python 3.11 typing (X | None, builtin generics, collections.abc)
+  ([`221f3e9`](https://github.com/jhnnsrs/rath/commit/221f3e9749b73e8641a1ef1d0c2187324fa39547))
+
+Rewrite Optional[X]/Union[A, B] to X | None / A | B, List/Dict/Tuple/Type/Set to builtins,
+  typing.Callable & co. to collections.abc, and other pyupgrade rewrites for the >=3.11 floor.
+  Enforce it with ruff's UP rules (UP037, UP038 and UP042 ignored; generated api/schema.py keeps
+  typing imports).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+
 ## v4.1.2 (2026-10-07)
 
 ### Bug Fixes
