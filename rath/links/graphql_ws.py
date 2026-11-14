@@ -142,6 +142,8 @@ class GraphQLWSLink(AsyncTerminatingLink):
     _connection_lock: asyncio.Lock | None = None
     _connected: bool = False
     _alive: bool = False
+    _acknowledged: bool = False
+    """Whether the current connection attempt was acknowledged by the server."""
     _send_queue: asyncio.Queue[str] | None = None
     _connection_task: asyncio.Task[None] | None = None
     _ongoing_subscriptions: dict[str, asyncio.Queue[TransportMessage]] | None = None
@@ -237,6 +239,7 @@ class GraphQLWSLink(AsyncTerminatingLink):
         """
         send_task = None
         receive_task = None
+        self._acknowledged = False
         try:
             try:
                 url = await self.abuild_url(initiating_operation)
@@ -288,6 +291,9 @@ class GraphQLWSLink(AsyncTerminatingLink):
             logger.info(
                 f"Trying to Recover from Exception {e} Reconnect is {self.allow_reconnect} Retry: {retry}"
             )
+            if self._acknowledged:
+                # It stood: this drop starts a fresh budget, not the rest of the last one.
+                retry = 0
             if retry > self.max_retries or not self.allow_reconnect:
                 logger.error("Max retries reached. Aborting")
                 raise DefiniteConnectionFail("Exceeded Number of Retries")
@@ -398,7 +404,10 @@ class GraphQLWSLink(AsyncTerminatingLink):
         if type == GQL_CONNECTION_ACK:
             if self.on_connect:
                 await self.on_connect(message.get("payload", {}))
-            initial_connection_future.set_result(True)
+            self._acknowledged = True
+            # The same future is handed to every reconnect: only the first ack resolves it.
+            if not initial_connection_future.done():
+                initial_connection_future.set_result(True)
             return
 
         if type == GQL_PING:
