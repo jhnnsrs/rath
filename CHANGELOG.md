@@ -1,6 +1,26 @@
 # CHANGELOG
 
 
+## v4.2.0 (2026-11-19)
+
+### Build System
+
+- **deps**: Lock koil 3.4.1
+  ([`819a07e`](https://github.com/jhnnsrs/rath/commit/819a07e575a547994d671a1f410fa55c39e0e225))
+
+Co-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>
+
+### Features
+
+- A request made inside a trace carries it on
+  ([`fe08ea1`](https://github.com/jhnnsrs/rath/commit/fe08ea18dbcd5f629db81de5a7952434faf905cd))
+
+The HTTP links add the running trace (W3C `traceparent`, through OpenTelemetry's API) beside an
+  operation's headers. Outside of a trace, and where nobody set OpenTelemetry up, nothing is added.
+
+Co-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>
+
+
 ## v4.1.3 (2026-11-14)
 
 ### Bug Fixes
