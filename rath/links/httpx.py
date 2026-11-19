@@ -14,6 +14,7 @@ from rath.links.errors import (
 )
 import logging
 from rath.links.types import Payload
+from rath.trace import traced
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
@@ -114,7 +115,7 @@ class HttpxLink(AsyncTerminatingLink):
 
         async with httpx.AsyncClient(**client_kwargs) as client:
             response = await client.post(
-                self.endpoint_url, headers=operation.context.headers, **post_kwargs
+                self.endpoint_url, headers=traced(operation.context.headers), **post_kwargs
             )
 
             if response.status_code in self.auth_errors:

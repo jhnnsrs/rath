@@ -9,6 +9,8 @@ dependencies = [
     "koil>=3.3.1",
     "graphql-core>=3.2.0,<4",
     "pydantic>2",
+    # The API only: a request made inside a trace carries it on (rath.trace).
+    "opentelemetry-api>=1.30",
 ]
 
 [project.optional-dependencies]

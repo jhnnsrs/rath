@@ -7,6 +7,7 @@ from ssl import SSLContext
 from typing import Any, Self
 from collections.abc import AsyncIterator
 from rath.links.types import Payload
+from rath.trace import traced
 import aiohttp
 from graphql import OperationType
 from pydantic import Field
@@ -211,7 +212,7 @@ class AIOHttpLink(AsyncTerminatingLink):
 
         async with self._request_session() as session:
             async with session.post(
-                self.endpoint_url, headers=operation.context.headers, **post_kwargs
+                self.endpoint_url, headers=traced(operation.context.headers), **post_kwargs
             ) as response:
                 if response.status in self.auth_errors:
                     raise AuthenticationError(
