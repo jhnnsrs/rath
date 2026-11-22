@@ -36,7 +36,12 @@ tests/                 # pytest suite (mirrors rath/ structure)
 - **Pydantic v2** models throughout — prefer `Field(default_factory=…)` for mutable defaults.
 - Links inherit from `Link`, `ContinuationLink`, or `AsyncTerminatingLink`; implement `aexecute(self, operation) -> AsyncIterator[GraphQLResult]`.
 - Keep methods short. No inline comments unless the _why_ is non-obvious.
-- Formatting: [Ruff](https://docs.astral.sh/ruff/) (`ruff check .`), line length 300.
+- Lint, format and types follow the arkitekt Python standard: `ruff.toml` and
+  `pyrightconfig.json` extend the synced `ruff.shared.toml` / `pyright.shared.json`
+  (never edit those two). Every argument and return annotated, no `Any`, line
+  length 88. `uv run ruff check .`, `uv run ruff format .` and `uv run basedpyright`
+  are all required in CI (the `Quality` workflow); basedpyright tolerates only the
+  errors in `.basedpyright/baseline.json`. The turms-generated `tests/apis` is excluded.
 
 ## Tests
 
