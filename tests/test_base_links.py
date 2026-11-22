@@ -3,6 +3,7 @@
 from collections.abc import AsyncIterator
 
 import pytest
+from pydantic import ValidationError
 
 from rath.errors import NotComposedError
 from rath.links import compose
@@ -45,14 +46,14 @@ class CountingLink(AsyncTerminatingLink):
 # ---------------------------------------------------------------------------
 
 
-async def test_link_context_manager_enters_and_exits():
+async def test_link_context_manager_enters_and_exits() -> None:
     """Link.__aenter__ returns self and __aexit__ does not raise."""
     link = EchoLink()
     async with link as entered:
         assert entered is link
 
 
-async def test_link_aconnect_and_adisconnect_are_noops():
+async def test_link_aconnect_and_adisconnect_are_noops() -> None:
     """Default aconnect / adisconnect are no-ops (do not raise)."""
     link = EchoLink()
     op = opify(QUERY)
@@ -75,7 +76,7 @@ class PassthroughLink(ContinuationLink):
             yield result
 
 
-async def test_continuation_link_delegates_to_next():
+async def test_continuation_link_delegates_to_next() -> None:
     """ContinuationLink forwards the operation to the next link."""
     terminal = EchoLink()
     continuation = PassthroughLink()
@@ -86,7 +87,7 @@ async def test_continuation_link_delegates_to_next():
     assert "echo" in results[0].data
 
 
-async def test_continuation_link_raises_without_next():
+async def test_continuation_link_raises_without_next() -> None:
     """ContinuationLink raises NotComposedError when next is not set."""
     link = PassthroughLink()
     with pytest.raises(NotComposedError):
@@ -94,7 +95,7 @@ async def test_continuation_link_raises_without_next():
             pass
 
 
-async def test_base_continuation_link_raises_without_next():
+async def test_base_continuation_link_raises_without_next() -> None:
     """The base ContinuationLink.aexecute also raises NotComposedError."""
     link = ContinuationLink()
     with pytest.raises(NotComposedError):
@@ -102,7 +103,7 @@ async def test_base_continuation_link_raises_without_next():
             pass
 
 
-async def test_set_next_stores_next_link():
+async def test_set_next_stores_next_link() -> None:
     link = PassthroughLink()
     terminal = EchoLink()
     link.set_next(terminal)
@@ -114,7 +115,7 @@ async def test_set_next_stores_next_link():
 # ---------------------------------------------------------------------------
 
 
-async def test_compose_single_terminating_link():
+async def test_compose_single_terminating_link() -> None:
     """compose() accepts a single TerminatingLink."""
     composed = compose(EchoLink())
     async with composed:
@@ -122,7 +123,7 @@ async def test_compose_single_terminating_link():
     assert len(results) == 1
 
 
-async def test_compose_continuation_plus_terminating():
+async def test_compose_continuation_plus_terminating() -> None:
     """compose() wires two links and executes end-to-end."""
     composed = compose(PassthroughLink(), EchoLink())
     async with composed:
@@ -130,7 +131,7 @@ async def test_compose_continuation_plus_terminating():
     assert results[0].data["echo"]
 
 
-async def test_compose_sets_next_on_enter():
+async def test_compose_sets_next_on_enter() -> None:
     """Links do not have next set until the composed chain is entered."""
     passthrough = PassthroughLink()
     echo = EchoLink()
@@ -142,7 +143,7 @@ async def test_compose_sets_next_on_enter():
         assert passthrough.next is echo  # set during __aenter__
 
 
-async def test_compose_multiple_continuation_links():
+async def test_compose_multiple_continuation_links() -> None:
     """compose() supports more than two links in the chain."""
 
     class HeaderInjectingLink(ContinuationLink):
@@ -175,21 +176,21 @@ async def test_compose_multiple_continuation_links():
 # ---------------------------------------------------------------------------
 
 
-def test_compose_requires_terminating_last_link():
+def test_compose_requires_terminating_last_link() -> None:
     """ComposedLink refuses a chain whose last link is a ContinuationLink."""
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationError):
         compose(PassthroughLink(), PassthroughLink())
 
 
-def test_compose_refuses_empty_links():
+def test_compose_refuses_empty_links() -> None:
     """ComposedLink refuses an empty links list."""
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationError):
         ComposedLink(links=[])
 
 
-def test_compose_refuses_terminating_link_in_middle():
+def test_compose_refuses_terminating_link_in_middle() -> None:
     """ComposedLink refuses a TerminatingLink that is not the last link."""
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationError):
         compose(EchoLink(), EchoLink())
 
 
@@ -198,14 +199,14 @@ def test_compose_refuses_terminating_link_in_middle():
 # ---------------------------------------------------------------------------
 
 
-async def test_composed_link_enters_and_exits_cleanly():
+async def test_composed_link_enters_and_exits_cleanly() -> None:
     """ComposedLink context manager enters and exits without error."""
     composed = compose(PassthroughLink(), EchoLink())
     async with composed:
         pass  # just entering and exiting should be fine
 
 
-async def test_composed_link_can_be_entered_multiple_times():
+async def test_composed_link_can_be_entered_multiple_times() -> None:
     """A ComposedLink can be re-entered after exit."""
     composed = compose(EchoLink())
     async with composed:

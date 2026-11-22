@@ -3,7 +3,7 @@
 import copy
 import pickle
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, Never
 
 import pytest
 from pydantic import BaseModel, ConfigDict
@@ -42,10 +42,10 @@ class Operation(BaseModel):
 class UncopyableApp:
     """Stands in for an app: it owns clients and connections, and must stay where it is."""
 
-    def __deepcopy__(self, memo: dict[int, Any]) -> Any:
+    def __deepcopy__(self, memo: dict[int, object]) -> Never:
         raise AssertionError("the app was deep-copied along with an object")
 
-    def __reduce__(self) -> Any:
+    def __reduce__(self) -> Never:
         raise AssertionError("the app was pickled along with an object")
 
 
@@ -157,14 +157,14 @@ class FakeRath:
     def __init__(self) -> None:
         self.queries: list[dict[str, Any]] = []
 
-    def _result(self, variables: dict[str, Any]) -> Any:
+    def _result(self, variables: dict[str, Any]) -> SimpleNamespace:
         self.queries.append(variables)
         return SimpleNamespace(data={"entities": [{"id": "7"}]})
 
-    def query(self, query: str, variables: dict[str, Any]) -> Any:
+    def query(self, query: str, variables: dict[str, Any]) -> SimpleNamespace:
         return self._result(variables)
 
-    async def aquery(self, query: str, variables: dict[str, Any]) -> Any:
+    async def aquery(self, query: str, variables: dict[str, Any]) -> SimpleNamespace:
         return self._result(variables)
 
 
@@ -234,10 +234,6 @@ class InstanceRef(ContextBound, FederationFetchable, BaseModel):
         name = "InstanceRef"
         type = "Instance"
 
-    @classmethod
-    def get_rath(cls, ctx: Any = None) -> Any:
-        return ctx.rath
-
 
 class RecordingRath:
     """Answers `_entities` from a table, and remembers what it was asked."""
@@ -246,15 +242,15 @@ class RecordingRath:
         self.known = known
         self.requests: list[tuple[str, dict[str, Any]]] = []
 
-    def _result(self, query: str, variables: dict[str, Any]) -> Any:
+    def _result(self, query: str, variables: dict[str, Any]) -> SimpleNamespace:
         self.requests.append((query, variables))
         entities = [self.known.get(rep["id"]) for rep in variables["representations"]]
         return SimpleNamespace(data={"entities": entities})
 
-    def query(self, query: str, variables: dict[str, Any]) -> Any:
+    def query(self, query: str, variables: dict[str, Any]) -> SimpleNamespace:
         return self._result(query, variables)
 
-    async def aquery(self, query: str, variables: dict[str, Any]) -> Any:
+    async def aquery(self, query: str, variables: dict[str, Any]) -> SimpleNamespace:
         return self._result(query, variables)
 
 
@@ -347,7 +343,7 @@ def test_the_caller_can_supply_the_origin() -> None:
 
 class LayeredRef(InstanceRef):
     @classmethod
-    def fetch_origin(cls, client: Any) -> Any:
+    def fetch_origin(cls, client: SimpleNamespace) -> dict[str, Origin]:
         return origin_context(
             client=client, rath=client.rath, datalayer=client.datalayer
         )

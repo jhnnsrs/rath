@@ -24,7 +24,7 @@ class SignLocalLink(AuthTokenLink):
     private_key: rsa.RSAPrivateKey
 
     @field_validator("private_key", mode="before")
-    def must_be_valid_pem_key(cls, v: Any) -> rsa.RSAPrivateKey:
+    def must_be_valid_pem_key(cls, v: str | bytes) -> rsa.RSAPrivateKey:
         """Validates that the private key is a valid PEM key"""
         try:
             try:
@@ -44,7 +44,7 @@ class SignLocalLink(AuthTokenLink):
 
             return key
         except Exception as e:
-            raise ValueError(f"Not a valid PEM key. {str(e)}")
+            raise ValueError(f"Not a valid PEM key. {str(e)}") from e
 
     async def aretrieve_payload(self, operation: Operation) -> dict[str, Any]:
         """Abstract method to retrieve the payload to sign

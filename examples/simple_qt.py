@@ -1,4 +1,5 @@
 import sys
+from typing import Any
 
 from countries.schema import Countries
 from koil.qt import QtKoil
@@ -12,7 +13,7 @@ from rath.links.validate import ValidatingLink
 
 
 class QtRathWidget(QtWidgets.QWidget):
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.koil = QtKoil(parent=self)
         self.koil.enter()
@@ -38,14 +39,14 @@ class QtRathWidget(QtWidgets.QWidget):
         self.countries_query.returned.connect(self.show_countries)
         self.countries_query.errored.connect(print)
 
-    def show_countries(self, c: Countries):
+    def show_countries(self, c: Countries) -> None:
         print(c)
 
-    def greet(self):
+    def greet(self) -> None:
         self.countries_query.run()
 
 
-def main(**kwargs):
+def main(**kwargs: Any) -> None:
     app = QtWidgets.QApplication(sys.argv)
     # app.setWindowIcon(QtGui.QIcon(os.path.join(os.getcwd(), 'share\\assets\\icon.png')))
     main_window = QtRathWidget(**kwargs)

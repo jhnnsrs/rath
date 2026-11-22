@@ -22,7 +22,7 @@ QUERY = "query GetBeast { beast { id } }"
 # ---------------------------------------------------------------------------
 
 
-async def test_aiohttp_rejects_subscriptions():
+async def test_aiohttp_rejects_subscriptions() -> None:
     link = AIOHttpLink(endpoint_url="http://example.com/graphql")
     async with link:
         with pytest.raises(NotImplementedError, match="Aiohttp") as excinfo:
@@ -31,7 +31,7 @@ async def test_aiohttp_rejects_subscriptions():
     assert "subscription" in str(excinfo.value)
 
 
-async def test_httpx_rejects_subscriptions():
+async def test_httpx_rejects_subscriptions() -> None:
     link = HttpxLink(endpoint_url="http://example.com/graphql")
     async with link:
         # The message must name the *httpx* transport, not aiohttp.
@@ -47,7 +47,7 @@ async def test_httpx_rejects_subscriptions():
 
 
 class _FakeResponse:
-    def __init__(self, status_code: int, payload: dict):
+    def __init__(self, status_code: int, payload: dict) -> None:
         self.status_code = status_code
         self._payload = payload
 
@@ -66,16 +66,22 @@ class _FakeAsyncClient:
     async def __aexit__(self, *args: object) -> None:
         return None
 
-    async def post(self, url: str, headers=None, **kwargs) -> _FakeResponse:
+    async def post(
+        self, url: str, headers: dict[str, str] | None = None, **kwargs: object
+    ) -> _FakeResponse:
         return self._response
 
 
-def _patch_httpx_response(monkeypatch, response: _FakeResponse) -> None:
+def _patch_httpx_response(
+    monkeypatch: pytest.MonkeyPatch, response: _FakeResponse
+) -> None:
     client_cls = type("PatchedClient", (_FakeAsyncClient,), {"_response": response})
     monkeypatch.setattr(httpx_module.httpx, "AsyncClient", client_cls)
 
 
-async def test_httpx_raises_malformed_response_without_data(monkeypatch):
+async def test_httpx_raises_malformed_response_without_data(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """A 200 response with neither data nor errors raises MalformedResponseError."""
     _patch_httpx_response(monkeypatch, _FakeResponse(200, {"unexpected": True}))
 
@@ -92,7 +98,9 @@ async def test_httpx_raises_malformed_response_without_data(monkeypatch):
     assert "GetBeast" in message  # the operation name is surfaced from the document
 
 
-async def test_httpx_raises_graphql_exception_with_errors(monkeypatch):
+async def test_httpx_raises_graphql_exception_with_errors(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """GraphQL errors are surfaced as an informative GraphQLException."""
     errors = [{"message": "Field 'beast' not found"}]
     _patch_httpx_response(monkeypatch, _FakeResponse(200, {"errors": errors}))
@@ -113,7 +121,7 @@ async def test_httpx_raises_graphql_exception_with_errors(monkeypatch):
     assert "GetBeast" in str(exc)
 
 
-async def test_httpx_returns_data_on_success(monkeypatch):
+async def test_httpx_returns_data_on_success(monkeypatch: pytest.MonkeyPatch) -> None:
     """Happy-path control through the patched client."""
     _patch_httpx_response(
         monkeypatch, _FakeResponse(200, {"data": {"beast": {"id": "1"}}})

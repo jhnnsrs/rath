@@ -1,6 +1,6 @@
 """Objects that remember the client they were fetched with."""
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Protocol
 
 from pydantic import BaseModel
 
@@ -10,6 +10,13 @@ if TYPE_CHECKING:
 
 ORIGIN_KEY = "__rath_origin__"
 """Where an object keeps its origin, and the validation-context key it arrives under."""
+
+
+class HasRath(Protocol):
+    """A package's client (a ``Mikro``, say): what federation fetches through."""
+
+    @property
+    def rath(self) -> "Rath": ...
 
 
 class Origin:
@@ -35,29 +42,29 @@ class Origin:
 
     def __init__(
         self,
-        client: Any = None,
+        client: object = None,
         rath: "Rath | None" = None,
-        **clients: Any,  # noqa: ANN401
+        **clients: object,
     ) -> None:
         self.client = client
         self.rath = rath
-        self.clients: dict[str, Any] = clients
+        self.clients: dict[str, object] = clients
 
-    def __deepcopy__(self, memo: dict[int, Any]) -> "Origin":
+    def __deepcopy__(self, memo: dict[int, object]) -> "Origin":
         # A deep copy of the object still came from the same client, and the
         # client (its connections) must not be copied along with it.
         return self
 
-    def __reduce__(self) -> Any:
+    def __reduce__(self) -> tuple[type["Origin"], tuple[()]]:
         # The client does not travel with a pickled object: it arrives unbound.
         return (Origin, ())
 
 
 def origin_context(
-    client: Any = None,
+    client: object = None,
     rath: "Rath | None" = None,
-    **clients: Any,  # noqa: ANN401
-) -> dict[str, Any]:
+    **clients: object,
+) -> dict[str, Origin]:
     """The validation context that binds every object built under it to an origin.
 
     Pass it as ``Model.model_validate(data, context=origin_context(...))``. Pydantic
@@ -67,7 +74,7 @@ def origin_context(
     return {ORIGIN_KEY: Origin(client=client, rath=rath, **clients)}
 
 
-def get_origin(obj: Any) -> Origin | None:  # noqa: ANN401
+def get_origin(obj: object) -> Origin | None:
     """The origin of an object, or ``None`` if it was not built under one."""
     return getattr(obj, "__dict__", {}).get(ORIGIN_KEY)
 
@@ -75,7 +82,7 @@ def get_origin(obj: Any) -> Origin | None:  # noqa: ANN401
 class ContextBound(BaseModel):
     """A model that remembers the client it was fetched with."""
 
-    def model_post_init(self, context: Any) -> None:  # noqa: ANN401
+    def model_post_init(self, context: object) -> None:
         """Pick the origin up from the validation context, if there is one."""
         super().model_post_init(context)
         if isinstance(context, dict) and ORIGIN_KEY in context:
@@ -83,7 +90,7 @@ class ContextBound(BaseModel):
             # deliberately neither a field nor a pydantic private attribute.
             object.__setattr__(self, ORIGIN_KEY, context[ORIGIN_KEY])
 
-    def bound_client(self) -> Any:  # noqa: ANN401
+    def bound_client(self) -> object:
         """The client this object was fetched with, or ``None``."""
         origin = get_origin(self)
         return origin.client if origin is not None else None

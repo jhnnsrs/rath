@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 
 def recurse_parse_variables(
@@ -21,7 +21,7 @@ def recurse_parse_variables(
         Dict: _description_
     """
 
-    def recurse_extract(obj: Any, path: str | None = None) -> Any:
+    def recurse_extract(obj: object, path: str | None = None) -> object:
         """
         recursively traverse obj, doing a deepcopy, but
         replacing any file-like objects with nulls and
@@ -48,6 +48,7 @@ def recurse_parse_variables(
         else:
             return obj
 
-    dicted_variables = recurse_extract(variables)
+    # A dict is walked into a dict.
+    dicted_variables = cast(dict[str, Any], recurse_extract(variables))
 
     return dicted_variables

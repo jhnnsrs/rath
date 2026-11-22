@@ -10,12 +10,12 @@ from .apis.countries import acountries, countries
 
 @pytest.mark.public
 @pytest.fixture()
-def real_world_link():
+def real_world_link() -> AIOHttpLink:
     return AIOHttpLink(endpoint_url="https://countries.trevorblades.com/")
 
 
 @pytest.mark.public
-async def test_query_async(real_world_link):
+async def test_query_async(real_world_link: AIOHttpLink) -> None:
     rath = Rath(link=real_world_link)
 
     async with rath:
@@ -25,7 +25,7 @@ async def test_query_async(real_world_link):
 
 
 @pytest.mark.public
-def test_query_sync(real_world_link):
+def test_query_sync(real_world_link: AIOHttpLink) -> None:
     rath = Rath(link=real_world_link)
 
     with rath:
@@ -35,11 +35,11 @@ def test_query_sync(real_world_link):
 
 
 @pytest.mark.public
-async def test_validation(real_world_link):
+async def test_validation(real_world_link: AIOHttpLink) -> None:
     link = ValidatingLink(allow_introspection=True)
 
     rath = Rath(link=compose(link, real_world_link))
-    async with rath as r:
+    async with rath:
         with pytest.raises(ValidationError):
             await rath.aquery(
                 """

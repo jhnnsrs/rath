@@ -6,11 +6,11 @@ from rath.links import split
 from rath.links.testing.mock import AsyncMockLink
 from rath.links.testing.statefulmock import AsyncStatefulMockLink
 
-from .mocks import *
+from .mocks import MutationAsync, QueryAsync, SubscriptionAsync
 
 
 @pytest.fixture()
-def mock_link_left():
+def mock_link_left() -> AsyncMockLink:
     return AsyncMockLink(
         query_resolver=QueryAsync().to_dict(),
         mutation_resolver=MutationAsync().to_dict(),
@@ -18,19 +18,21 @@ def mock_link_left():
 
 
 @pytest.fixture()
-def mock_link_right():
+def mock_link_right() -> AsyncMockLink:
     return AsyncMockLink(subscription_resolver=SubscriptionAsync().to_dict())
 
 
 @pytest.fixture()
-def stateful_mock_link():
+def stateful_mock_link() -> AsyncStatefulMockLink:
     return AsyncStatefulMockLink(
         query_resolver=QueryAsync().to_dict(),
         mutation_resolver=MutationAsync().to_dict(),
     )
 
 
-async def test_aquery(mock_link_left, mock_link_right):
+async def test_aquery(
+    mock_link_left: AsyncMockLink, mock_link_right: AsyncMockLink
+) -> None:
     rath = Rath(
         link=split(
             mock_link_left,
@@ -51,7 +53,7 @@ async def test_aquery(mock_link_left, mock_link_right):
         )
 
 
-async def test_stateful_mock(stateful_mock_link):
+async def test_stateful_mock(stateful_mock_link: AsyncStatefulMockLink) -> None:
     async with Rath(link=stateful_mock_link) as rath:
         await rath.aquery(
             """
@@ -65,7 +67,7 @@ async def test_stateful_mock(stateful_mock_link):
         )
 
 
-def test_stateful_mock_sync(stateful_mock_link):
+def test_stateful_mock_sync(stateful_mock_link: AsyncStatefulMockLink) -> None:
     with Rath(link=stateful_mock_link) as rath:
         rath.query(
             """
@@ -78,7 +80,9 @@ def test_stateful_mock_sync(stateful_mock_link):
         )
 
 
-async def test_asubscribe(mock_link_left, mock_link_right):
+async def test_asubscribe(
+    mock_link_left: AsyncMockLink, mock_link_right: AsyncMockLink
+) -> None:
     rath = Rath(
         link=split(
             mock_link_left,

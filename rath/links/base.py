@@ -1,10 +1,13 @@
 from collections.abc import AsyncIterator
-from typing import Any, Self
+from types import TracebackType
+from typing import TypeVar
 
 from koil.composition import KoiledModel
 
 from rath.errors import NotComposedError
 from rath.operation import GraphQLResult, Operation
+
+_LinkT = TypeVar("_LinkT", bound="Link")
 
 
 class Link(KoiledModel):
@@ -26,7 +29,7 @@ class Link(KoiledModel):
         """A coroutine that is called when the link is disconnected."""
         pass
 
-    async def __aenter__(self) -> Self:
+    async def __aenter__(self: _LinkT) -> _LinkT:
         """A coroutine that is called when the link is entered."""
         return self
 
@@ -34,7 +37,7 @@ class Link(KoiledModel):
         self,
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
-        traceback: Any | None,
+        traceback: TracebackType | None,
     ) -> None:
         """A coroutine that is called when the link is exited."""
         pass

@@ -1,10 +1,13 @@
 from collections.abc import AsyncIterator, Callable
-from typing import Any, Self
+from types import TracebackType
+from typing import TypeVar
 
 from pydantic import Field
 
 from rath.links.base import TerminatingLink
 from rath.operation import GraphQLResult, Operation
+
+_SplitLinkT = TypeVar("_SplitLinkT", bound="SplitLink")
 
 
 class SplitLink(TerminatingLink):
@@ -45,7 +48,7 @@ class SplitLink(TerminatingLink):
         async for res in iterator:
             yield res
 
-    async def __aenter__(self) -> Self:
+    async def __aenter__(self: _SplitLinkT) -> _SplitLinkT:
         """Enters the context manager of the link"""
         await self.left.__aenter__()
         await self.right.__aenter__()
@@ -55,7 +58,7 @@ class SplitLink(TerminatingLink):
         self,
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
-        traceback: Any | None,
+        traceback: TracebackType | None,
     ) -> None:
         """Exits the context manager of the link"""
         await self.left.__aexit__(exc_type, exc_val, traceback)

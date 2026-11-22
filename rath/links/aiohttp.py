@@ -7,7 +7,8 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from http import HTTPStatus
 from ssl import SSLContext
-from typing import Any, Self
+from types import TracebackType
+from typing import Any, TypeVar
 
 import aiohttp
 import certifi
@@ -36,6 +37,9 @@ class DateTimeEncoder(json.JSONEncoder):
             return o.isoformat()
 
         return json.JSONEncoder.default(self, o)
+
+
+_AIOHttpLinkT = TypeVar("_AIOHttpLinkT", bound="AIOHttpLink")
 
 
 class AIOHttpLink(AsyncTerminatingLink):
@@ -98,7 +102,7 @@ class AIOHttpLink(AsyncTerminatingLink):
     _session: aiohttp.ClientSession | None = None
     _session_loop: asyncio.AbstractEventLoop | None = None
 
-    async def __aenter__(self) -> Self:
+    async def __aenter__(self: _AIOHttpLinkT) -> _AIOHttpLinkT:
         """Entery point for the async context manager"""
         self._entered = True
         return self
@@ -143,7 +147,7 @@ class AIOHttpLink(AsyncTerminatingLink):
         self,
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
-        traceback: Any | None,
+        traceback: TracebackType | None,
     ) -> None:
         """Exit point for the async context manager"""
         self._entered = False

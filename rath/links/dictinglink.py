@@ -34,7 +34,7 @@ def parse_variables(
 
         if isinstance(obj, list):
             nulled_list: list[Any] = []
-            for key, value in enumerate(obj):  # type: ignore
+            for _key, value in enumerate(obj):  # type: ignore
                 value = recurse_extract(value)
                 nulled_list.append(value)
             return nulled_list

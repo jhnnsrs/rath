@@ -12,7 +12,7 @@ from .apis.countries import acountries
 
 
 class QtRathWidget(QtWidgets.QWidget):
-    def __init__(self, parent: QtWidgets.QWidget | None = None):
+    def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent=parent)
 
         public_link = AIOHttpLink(endpoint_url="https://countries.trevorblades.com/")
@@ -34,12 +34,12 @@ class QtRathWidget(QtWidgets.QWidget):
 
         self.button_greet.clicked.connect(self.greet)
 
-    def greet(self):
+    def greet(self) -> None:
         self.countries_query.run(self.rath)
 
 
 class QtFuncWidget(QtWidgets.QWidget):
-    def __init__(self, parent: QtWidgets.QWidget | None = None):
+    def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent=parent)
 
         self.button_greet = QtWidgets.QPushButton("Greet")
@@ -53,12 +53,12 @@ class QtFuncWidget(QtWidgets.QWidget):
 
         self.button_greet.clicked.connect(self.greet)
 
-    def greet(self):
+    def greet(self) -> None:
         self.greet_label.setText("Hello!")
 
 
 @pytest.mark.qt
-def test_no_interference(qtbot: QtBot):
+def test_no_interference(qtbot: QtBot) -> None:
     """Tests if just adding koil interferes with normal
     qtpy widgets.
 
@@ -75,7 +75,7 @@ def test_no_interference(qtbot: QtBot):
 
 
 @pytest.mark.qt
-def test_call_query(qtbot: QtBot):
+def test_call_query(qtbot: QtBot) -> None:
     """Tests if we can call a task from a koil widget."""
     widget = QtRathWidget()
     qtbot.addWidget(widget)  # type: ignore

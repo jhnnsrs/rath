@@ -77,7 +77,7 @@ class GraphQLException(Exception):
         operation: Operation | None = None,
         endpoint_url: str | None = None,
         errors: dict[str, Any] | None = None,
-    ):
+    ) -> None:
         """Initialize the GraphQLException with a message and optional errors."""
         super().__init__(message)
         self.message = message

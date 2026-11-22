@@ -13,6 +13,7 @@ import pytest
 
 from rath.links import websocket_connect
 from rath.links.aiohttp import AIOHttpLink
+from rath.links.base import AsyncTerminatingLink
 from rath.links.graphql_ws import GraphQLWSLink
 from rath.links.httpx import HttpxLink
 from rath.operation import opify
@@ -85,12 +86,12 @@ async def recording_server() -> AsyncIterator[RecordingServer]:
         await recorder.server.wait_closed()
 
 
-async def _execute(link) -> tuple[dict, ...]:
+async def _execute(link: AsyncTerminatingLink) -> tuple[dict, ...]:
     async with link:
         return tuple([result.data async for result in link.aexecute(opify(QUERY))])
 
 
-async def test_aiohttp_routes_through_proxy(recording_server: RecordingServer):
+async def test_aiohttp_routes_through_proxy(recording_server: RecordingServer) -> None:
     """With a proxy set, aiohttp sends an absolute-form request to the proxy.
 
     ``example.mesh`` does not resolve, so the request can only succeed via the proxy.
@@ -106,7 +107,9 @@ async def test_aiohttp_routes_through_proxy(recording_server: RecordingServer):
     ]
 
 
-async def test_aiohttp_without_proxy_goes_direct(recording_server: RecordingServer):
+async def test_aiohttp_without_proxy_goes_direct(
+    recording_server: RecordingServer,
+) -> None:
     """Without a proxy, aiohttp talks to the endpoint directly (origin-form)."""
     link = AIOHttpLink(endpoint_url=f"{recording_server.url}/graphql")
     assert link.proxy is None
@@ -165,7 +168,7 @@ async def keepalive_server() -> AsyncIterator[KeepAliveServer]:
 
 async def test_aiohttp_keeps_its_connection_while_entered(
     keepalive_server: KeepAliveServer,
-):
+) -> None:
     """Requests that follow each other on an entered link share one connection."""
     link = AIOHttpLink(endpoint_url=f"{keepalive_server.url}/graphql")
     async with link:
@@ -180,7 +183,7 @@ async def test_aiohttp_keeps_its_connection_while_entered(
 
 async def test_aiohttp_not_entered_opens_a_connection_per_request(
     keepalive_server: KeepAliveServer,
-):
+) -> None:
     """A link used without being entered keeps nothing open behind it."""
     link = AIOHttpLink(endpoint_url=f"{keepalive_server.url}/graphql")
     for _ in range(3):
@@ -189,7 +192,7 @@ async def test_aiohttp_not_entered_opens_a_connection_per_request(
     assert link._session is None
 
 
-async def test_httpx_routes_through_proxy(recording_server: RecordingServer):
+async def test_httpx_routes_through_proxy(recording_server: RecordingServer) -> None:
     """With a proxy set, httpx sends an absolute-form request to the proxy."""
     link = HttpxLink(
         endpoint_url="http://example.mesh:8080/graphql", proxy=recording_server.url
@@ -202,7 +205,9 @@ async def test_httpx_routes_through_proxy(recording_server: RecordingServer):
     ]
 
 
-async def test_httpx_without_proxy_goes_direct(recording_server: RecordingServer):
+async def test_httpx_without_proxy_goes_direct(
+    recording_server: RecordingServer,
+) -> None:
     """Without a proxy, httpx talks to the endpoint directly (origin-form)."""
     link = HttpxLink(endpoint_url=f"{recording_server.url}/graphql")
     results = await _execute(link)
@@ -214,7 +219,9 @@ async def test_httpx_without_proxy_goes_direct(recording_server: RecordingServer
 @pytest.mark.skipif(
     not websocket_connect.SUPPORTS_PROXY, reason="websocket proxies need websockets>=15"
 )
-async def test_graphql_ws_tunnels_through_proxy(recording_server: RecordingServer):
+async def test_graphql_ws_tunnels_through_proxy(
+    recording_server: RecordingServer,
+) -> None:
     """With a proxy set, the websocket link issues ``CONNECT host:port`` to the proxy."""
     link = GraphQLWSLink(
         ws_endpoint_url="ws://example.mesh:8080/graphql",
@@ -243,7 +250,7 @@ async def test_graphql_ws_tunnels_through_proxy(recording_server: RecordingServe
     websocket_connect.SUPPORTS_PROXY,
     reason="only relevant for websockets without proxy support",
 )
-def test_ws_proxy_on_old_websockets_raises():
+def test_ws_proxy_on_old_websockets_raises() -> None:
     """On a websockets without proxy support, asking for a proxy fails loudly."""
     with pytest.raises(RuntimeError, match="websockets>=15"):
         websocket_connect.ws_connect(
@@ -266,11 +273,11 @@ async def _pipe(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> N
 @pytest.mark.skipif(
     not websocket_connect.SUPPORTS_PROXY, reason="websocket proxies need websockets>=15"
 )
-async def test_graphql_ws_subscription_through_tunnel():
+async def test_graphql_ws_subscription_through_tunnel() -> None:
     """A full subscription round trip through a CONNECT tunnel to a local ws server."""
-    from websockets.asyncio.server import serve
+    from websockets.asyncio.server import ServerConnection, serve
 
-    async def ws_handler(ws) -> None:
+    async def ws_handler(ws: ServerConnection) -> None:
         async for raw in ws:
             message = json.loads(raw)
             if message["type"] == "connection_init":
@@ -333,13 +340,13 @@ async def test_graphql_ws_subscription_through_tunnel():
 )
 async def test_graphql_ws_ignores_socks_proxy_variables(
     monkeypatch: pytest.MonkeyPatch,
-):
+) -> None:
     """Without a proxy the link connects directly, even with ALL_PROXY=socks5h
     exported for some other tool (websockets would otherwise need python-socks
     and route through it)."""
-    from websockets.asyncio.server import serve
+    from websockets.asyncio.server import ServerConnection, serve
 
-    async def ws_handler(ws) -> None:
+    async def ws_handler(ws: ServerConnection) -> None:
         async for raw in ws:
             message = json.loads(raw)
             if message["type"] == "connection_init":

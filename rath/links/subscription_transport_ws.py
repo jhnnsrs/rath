@@ -4,12 +4,14 @@ import logging
 import ssl
 from collections.abc import AsyncIterator
 from ssl import SSLContext
+from types import TracebackType
 from typing import (
+    TYPE_CHECKING,
     Any,
     Literal,
     NotRequired,
-    Self,
     TypedDict,
+    TypeVar,
 )
 
 import certifi
@@ -29,6 +31,9 @@ from rath.operation import (
     Operation,
     SubscriptionDisconnect,
 )
+
+if TYPE_CHECKING:
+    from websockets.asyncio.client import ClientConnection
 
 logger = logging.getLogger(__name__)
 
@@ -100,6 +105,11 @@ class TransportMessage(TypedDict):
     error: NotRequired[Exception]
 
 
+_SubscriptionTransportWsLinkT = TypeVar(
+    "_SubscriptionTransportWsLinkT", bound="SubscriptionTransportWsLink"
+)
+
+
 class SubscriptionTransportWsLink(AsyncTerminatingLink):
     """WebSocketLink is a terminating link that sends operations over websockets using
       websockets via the subscription-transport-ws protocol. This is a
@@ -154,7 +164,9 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
             raise LinkNotConnectedError("Link is not connected")
         await self._send_queue.put(message)
 
-    async def __aenter__(self) -> Self:
+    async def __aenter__(
+        self: _SubscriptionTransportWsLinkT,
+    ) -> _SubscriptionTransportWsLinkT:
         """Enters the context manager of the link"""
         self._ongoing_subscriptions = {}
         self._send_queue = asyncio.Queue()
@@ -197,7 +209,7 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
         self,
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
-        traceback: Any | None,
+        traceback: TracebackType | None,
     ) -> None:
         """Exits the context manager of the link"""
         await self.adisconnect()
@@ -289,7 +301,7 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
             )
             if retry > self.max_retries or not self.allow_reconnect:
                 logger.error("Max retries reached. Aborting")
-                raise DefiniteConnectionFail("Exceeded Number of Retries")
+                raise DefiniteConnectionFail("Exceeded Number of Retries") from e
 
             await asyncio.sleep(self.time_between_retries)
             logger.info("Retrying to connect")
@@ -319,7 +331,9 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
                 connection_future.set_exception(e)
             raise e
 
-    async def sending(self, client: Any, initiating_operation: Operation) -> None:
+    async def sending(
+        self, client: "ClientConnection", initiating_operation: Operation
+    ) -> None:
         """The sending task
 
         This method is the sending task. It will send messages to the websocket
@@ -356,7 +370,7 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
 
     async def receiving(
         self,
-        client: Any,
+        client: "ClientConnection",
         operation: Operation,
         connection_future: asyncio.Future[bool],
     ) -> None:

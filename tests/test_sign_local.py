@@ -6,19 +6,19 @@ from rath.links.testing.utils import run_basic_query
 from rath.operation import Operation
 
 
-def test_serialization():
-    link = SignLocalLink(private_key="private_key.pem")
+def test_serialization() -> None:
+    SignLocalLink(private_key="private_key.pem")
 
 
-async def test_sign_local_link():
-    def is_query(op: Operation):
+async def test_sign_local_link() -> None:
+    def is_query(op: Operation) -> bool:
         print(op.document_node.kind)
         return op.node.operation == OperationType.QUERY
 
-    def has_token_header(op: Operation):
+    def has_token_header(op: Operation) -> bool:
         return op.context.headers.get("Authorization") is not None
 
-    async def load_payload(operation: Operation):
+    async def load_payload(operation: Operation) -> dict[str, str]:
         return {
             "sub": "1234567890",
         }

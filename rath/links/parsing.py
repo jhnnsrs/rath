@@ -1,15 +1,36 @@
 import asyncio
 from collections.abc import AsyncIterator, Awaitable, Callable
-from typing import Any
+from typing import Any, TypeVar, overload
 
 from rath.errors import NotComposedError
 from rath.links.base import ContinuationLink
 from rath.operation import GraphQLResult, Operation
 
+_Leaf = TypeVar("_Leaf")
+_Key = TypeVar("_Key")
+
+
+@overload
+async def apply_recursive(
+    func: Callable[[_Leaf], Awaitable[object]],
+    obj: dict[_Key, object],
+    typeguard: type[_Leaf] | tuple[type[_Leaf], ...],
+) -> dict[_Key, object]: ...
+
+
+@overload
+async def apply_recursive(
+    func: Callable[[_Leaf], Awaitable[object]],
+    obj: object,
+    typeguard: type[_Leaf] | tuple[type[_Leaf], ...],
+) -> object: ...
+
 
 async def apply_recursive(
-    func, obj, typeguard: type[Any] | tuple[type[Any], ...]
-) -> Any:  # type: ignore
+    func: Callable[[_Leaf], Awaitable[object]],
+    obj: object,
+    typeguard: type[_Leaf] | tuple[type[_Leaf], ...],
+) -> object:
     """
     Recursively applies an asynchronous function to elements in a nested structure.
 
@@ -43,9 +64,22 @@ async def apply_recursive(
         return obj  # type: ignore
 
 
+@overload
 async def apply_typemap_recursive(
-    obj, typefuncs: dict[type[Any], Callable[[type[Any]], Awaitable[Any]]]
-) -> Any:  # type: ignore
+    obj: dict[_Key, object],
+    typefuncs: dict[type[Any], Callable[[Any], Awaitable[Any]]],
+) -> dict[_Key, object]: ...
+
+
+@overload
+async def apply_typemap_recursive(
+    obj: object, typefuncs: dict[type[Any], Callable[[Any], Awaitable[Any]]]
+) -> object: ...
+
+
+async def apply_typemap_recursive(
+    obj: object, typefuncs: dict[type[Any], Callable[[Any], Awaitable[Any]]]
+) -> object:
     """
     Recursively applies an asynchronous function to elements in a nested structure.
 

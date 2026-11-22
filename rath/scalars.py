@@ -1,4 +1,4 @@
-from typing import Any, Protocol, TypeAlias
+from typing import Protocol, TypeAlias
 
 from pydantic import BaseModel, GetCoreSchemaHandler
 from pydantic_core import CoreSchema, core_schema
@@ -8,15 +8,15 @@ class ID(str):
     """A custom scalar for IDs. If passed a pydantic model it an id property
     it will automatically validate to that models id"""
 
-    def __get__(self, instance, owner) -> "ID": ...
+    def __get__(self, instance: object, owner: object) -> "ID": ...
 
-    def __set__(self, instance, value: "IDCoercible") -> None: ...
+    def __set__(self, instance: object, value: "IDCoercible") -> None: ...
 
     @classmethod
     def __get_pydantic_core_schema__(
         cls,
-        source_type: Any,  # noqa: ANN401
-        handler: GetCoreSchemaHandler,  # noqa: ANN401
+        source_type: object,
+        handler: GetCoreSchemaHandler,
     ) -> CoreSchema:
         """Get the pydantic core schema for the interface"""
         return core_schema.no_info_before_validator_function(cls.validate, handler(str))

@@ -41,31 +41,31 @@ class PassthroughLink(ContinuationLink):
 # ---------------------------------------------------------------------------
 
 
-def test_rath_rejects_non_terminating_link():
+def test_rath_rejects_non_terminating_link() -> None:
     """A bare ContinuationLink is not a valid terminating link for a Rath."""
     with pytest.raises(ValueError, match="TerminatingLink"):
         Rath(link=PassthroughLink())  # type: ignore[arg-type]
 
 
-def test_rath_rejects_non_link_value():
+def test_rath_rejects_non_link_value() -> None:
     """Passing something that is not a link at all is rejected."""
     with pytest.raises(ValueError):
         Rath(link="not-a-link")  # type: ignore[arg-type]
 
 
-def test_rath_rejects_list_with_non_link_member():
+def test_rath_rejects_list_with_non_link_member() -> None:
     """A list link chain must contain only links."""
     with pytest.raises(ValueError, match="must be of type Link"):
         Rath(link=[PassthroughLink(), "nope"])  # type: ignore[list-item]
 
 
-def test_rath_rejects_list_without_terminating_last_link():
+def test_rath_rejects_list_without_terminating_last_link() -> None:
     """The last element of a list link chain must be a TerminatingLink."""
     with pytest.raises(ValueError, match="last link"):
         Rath(link=[PassthroughLink(), PassthroughLink()])
 
 
-def test_rath_accepts_list_link_chain():
+def test_rath_accepts_list_link_chain() -> None:
     """A valid list link chain is composed into a single terminating link."""
     rath = Rath(link=[PassthroughLink(), EchoLink()])  # type: ignore[arg-type]
     assert rath.link is not None
@@ -76,14 +76,14 @@ def test_rath_accepts_list_link_chain():
 # ---------------------------------------------------------------------------
 
 
-async def test_aquery_raises_not_connected_when_link_yields_nothing():
+async def test_aquery_raises_not_connected_when_link_yields_nothing() -> None:
     """If the terminating link yields no result, aquery raises NotConnectedError."""
     async with Rath(link=EmptyLink()) as rath:
         with pytest.raises(NotConnectedError, match="Could not retrieve data"):
             await rath.aquery(QUERY)
 
 
-async def test_aquery_returns_first_result():
+async def test_aquery_returns_first_result() -> None:
     """Happy-path control: a yielding link returns its result."""
     async with Rath(link=EchoLink()) as rath:
         result = await rath.aquery(QUERY)

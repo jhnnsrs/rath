@@ -4,21 +4,22 @@ from pydantic import BaseModel
 from rath.links.compose import compose
 from rath.links.dictinglink import DictingLink
 from rath.links.testing.mock import AsyncMockLink, AsyncMockResolver
+from rath.operation import Operation
 from rath.rath import Rath
 
 
 class MutationAsync(AsyncMockResolver):
-    async def resolve_createBeast(self, operation):
+    async def resolve_createBeast(self, operation: Operation) -> dict[str, str | int]:
         assert operation.variables["dict"]["a"] == 1
         return {"id": "1", "legs": 1}
 
 
 @pytest.fixture()
-def mock_link():
+def mock_link() -> AsyncMockLink:
     return AsyncMockLink(mutation_resolver=MutationAsync().to_dict())
 
 
-async def test_dicting(mock_link):
+async def test_dicting(mock_link: AsyncMockLink) -> None:
     link = DictingLink()
 
     class DictableX(BaseModel):

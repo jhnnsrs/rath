@@ -1,12 +1,14 @@
 import asyncio
+from collections.abc import AsyncGenerator
 
 from rath.links.testing.mock import AsyncMockResolver
+from rath.operation import Operation
 
 
 class QueryAsync(AsyncMockResolver):
     """Async Test"""
 
-    async def resolve_beast(self, _):
+    async def resolve_beast(self, _: Operation) -> dict[str, str | int]:
         """Resolves a beast
 
         Args:
@@ -17,7 +19,7 @@ class QueryAsync(AsyncMockResolver):
         """
         return {"id": "1", "legs": 1}
 
-    async def resolve_beasts(self, _):
+    async def resolve_beasts(self, _: Operation) -> list[dict[str, str | int]]:
         """Resolves Fake beasts
 
         Args:
@@ -36,7 +38,7 @@ class MutationAsync(AsyncMockResolver):
     """Async Test"""
 
     # pylint: disable=invalid-name
-    async def resolve_createBeast(self, _):
+    async def resolve_createBeast(self, _: Operation) -> dict[str, str | int]:
         """Resolves creating a beast"""
         return {"id": "1", "legs": 1}
 
@@ -45,7 +47,9 @@ class SubscriptionAsync(AsyncMockResolver):
     """Async Test"""
 
     # pylint: disable=invalid-name
-    async def resolve_watchBeast(self, _):
+    async def resolve_watchBeast(
+        self, _: Operation
+    ) -> AsyncGenerator[dict[str, str | int], None]:
         """Resolves watching a beast
 
         Args:

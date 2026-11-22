@@ -14,6 +14,7 @@ scopes ``_entities`` like its ``get_x`` queries before switching a type over.
 from collections.abc import Callable, Sequence
 from typing import Any
 
+from rath.origin import HasRath
 from rath.scalars import IDCoercible
 from rath.turms.fragment import TFragment, afetch_fragment_via, afetch_fragments_via
 
@@ -49,19 +50,19 @@ def federated(
     """
     from rath.origin import origin_context
 
-    def bound_to(client: Any) -> dict[str, Any]:  # noqa: ANN401
+    def bound_to(client: HasRath) -> dict[str, Any]:
         if origin is not None:
             return origin(client)
         return origin_context(client=client, rath=client.rath)
 
-    async def aexpand(client: Any, id: IDCoercible) -> TFragment:  # noqa: ANN401
+    async def aexpand(client: HasRath, id: IDCoercible) -> TFragment:
         return await afetch_fragment_via(
             fragment, id, rath=client.rath, origin=bound_to(client)
         )
 
     async def aexpand_many(
-        client: Any,
-        ids: Sequence[IDCoercible],  # noqa: ANN401
+        client: HasRath,
+        ids: Sequence[IDCoercible],
     ) -> list[TFragment | None]:
         return await afetch_fragments_via(
             fragment, ids, rath=client.rath, origin=bound_to(client)

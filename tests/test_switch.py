@@ -10,7 +10,7 @@ from .mocks import MutationAsync, QueryAsync, SubscriptionAsync
 
 
 @pytest.fixture()
-def mock_link():
+def mock_link() -> AsyncMockLink:
     return AsyncMockLink(
         query_resolver=QueryAsync().to_dict(),
         mutation_resolver=MutationAsync().to_dict(),
@@ -19,7 +19,7 @@ def mock_link():
 
 
 @pytest.fixture()
-def stateful_mocklink():
+def stateful_mocklink() -> AsyncStatefulMockLink:
     return AsyncStatefulMockLink(
         query_resolver=QueryAsync().to_dict(),
         mutation_resolver=MutationAsync().to_dict(),
@@ -28,16 +28,16 @@ def stateful_mocklink():
 
 
 @pytest.fixture()
-def simple_rath(mock_link):
+def simple_rath(mock_link: AsyncMockLink) -> Rath:
     return Rath(link=mock_link)
 
 
 @pytest.fixture()
-def stateful_rath(stateful_mocklink):
+def stateful_rath(stateful_mocklink: AsyncStatefulMockLink) -> Rath:
     return Rath(link=stateful_mocklink)
 
 
-async def test_bypass(simple_rath):
+async def test_bypass(simple_rath: Rath) -> None:
     async with simple_rath:
         x = await simple_rath.aquery(
             """
@@ -51,7 +51,7 @@ async def test_bypass(simple_rath):
         assert x.data, "No data"
 
 
-async def test_stateful_link_execution(stateful_rath):
+async def test_stateful_link_execution(stateful_rath: Rath) -> None:
     async with stateful_rath:
         x = await stateful_rath.aquery(
             """
@@ -66,7 +66,7 @@ async def test_stateful_link_execution(stateful_rath):
         assert x.data, "No data received"
 
 
-def test_stateful_link_execution_sync(stateful_rath):
+def test_stateful_link_execution_sync(stateful_rath: Rath) -> None:
     with stateful_rath:
         x = stateful_rath.query(
             """
@@ -81,7 +81,7 @@ def test_stateful_link_execution_sync(stateful_rath):
         assert x.data, "No data received"
 
 
-def test_stateful_link_execution_sync_no_sideffects(stateful_rath):
+def test_stateful_link_execution_sync_no_sideffects(stateful_rath: Rath) -> None:
     with stateful_rath:
         x = stateful_rath.query(
             """
@@ -109,7 +109,7 @@ def test_stateful_link_execution_sync_no_sideffects(stateful_rath):
         assert x.data, "No data received"
 
 
-def test_stateful_link_subscription_sync_no_sideffects(stateful_rath):
+def test_stateful_link_subscription_sync_no_sideffects(stateful_rath: Rath) -> None:
     with stateful_rath:
         for x in stateful_rath.subscribe(
             """
@@ -135,7 +135,7 @@ def test_stateful_link_subscription_sync_no_sideffects(stateful_rath):
             assert x.data, "No data received"
 
 
-def test_stateful_link_execution_sync_same_koil(stateful_rath: Rath):
+def test_stateful_link_execution_sync_same_koil(stateful_rath: Rath) -> None:
     with Koil():
         with stateful_rath:
             x = stateful_rath.query(
@@ -164,7 +164,7 @@ def test_stateful_link_execution_sync_same_koil(stateful_rath: Rath):
             assert x.data, "No data received"
 
 
-def test_stateful_link_subscription_sync_same_koil(stateful_rath):
+def test_stateful_link_subscription_sync_same_koil(stateful_rath: Rath) -> None:
     with Koil():
         with stateful_rath:
             for x in stateful_rath.subscribe(
@@ -191,7 +191,7 @@ def test_stateful_link_subscription_sync_same_koil(stateful_rath):
                 assert x.data, "No data received"
 
 
-def test_query_sinc(mock_link):
+def test_query_sinc(mock_link: AsyncMockLink) -> None:
     with Rath(link=mock_link) as rath:
         rath.query(
             """
@@ -204,7 +204,7 @@ def test_query_sinc(mock_link):
         )
 
 
-def test_switch_sync(mock_link):
+def test_switch_sync(mock_link: AsyncMockLink) -> None:
     with Rath(link=compose(mock_link)) as rath:
         rath.query(
             """

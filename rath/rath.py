@@ -56,7 +56,7 @@ class Rath(KoiledModel):
 
     @field_validator("link", mode="before")
     def validate_link(
-        cls, link: TerminatingLink | list[ContinuationLink | TerminatingLink] | Any
+        cls, link: TerminatingLink | list[ContinuationLink | TerminatingLink]
     ) -> TerminatingLink:
         """Validates the link and ensures it is a terminating link or a list of links."""
         if isinstance(link, list):

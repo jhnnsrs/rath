@@ -26,7 +26,7 @@ query {
 """
 
 
-def _make_capturing_link():
+def _make_capturing_link() -> tuple[AsyncTerminatingLink, list[Operation]]:
     """Return (link, list) where every received operation is appended to the list."""
     received: list[Operation] = []
 
@@ -38,7 +38,9 @@ def _make_capturing_link():
     return CapturingLink(), received
 
 
-def _make_failing_then_succeeding_link(fail_times: int = 1):
+def _make_failing_then_succeeding_link(
+    fail_times: int = 1,
+) -> tuple[AsyncTerminatingLink, dict[str, int]]:
     """Return a terminating link that raises AuthenticationError for the first
     *fail_times* calls, then succeeds."""
     state = {"calls": 0}
@@ -58,7 +60,7 @@ def _make_failing_then_succeeding_link(fail_times: int = 1):
 # ---------------------------------------------------------------------------
 
 
-async def test_auth_sets_authorization_header():
+async def test_auth_sets_authorization_header() -> None:
     """AuthTokenLink injects a Bearer token into context.headers."""
     terminal, received = _make_capturing_link()
 
@@ -75,7 +77,7 @@ async def test_auth_sets_authorization_header():
     assert received[0].context.headers["Authorization"] == "Bearer my-token"
 
 
-async def test_auth_sets_initial_payload_token():
+async def test_auth_sets_initial_payload_token() -> None:
     """AuthTokenLink puts the token in context.initial_payload as well."""
     terminal, received = _make_capturing_link()
 
@@ -91,7 +93,7 @@ async def test_auth_sets_initial_payload_token():
     assert received[0].context.initial_payload["token"] == "payload-token"
 
 
-async def test_auth_result_is_forwarded():
+async def test_auth_result_is_forwarded() -> None:
     """AuthTokenLink yields the downstream result unchanged."""
     terminal, _ = _make_capturing_link()
 
@@ -111,7 +113,7 @@ async def test_auth_result_is_forwarded():
 # ---------------------------------------------------------------------------
 
 
-async def test_auth_refreshes_token_on_authentication_error():
+async def test_auth_refreshes_token_on_authentication_error() -> None:
     """AuthTokenLink calls arefresh_token exactly once when downstream raises."""
     terminal, state = _make_failing_then_succeeding_link(fail_times=1)
     refresh_calls: list[str] = []
@@ -132,7 +134,7 @@ async def test_auth_refreshes_token_on_authentication_error():
     assert results[0].data == {"hello": "ok"}
 
 
-async def test_auth_raises_after_max_refresh_attempts():
+async def test_auth_raises_after_max_refresh_attempts() -> None:
     """AuthTokenLink raises AuthenticationError when max attempts are exhausted."""
     # Always fails → triggers maximum_refresh_attempts exceeded
     terminal, _ = _make_failing_then_succeeding_link(fail_times=999)
@@ -153,7 +155,7 @@ async def test_auth_raises_after_max_refresh_attempts():
                 pass
 
 
-async def test_auth_no_refresh_called_on_success():
+async def test_auth_no_refresh_called_on_success() -> None:
     """arefresh_token is never called when the downstream link succeeds."""
     terminal, _ = _make_capturing_link()
     refresh_calls: list[str] = []
@@ -179,7 +181,7 @@ async def test_auth_no_refresh_called_on_success():
 # ---------------------------------------------------------------------------
 
 
-async def test_auth_raises_not_composed_error_without_next():
+async def test_auth_raises_not_composed_error_without_next() -> None:
     """Calling aexecute with no next link set raises NotComposedError."""
 
     class SimpleAuth(AuthTokenLink):
@@ -197,7 +199,7 @@ async def test_auth_raises_not_composed_error_without_next():
 # ---------------------------------------------------------------------------
 
 
-async def test_composed_auth_link_uses_token_loader():
+async def test_composed_auth_link_uses_token_loader() -> None:
     """ComposedAuthLink delegates to the provided token_loader callable."""
     terminal, received = _make_capturing_link()
     calls: list[str] = []
@@ -215,7 +217,7 @@ async def test_composed_auth_link_uses_token_loader():
     assert received[0].context.headers["Authorization"] == "Bearer functional-token"
 
 
-async def test_composed_auth_link_uses_token_refresher():
+async def test_composed_auth_link_uses_token_refresher() -> None:
     """ComposedAuthLink calls the token_refresher on AuthenticationError."""
     terminal, state = _make_failing_then_succeeding_link(fail_times=1)
     refreshed: list[str] = []
@@ -237,7 +239,7 @@ async def test_composed_auth_link_uses_token_refresher():
     assert refreshed == ["refreshed"]
 
 
-async def test_composed_auth_raises_without_loader():
+async def test_composed_auth_raises_without_loader() -> None:
     """ComposedAuthLink raises an informative TokenLoaderNotSetError when token_loader is None."""
     terminal, _ = _make_capturing_link()
     link = compose(ComposedAuthLink(token_loader=None), terminal)
@@ -248,7 +250,7 @@ async def test_composed_auth_raises_without_loader():
                 pass
 
 
-async def test_composed_auth_raises_without_refresher_on_auth_error():
+async def test_composed_auth_raises_without_refresher_on_auth_error() -> None:
     """ComposedAuthLink raises TokenRefresherNotSetError when token_refresher is None and auth fails."""
     terminal, _ = _make_failing_then_succeeding_link(fail_times=999)
 
@@ -272,7 +274,7 @@ async def test_composed_auth_raises_without_refresher_on_auth_error():
 # ---------------------------------------------------------------------------
 
 
-async def test_base_auth_link_raises_token_loader_not_set():
+async def test_base_auth_link_raises_token_loader_not_set() -> None:
     """The un-subclassed AuthTokenLink.aload_token raises an informative error."""
     terminal, _ = _make_capturing_link()
     link = compose(AuthTokenLink(), terminal)
@@ -283,7 +285,7 @@ async def test_base_auth_link_raises_token_loader_not_set():
                 pass
 
 
-async def test_base_auth_link_arefresh_token_raises():
+async def test_base_auth_link_arefresh_token_raises() -> None:
     """The un-subclassed AuthTokenLink.arefresh_token raises an informative error."""
     op = opify(QUERY)
     with pytest.raises(TokenRefresherNotSetError, match="override arefresh_token"):
@@ -293,7 +295,7 @@ async def test_base_auth_link_arefresh_token_raises():
 @pytest.mark.parametrize("max_attempts,expected_refreshes", [(1, 1), (2, 2), (3, 3)])
 async def test_refresh_count_matches_maximum_refresh_attempts(
     max_attempts: int, expected_refreshes: int
-):
+) -> None:
     """maximum_refresh_attempts maps one-to-one to the number of refresh calls.
 
     The link refreshes-and-retries up to maximum_refresh_attempts times before giving
@@ -323,7 +325,7 @@ async def test_refresh_count_matches_maximum_refresh_attempts(
     assert len(refresh_calls) == expected_refreshes
 
 
-async def test_no_refresh_when_max_attempts_is_zero():
+async def test_no_refresh_when_max_attempts_is_zero() -> None:
     """maximum_refresh_attempts=0 means the link never refreshes and fails immediately."""
     terminal, _ = _make_failing_then_succeeding_link(fail_times=999)
     refresh_calls: list[str] = []

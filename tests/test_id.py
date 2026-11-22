@@ -8,14 +8,14 @@ class IDModel(BaseModel):
     """The id field is a scalar that can bes used to represent an ID"""
 
 
-def test_id_serialization():
+def test_id_serialization() -> None:
     """Test the ID serialization"""
 
     x = IDModel(id="123")
     assert x.id == "123"
 
 
-def test_id_model_serialization():
+def test_id_model_serialization() -> None:
     """Test the ID serialization of a BaseModel"""
 
     x = IDModel(id="123")

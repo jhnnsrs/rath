@@ -25,7 +25,6 @@ class NeverSucceedingLink(AsyncTerminatingLink):
         GraphQLResult
             The result of the operation
         """
-        while True:
-            await asyncio.sleep(1)
+        await asyncio.Event().wait()  # never set: this link never answers
 
         yield GraphQLResult(data={})

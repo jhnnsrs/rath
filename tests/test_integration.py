@@ -1,4 +1,5 @@
 import subprocess
+from collections.abc import Generator
 
 import pytest
 from testcontainers.compose import DockerCompose
@@ -12,7 +13,7 @@ from .utils import build_relative
 
 class DockerV2Compose(DockerCompose):
     @property
-    def docker_cmd_comment(self):
+    def docker_cmd_comment(self) -> list[str]:
         """Returns the base docker command by testing the docker compose api
 
         Returns:
@@ -29,7 +30,7 @@ class DockerV2Compose(DockerCompose):
             else ["docker-compose"]
         )
 
-    def docker_compose_command(self):
+    def docker_compose_command(self) -> list[str]:
         """
         Returns command parts used for the docker compose commands
 
@@ -48,23 +49,23 @@ class DockerV2Compose(DockerCompose):
 
 @pytest.mark.integration
 @pytest.fixture()
-def integration_link():
+def integration_link() -> AIOHttpLink:
     return AIOHttpLink(endpoint_url="http://localhost:5454/graphql")
 
 
 @pytest.mark.integration
 @pytest.fixture(scope="session")
-def environment():
+def environment() -> Generator[None, None, None]:
     with DockerV2Compose(
         filepath=build_relative("integration"),
         compose_file_name="docker-compose.yaml",
-    ) as compose:
+    ):
         wait_for_http_response("http://localhost:5454/ht", max_retries=5)
         yield
 
 
 @pytest.mark.integration
-def test_connection_x(environment, integration_link):
+def test_connection_x(environment: None, integration_link: AIOHttpLink) -> None:
     rath = Rath(link=integration_link)
     with rath:
         answer = rath.query(

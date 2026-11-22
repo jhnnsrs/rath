@@ -42,13 +42,13 @@ type Mutation {
 
 class QueryAsync(AsyncMockResolver):
     @staticmethod
-    async def resolve_beast(operation: Operation):
+    async def resolve_beast(operation: Operation) -> dict[str, str | int]:
         return {"id": "1", "legs": 1}
 
 
 class MutationAsync(AsyncMockResolver):
     @staticmethod
-    async def resolve_createBeast(operation: Operation):
+    async def resolve_createBeast(operation: Operation) -> dict[str, object]:
         return {
             "id": operation.variables["id"],
             "name": "John Doe",
@@ -57,14 +57,14 @@ class MutationAsync(AsyncMockResolver):
 
 
 @pytest.fixture()
-def mock_link():
+def mock_link() -> AsyncMockLink:
     return AsyncMockLink(
         query_resolver=QueryAsync().to_dict(),
         mutation_resolver=MutationAsync().to_dict(),
     )
 
 
-async def test_validation(mock_link):
+async def test_validation(mock_link: AsyncMockLink) -> None:
     link = ValidatingLink(schema_glob=build_relative_glob("/schemas/beasts.graphql"))
 
     async with Rath(link=compose(link, mock_link)) as r:
@@ -79,7 +79,7 @@ async def test_validation(mock_link):
         )
 
 
-async def test_validation_error(mock_link):
+async def test_validation_error(mock_link: AsyncMockLink) -> None:
     link = ValidatingLink(schema_dsl=schema)
 
     rath = Rath(link=compose(link, mock_link))

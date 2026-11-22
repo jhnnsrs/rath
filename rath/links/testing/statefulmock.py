@@ -4,7 +4,7 @@ from collections.abc import AsyncIterator, Awaitable, Callable
 from types import TracebackType
 from typing import (
     Any,
-    Self,
+    TypeVar,
 )
 
 from pydantic import Field, field_validator
@@ -35,6 +35,11 @@ class ConfigurationError(TerminatingLinkError):
 
 
 ResolverDict = dict[str, Callable[[Operation], Awaitable[dict[str, Any]]]]
+
+
+_AsyncStatefulMockLinkT = TypeVar(
+    "_AsyncStatefulMockLinkT", bound="AsyncStatefulMockLink"
+)
 
 
 class AsyncStatefulMockLink(AsyncTerminatingLink):
@@ -69,13 +74,16 @@ class AsyncStatefulMockLink(AsyncTerminatingLink):
         mode="before",
     )
     @classmethod
-    def coerce_resolver(cls: type["AsyncStatefulMockLink"], v: Any) -> dict[str, Any]:
+    def coerce_resolver(
+        cls: type["AsyncStatefulMockLink"],
+        v: "AsyncMockResolver | dict[str, Any]",
+    ) -> dict[str, Any]:
         """Coerce the resolver to a dict if it is a AsyncMockResolver"""
         if isinstance(v, AsyncMockResolver):
             return v.to_dict()
         return v
 
-    async def __aenter__(self) -> Self:
+    async def __aenter__(self: _AsyncStatefulMockLinkT) -> _AsyncStatefulMockLinkT:
         """Aenter the link and set up the internal state"""
         self._connection_lock = asyncio.Lock()
         return await super().__aenter__()

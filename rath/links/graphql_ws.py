@@ -4,12 +4,14 @@ import logging
 import ssl
 from collections.abc import AsyncIterator, Awaitable, Callable
 from ssl import SSLContext
+from types import TracebackType
 from typing import (
+    TYPE_CHECKING,
     Any,
     Literal,
     NotRequired,
-    Self,
     TypedDict,
+    TypeVar,
 )
 
 import certifi
@@ -25,6 +27,9 @@ from rath.operation import (
     Operation,
     SubscriptionDisconnect,
 )
+
+if TYPE_CHECKING:
+    from websockets.asyncio.client import ClientConnection
 
 logger = logging.getLogger(__name__)
 
@@ -100,6 +105,9 @@ class TransportMessage(TypedDict):
     error: NotRequired[Exception]
 
 
+_GraphQLWSLinkT = TypeVar("_GraphQLWSLinkT", bound="GraphQLWSLink")
+
+
 class GraphQLWSLink(AsyncTerminatingLink):
     """GraphQLWSLink is a terminating link that sends operations over websockets using
       websockets via the graphql-ws protocol. This is a
@@ -164,7 +172,7 @@ class GraphQLWSLink(AsyncTerminatingLink):
 
         await self._send_queue.put(message)
 
-    async def __aenter__(self) -> Self:
+    async def __aenter__(self: _GraphQLWSLinkT) -> _GraphQLWSLinkT:
         """Enter the link, and initialize the connection"""
 
         self._ongoing_subscriptions = {}
@@ -203,7 +211,7 @@ class GraphQLWSLink(AsyncTerminatingLink):
         self,
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
-        traceback: Any | None,
+        traceback: TracebackType | None,
     ) -> None:
         """Exit the link, and disconnect from the server"""
         await self.adisconnect()
@@ -296,7 +304,7 @@ class GraphQLWSLink(AsyncTerminatingLink):
                 retry = 0
             if retry > self.max_retries or not self.allow_reconnect:
                 logger.error("Max retries reached. Aborting")
-                raise DefiniteConnectionFail("Exceeded Number of Retries")
+                raise DefiniteConnectionFail("Exceeded Number of Retries") from e
 
             await asyncio.sleep(self.time_between_retries)
             logger.info("Retrying to connect")
@@ -326,7 +334,9 @@ class GraphQLWSLink(AsyncTerminatingLink):
             logger.error("Websocket excepted", exc_info=True)
             raise e
 
-    async def sending(self, client: Any, initiating_operation: Operation) -> None:
+    async def sending(
+        self, client: "ClientConnection", initiating_operation: Operation
+    ) -> None:
         """The sending task
 
         This method is the sending task. It will send messages to the websocket
@@ -363,7 +373,9 @@ class GraphQLWSLink(AsyncTerminatingLink):
             raise e
 
     async def receiving(
-        self, client: Any, initial_connection_future: asyncio.Future[bool]
+        self,
+        client: "ClientConnection",
+        initial_connection_future: asyncio.Future[bool],
     ) -> None:
         """The receiving task
 

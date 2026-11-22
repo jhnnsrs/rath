@@ -8,7 +8,9 @@ class RetryExceededError(Exception):
     pass
 
 
-def wait_for_http_response(url, status_code=200, retry=0, max_retries=10):
+def wait_for_http_response(
+    url: str, status_code: int = 200, retry: int = 0, max_retries: int = 10
+) -> requests.Response:
     if retry > max_retries:
         raise RetryExceededError("Max retries exceeded")
     time.sleep(retry * retry * 0.5)

@@ -63,7 +63,9 @@ class AsyncMockLink(AsyncTerminatingLink):
         mode="before",
     )
     @classmethod
-    def coerce_resolver(cls: type["AsyncMockLink"], v: Any) -> ResolverDict:
+    def coerce_resolver(
+        cls: type["AsyncMockLink"], v: "AsyncMockResolver | ResolverDict"
+    ) -> ResolverDict:
         """A validator that coerces AsyncMockResolver to a dict of resolvers"""
         if isinstance(v, AsyncMockResolver):
             return v.to_dict()

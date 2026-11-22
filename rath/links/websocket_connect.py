@@ -28,7 +28,7 @@ def ws_connect(
     subprotocols: list[str],
     ssl: SSLContext | None,
     proxy: str | None = None,
-) -> Any:
+) -> _connect:
     """Open a websocket connection (use as an async context manager).
 
     Parameters
@@ -48,7 +48,7 @@ def ws_connect(
 
     Returns
     -------
-    Any
+    connect
         The websockets connect context manager
     """
     kwargs: dict[str, Any] = {"subprotocols": subprotocols, "ssl": ssl}

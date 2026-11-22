@@ -1,4 +1,5 @@
-from typing import Any
+import builtins
+from typing import overload
 
 
 class NotQueriedError(Exception):
@@ -7,7 +8,7 @@ class NotQueriedError(Exception):
     pass
 
 
-def get_nested_error(obj: Any, nested: list[str], above: list[str]) -> Any:
+def get_nested_error(obj: object, nested: list[str], above: list[str]) -> object:
     """Get a nested attribute or raise an error
 
 
@@ -45,7 +46,17 @@ def get_nested_error(obj: Any, nested: list[str], above: list[str]) -> Any:
         raise NotQueriedError(f"{nested} not queried. {above} was queried")
 
 
-def get_attributes_or_error(object: Any, *args: str) -> Any:
+@overload
+def get_attributes_or_error(object: object, arg: str, /) -> object: ...
+
+
+@overload
+def get_attributes_or_error(
+    object: object, arg: str, other: str, /, *args: str
+) -> tuple[object, ...]: ...
+
+
+def get_attributes_or_error(object: object, *args: str) -> object:
     """Get attributes or raise an error
 
     Get attributes from an object or raise an error if the attribute is not present
@@ -83,7 +94,8 @@ def get_attributes_or_error(object: Any, *args: str) -> Any:
         The nested attribute was not queried
 
     """
-    returns: list[Any] = []
+    # `object` is the parameter here.
+    returns: list[builtins.object] = []
     errors: list[str] = []
     for i in args:
         if "." in i:

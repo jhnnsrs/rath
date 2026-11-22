@@ -2,6 +2,7 @@
 
 import hashlib
 from collections.abc import AsyncIterator
+from typing import Any
 
 import pytest
 
@@ -24,7 +25,7 @@ def _sha256(text: str) -> str:
     return sha256.hexdigest()
 
 
-def _make_capturing_link():
+def _make_capturing_link() -> tuple[AsyncTerminatingLink, list[Operation]]:
     received: list[Operation] = []
 
     class CapturingLink(AsyncTerminatingLink):
@@ -40,19 +41,19 @@ def _make_capturing_link():
 # ---------------------------------------------------------------------------
 
 
-def test_hash_query_produces_sha256():
+def test_hash_query_produces_sha256() -> None:
     apq = ApqLink()
     query = "query { hello }"
     assert apq._hash_query(query) == _sha256(query)
 
 
-def test_hash_query_is_deterministic():
+def test_hash_query_is_deterministic() -> None:
     apq = ApqLink()
     query = "query { hello }"
     assert apq._hash_query(query) == apq._hash_query(query)
 
 
-def test_hash_query_differs_for_different_queries():
+def test_hash_query_differs_for_different_queries() -> None:
     apq = ApqLink()
     assert apq._hash_query("query { a }") != apq._hash_query("query { b }")
 
@@ -62,7 +63,7 @@ def test_hash_query_differs_for_different_queries():
 # ---------------------------------------------------------------------------
 
 
-async def test_apq_sets_persisted_query_extension():
+async def test_apq_sets_persisted_query_extension() -> None:
     """ApqLink stores the persistedQuery extension on context.extensions."""
     terminal, received = _make_capturing_link()
     link = compose(ApqLink(), terminal)
@@ -78,7 +79,7 @@ async def test_apq_sets_persisted_query_extension():
     assert pq["sha256Hash"] == _sha256(op.document)
 
 
-async def test_apq_sets_omit_document_flag():
+async def test_apq_sets_omit_document_flag() -> None:
     """ApqLink sets context.omit_document to True on the first attempt."""
     terminal, received = _make_capturing_link()
     link = compose(ApqLink(), terminal)
@@ -90,7 +91,7 @@ async def test_apq_sets_omit_document_flag():
     assert received[0].context.omit_document is True
 
 
-async def test_apq_result_is_forwarded():
+async def test_apq_result_is_forwarded() -> None:
     """ApqLink yields the result from the downstream link unchanged."""
     terminal, _ = _make_capturing_link()
     link = compose(ApqLink(), terminal)
@@ -106,10 +107,12 @@ async def test_apq_result_is_forwarded():
 # ---------------------------------------------------------------------------
 
 
-def _make_apq_server_link(not_found_message: str = "PersistedQueryNotFound"):
+def _make_apq_server_link(
+    not_found_message: str = "PersistedQueryNotFound",
+) -> tuple[AsyncTerminatingLink, dict[str, Any]]:
     """Return a link that rejects the first (hash-only) request with the given
     message, then succeeds on the second (full query) request."""
-    state = {"calls": 0, "received": []}
+    state: dict[str, Any] = {"calls": 0, "received": []}
 
     class ApqServerLink(AsyncTerminatingLink):
         async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
@@ -122,7 +125,7 @@ def _make_apq_server_link(not_found_message: str = "PersistedQueryNotFound"):
     return ApqServerLink(), state
 
 
-async def test_apq_retries_with_full_query_on_persisted_query_not_found():
+async def test_apq_retries_with_full_query_on_persisted_query_not_found() -> None:
     """ApqLink sends the full query when the server returns PersistedQueryNotFound."""
     terminal, state = _make_apq_server_link("PersistedQueryNotFound")
     link = compose(ApqLink(), terminal)
@@ -134,7 +137,7 @@ async def test_apq_retries_with_full_query_on_persisted_query_not_found():
     assert results == [GraphQLResult(data={"hello": "from-cache"})]
 
 
-async def test_apq_clears_persisted_query_on_fallback():
+async def test_apq_clears_persisted_query_on_fallback() -> None:
     """On fallback the persistedQuery extension is removed from context."""
     terminal, state = _make_apq_server_link("PersistedQueryNotFound")
     link = compose(ApqLink(), terminal)
@@ -148,7 +151,7 @@ async def test_apq_clears_persisted_query_on_fallback():
     assert "persistedQuery" not in second_op.context.extensions
 
 
-async def test_apq_restores_omit_document_on_fallback():
+async def test_apq_restores_omit_document_on_fallback() -> None:
     """On fallback omit_document is reset to False so the query is sent."""
     terminal, state = _make_apq_server_link("PersistedQueryNotFound")
     link = compose(ApqLink(), terminal)
@@ -161,7 +164,7 @@ async def test_apq_restores_omit_document_on_fallback():
     assert second_op.context.omit_document is False
 
 
-async def test_apq_retries_on_persisted_query_not_found_code():
+async def test_apq_retries_on_persisted_query_not_found_code() -> None:
     """PERSISTED_QUERY_NOT_FOUND (Apollo convention) also triggers the fallback."""
     terminal, state = _make_apq_server_link("PERSISTED_QUERY_NOT_FOUND")
     link = compose(ApqLink(), terminal)
@@ -178,7 +181,7 @@ async def test_apq_retries_on_persisted_query_not_found_code():
 # ---------------------------------------------------------------------------
 
 
-async def test_apq_reraises_unrelated_graphql_exception():
+async def test_apq_reraises_unrelated_graphql_exception() -> None:
     """Errors unrelated to APQ propagate without triggering the fallback."""
     state = {"calls": 0}
 
@@ -202,7 +205,7 @@ async def test_apq_reraises_unrelated_graphql_exception():
 # ---------------------------------------------------------------------------
 
 
-async def test_apq_raises_not_composed_error_without_next():
+async def test_apq_raises_not_composed_error_without_next() -> None:
     apq = ApqLink()
     with pytest.raises(NotComposedError):
         async for _ in apq.aexecute(opify(QUERY)):

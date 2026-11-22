@@ -1,11 +1,14 @@
 from collections.abc import AsyncIterator
-from typing import Any, Self
+from types import TracebackType
+from typing import TypeVar
 
 from pydantic import field_validator
 
 from rath.errors import NotComposedError
 from rath.links.base import ContinuationLink, Link, TerminatingLink
 from rath.operation import GraphQLResult, Operation
+
+_ComposedLinkT = TypeVar("_ComposedLinkT", bound="ComposedLink")
 
 
 class ComposedLink(TerminatingLink):
@@ -22,7 +25,9 @@ class ComposedLink(TerminatingLink):
     that the last link is a terminating link."""
 
     @field_validator("links", mode="before")
-    def validate_links(cls, value: Any) -> list[ContinuationLink | TerminatingLink]:
+    def validate_links(
+        cls, value: list[ContinuationLink | TerminatingLink]
+    ) -> list[ContinuationLink | TerminatingLink]:
         """Validate that the links are valid"""
         if not value:
             raise ValueError("ComposedLink requires at least one link")
@@ -50,7 +55,7 @@ class ComposedLink(TerminatingLink):
         for link in self.links:
             await link.adisconnect()
 
-    async def __aenter__(self) -> Self:
+    async def __aenter__(self: _ComposedLinkT) -> _ComposedLinkT:
         """Compose the links together and set the first link as the first link"""
         # We need to make sure that the links are connected in the correct order
         for i in range(len(self.links) - 1):
@@ -69,7 +74,7 @@ class ComposedLink(TerminatingLink):
         self,
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
-        traceback: Any | None,
+        traceback: TracebackType | None,
     ) -> None:
         """Exit the links in reverse order"""
         for link in self.links:
@@ -85,6 +90,9 @@ class ComposedLink(TerminatingLink):
             yield result
 
 
+_TypedComposedLinkT = TypeVar("_TypedComposedLinkT", bound="TypedComposedLink")
+
+
 class TypedComposedLink(TerminatingLink):
     """A typed composed link is a base class to create a definition for
     a composed link. It is a link that is composed of multiple links that
@@ -95,7 +103,7 @@ class TypedComposedLink(TerminatingLink):
 
     _firstlink: Link | None = None
 
-    async def __aenter__(self) -> Self:
+    async def __aenter__(self: _TypedComposedLinkT) -> _TypedComposedLinkT:
         """Compose the links together and set the first link as the first link"""
 
         current_link = None
@@ -125,7 +133,7 @@ class TypedComposedLink(TerminatingLink):
         self,
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
-        traceback: Any | None,
+        traceback: TracebackType | None,
     ) -> None:
         """Exit the links in reverse order"""
         for _, link in self:
