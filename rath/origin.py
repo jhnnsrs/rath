@@ -1,6 +1,7 @@
 """Objects that remember the client they were fetched with."""
 
 from typing import TYPE_CHECKING, Any
+
 from pydantic import BaseModel
 
 if TYPE_CHECKING:
@@ -33,7 +34,10 @@ class Origin:
     __slots__ = ("client", "rath", "clients")
 
     def __init__(
-        self, client: Any = None, rath: "Rath | None" = None, **clients: Any  # noqa: ANN401
+        self,
+        client: Any = None,
+        rath: "Rath | None" = None,
+        **clients: Any,  # noqa: ANN401
     ) -> None:
         self.client = client
         self.rath = rath
@@ -50,7 +54,9 @@ class Origin:
 
 
 def origin_context(
-    client: Any = None, rath: "Rath | None" = None, **clients: Any  # noqa: ANN401
+    client: Any = None,
+    rath: "Rath | None" = None,
+    **clients: Any,  # noqa: ANN401
 ) -> dict[str, Any]:
     """The validation context that binds every object built under it to an origin.
 

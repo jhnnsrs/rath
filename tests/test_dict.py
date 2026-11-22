@@ -1,9 +1,10 @@
+import pytest
 from pydantic import BaseModel
+
 from rath.links.compose import compose
 from rath.links.dictinglink import DictingLink
 from rath.links.testing.mock import AsyncMockLink, AsyncMockResolver
 from rath.rath import Rath
-import pytest
 
 
 class MutationAsync(AsyncMockResolver):

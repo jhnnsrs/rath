@@ -1,15 +1,18 @@
 import pytest
-from rath.links.aiohttp import AIOHttpLink
-from rath.links.validate import ValidatingLink
-from rath.links import compose
-from rath import Rath
-from PyQt5 import QtWidgets, QtCore
 from koil.qt import async_to_qt
-from .apis.countries import acountries
+from PyQt5 import QtCore, QtWidgets
 from pytestqt.qtbot import QtBot
 
+from rath import Rath
+from rath.links import compose
+from rath.links.aiohttp import AIOHttpLink
+from rath.links.validate import ValidatingLink
+
+from .apis.countries import acountries
+
+
 class QtRathWidget(QtWidgets.QWidget):
-    def __init__(self,parent: QtWidgets.QWidget | None = None): 
+    def __init__(self, parent: QtWidgets.QWidget | None = None):
         super().__init__(parent=parent)
 
         public_link = AIOHttpLink(endpoint_url="https://countries.trevorblades.com/")
@@ -36,7 +39,7 @@ class QtRathWidget(QtWidgets.QWidget):
 
 
 class QtFuncWidget(QtWidgets.QWidget):
-    def __init__(self,parent: QtWidgets.QWidget | None = None): 
+    def __init__(self, parent: QtWidgets.QWidget | None = None):
         super().__init__(parent=parent)
 
         self.button_greet = QtWidgets.QPushButton("Greet")
@@ -63,10 +66,10 @@ def test_no_interference(qtbot: QtBot):
         qtbot (_type_): _description_
     """
     widget = QtFuncWidget()
-    qtbot.addWidget(widget)# type: ignore
+    qtbot.addWidget(widget)  # type: ignore
 
     # click in the Greet button and make sure it updates the appropriate label
-    qtbot.mouseClick(widget.button_greet, QtCore.Qt.LeftButton)# type: ignore
+    qtbot.mouseClick(widget.button_greet, QtCore.Qt.LeftButton)  # type: ignore
 
     assert widget.greet_label.text() == "Hello!"
 
@@ -75,11 +78,11 @@ def test_no_interference(qtbot: QtBot):
 def test_call_query(qtbot: QtBot):
     """Tests if we can call a task from a koil widget."""
     widget = QtRathWidget()
-    qtbot.addWidget(widget) # type: ignore
+    qtbot.addWidget(widget)  # type: ignore
 
     # click in the Greet button and make sure it updates the appropriate label
-    with qtbot.waitSignal(widget.countries_query.returned, timeout=1000) as p: # type: ignore
-        qtbot.mouseClick(widget.button_greet, QtCore.Qt.LeftButton) # type: ignore
+    with qtbot.waitSignal(widget.countries_query.returned, timeout=1000) as p:  # type: ignore
+        qtbot.mouseClick(widget.button_greet, QtCore.Qt.LeftButton)  # type: ignore
 
-    countries = p.args[0]# type: ignore
+    countries = p.args[0]  # type: ignore
     assert isinstance(countries, list), "Not a list"

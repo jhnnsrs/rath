@@ -1,7 +1,11 @@
 """Tests for AuthTokenLink and ComposedAuthLink."""
-import pytest
-from typing import AsyncIterator
 
+from collections.abc import AsyncIterator
+
+import pytest
+
+from rath.errors import NotComposedError
+from rath.links import compose
 from rath.links.auth import AuthTokenLink, ComposedAuthLink
 from rath.links.base import AsyncTerminatingLink
 from rath.links.errors import (
@@ -9,10 +13,7 @@ from rath.links.errors import (
     TokenLoaderNotSetError,
     TokenRefresherNotSetError,
 )
-from rath.links import compose
-from rath.errors import NotComposedError
-from rath.operation import opify, GraphQLResult, Operation
-
+from rath.operation import GraphQLResult, Operation, opify
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -259,7 +260,9 @@ async def test_composed_auth_raises_without_refresher_on_auth_error():
     )
 
     async with link:
-        with pytest.raises(TokenRefresherNotSetError, match="No Token refresher specified"):
+        with pytest.raises(
+            TokenRefresherNotSetError, match="No Token refresher specified"
+        ):
             async for _ in link.aexecute(opify(QUERY)):
                 pass
 
@@ -311,7 +314,9 @@ async def test_refresh_count_matches_maximum_refresh_attempts(
 
     link = compose(CountingAuth(), terminal)
     async with link:
-        with pytest.raises(AuthenticationError, match="Maximum refresh attempts reached"):
+        with pytest.raises(
+            AuthenticationError, match="Maximum refresh attempts reached"
+        ):
             async for _ in link.aexecute(opify(QUERY)):
                 pass
 
@@ -335,7 +340,9 @@ async def test_no_refresh_when_max_attempts_is_zero():
 
     link = compose(NoRetryAuth(), terminal)
     async with link:
-        with pytest.raises(AuthenticationError, match="Maximum refresh attempts reached"):
+        with pytest.raises(
+            AuthenticationError, match="Maximum refresh attempts reached"
+        ):
             async for _ in link.aexecute(opify(QUERY)):
                 pass
 

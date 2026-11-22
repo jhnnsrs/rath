@@ -1,9 +1,10 @@
+from collections.abc import AsyncIterator, Callable
 from typing import Any, Self
-from collections.abc import Callable, AsyncIterator
 
 from pydantic import Field
-from rath.operation import Operation, GraphQLResult
+
 from rath.links.base import TerminatingLink
+from rath.operation import GraphQLResult, Operation
 
 
 class SplitLink(TerminatingLink):

@@ -1,11 +1,12 @@
 import asyncio
-from typing import Any
 from collections.abc import AsyncIterator, Awaitable, Callable
+from typing import Any
 
 from pydantic import Field, field_validator
+
+from graphql import FieldNode, OperationType
 from rath.links.base import AsyncTerminatingLink
 from rath.operation import GraphQLResult, Operation
-from graphql import FieldNode, OperationType
 
 
 def target_from_node(node: FieldNode) -> str:

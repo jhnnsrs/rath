@@ -105,9 +105,9 @@ from rath.links.retry import RetryLink
 from rath.links.aiohttp import AIOHttpLink
 
 link = compose(
-    ComposedAuthLink(token_loader=...),   # add the Bearer header
+    ComposedAuthLink(token_loader=...),  # add the Bearer header
     RetryLink(maximum_retry_attempts=3),  # retry on failure
-    AIOHttpLink(endpoint_url="..."),      # terminating link
+    AIOHttpLink(endpoint_url="..."),  # terminating link
 )
 
 rath = Rath(link=link)
@@ -343,7 +343,9 @@ link = AsyncMockLink(query_resolver={"countries": resolve_countries})
 
 with Rath(link=link) as rath:
     result = rath.query("query { countries { native capital } }")
-    assert result.data == {"countries": [{"capital": "Berlin", "native": "Deutschland"}]}
+    assert result.data == {
+        "countries": [{"capital": "Berlin", "native": "Deutschland"}]
+    }
 ```
 
 Use `AsyncStatefulMockLink` when you also need to mock subscriptions, and `AssertLink` together with

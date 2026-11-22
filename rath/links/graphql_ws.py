@@ -1,30 +1,30 @@
-from ssl import SSLContext
-from typing import (
-    Literal,
-    Any,
-    Self,
-    TypedDict,
-    NotRequired,
-)
-from collections.abc import AsyncIterator, Awaitable, Callable
-from graphql import OperationType
-from pydantic import Field
-from rath.links.websocket_connect import ws_connect
-import json
 import asyncio
+import json
 import logging
 import ssl
-import certifi
-from rath.links.errors import LinkNotConnectedError, TerminatingLinkError
+from collections.abc import AsyncIterator, Awaitable, Callable
+from ssl import SSLContext
+from typing import (
+    Any,
+    Literal,
+    NotRequired,
+    Self,
+    TypedDict,
+)
 
+import certifi
+from pydantic import Field
+
+from graphql import OperationType
+from rath.links.base import AsyncTerminatingLink
+from rath.links.errors import LinkNotConnectedError, TerminatingLinkError
+from rath.links.websocket_connect import ws_connect
 from rath.operation import (
     GraphQLException,
     GraphQLResult,
     Operation,
     SubscriptionDisconnect,
 )
-from rath.links.base import AsyncTerminatingLink
-
 
 logger = logging.getLogger(__name__)
 

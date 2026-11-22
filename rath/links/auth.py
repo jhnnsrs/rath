@@ -1,13 +1,13 @@
 from collections.abc import AsyncIterator, Awaitable, Callable
 
+from rath.errors import NotComposedError
 from rath.links.base import ContinuationLink
-from rath.operation import GraphQLResult, Operation
 from rath.links.errors import (
     AuthenticationError,
     TokenLoaderNotSetError,
     TokenRefresherNotSetError,
 )
-from rath.errors import NotComposedError
+from rath.operation import GraphQLResult, Operation
 
 
 class AuthTokenLink(ContinuationLink):

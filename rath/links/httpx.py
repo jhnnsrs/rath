@@ -1,21 +1,23 @@
-from http import HTTPStatus
 import json
-from typing import Any
+import logging
 from collections.abc import AsyncIterator
+from datetime import datetime
+from http import HTTPStatus
+from typing import Any
+
 import httpx
-from graphql import OperationType
 from pydantic import Field
-from rath.operation import GraphQLException, GraphQLResult, Operation
+
+from graphql import OperationType
 from rath.links.base import AsyncTerminatingLink
 from rath.links.errors import (
     AuthenticationError,
     MalformedResponseError,
     is_auth_error,
 )
-import logging
 from rath.links.types import Payload
+from rath.operation import GraphQLException, GraphQLResult, Operation
 from rath.trace import traced
-from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -115,7 +117,9 @@ class HttpxLink(AsyncTerminatingLink):
 
         async with httpx.AsyncClient(**client_kwargs) as client:
             response = await client.post(
-                self.endpoint_url, headers=traced(operation.context.headers), **post_kwargs
+                self.endpoint_url,
+                headers=traced(operation.context.headers),
+                **post_kwargs,
             )
 
             if response.status_code in self.auth_errors:

@@ -1,4 +1,4 @@
-""" Testing package for rath.links
+"""Testing package for rath.links
 
 
 This package contains links that are useful for testing.

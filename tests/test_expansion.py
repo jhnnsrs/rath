@@ -1,6 +1,7 @@
 """ExpandsStructures: a client expands and shrinks its structures by identifier."""
 
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 import pytest
 
@@ -46,7 +47,9 @@ async def test_expands_through_the_expander_named_for_the_identifier() -> None:
 
 @pytest.mark.asyncio
 async def test_an_unknown_identifier_names_the_client_and_what_it_knows() -> None:
-    with pytest.raises(UnknownStructureError, match=r"ThingClient cannot expand '@x/y'.*@things/thing"):
+    with pytest.raises(
+        UnknownStructureError, match=r"ThingClient cannot expand '@x/y'.*@things/thing"
+    ):
         await ThingClient("A").aexpand("@x/y", "1")
 
 

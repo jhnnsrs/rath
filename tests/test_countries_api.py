@@ -1,9 +1,11 @@
-from rath.links.validate import ValidatingLink, ValidationError
 import pytest
-from rath.links import compose
-from .apis.countries import acountries, countries
+
 from rath import Rath
+from rath.links import compose
 from rath.links.aiohttp import AIOHttpLink
+from rath.links.validate import ValidatingLink, ValidationError
+
+from .apis.countries import acountries, countries
 
 
 @pytest.mark.public

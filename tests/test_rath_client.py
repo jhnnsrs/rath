@@ -1,12 +1,13 @@
 """Non-happy-path tests for the Rath client itself (link validation, empty results)."""
+
+from collections.abc import AsyncIterator
+
 import pytest
-from typing import AsyncIterator
 
 from rath import Rath
 from rath.errors import NotConnectedError
 from rath.links.base import AsyncTerminatingLink, ContinuationLink
 from rath.operation import GraphQLResult, Operation
-
 
 QUERY = "query { hello }"
 

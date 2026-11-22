@@ -1,11 +1,8 @@
 from graphql import OperationType
+from rath.links import compose
+from rath.links.sign_local_link import ComposedSignTokenLink, SignLocalLink
 from rath.links.testing.assert_link import AssertLink
 from rath.links.testing.utils import run_basic_query
-from rath.links.testing.statefulmock import AsyncStatefulMockLink
-from rath.links.sign_local_link import SignLocalLink, ComposedSignTokenLink
-import pytest
-from rath.links import split, compose
-from rath import Rath
 from rath.operation import Operation
 
 

@@ -4,9 +4,10 @@ A tiny asyncio TCP server stands in for the mesh sidecar's forward proxy. It rec
 the request line it receives: an absolute-form request line for plain http, and a
 ``CONNECT host:port`` line for websockets.
 """
+
 import asyncio
 import json
-from typing import AsyncIterator, List, Tuple
+from collections.abc import AsyncIterator
 
 import pytest
 
@@ -29,7 +30,7 @@ class RecordingServer:
     """
 
     def __init__(self) -> None:
-        self.request_lines: List[str] = []
+        self.request_lines: list[str] = []
         self.connect_seen = asyncio.Event()
         self.server: asyncio.AbstractServer | None = None
 
@@ -39,7 +40,9 @@ class RecordingServer:
         host, port = self.server.sockets[0].getsockname()[:2]
         return f"http://{host}:{port}"
 
-    async def handle(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+    async def handle(
+        self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
+    ) -> None:
         try:
             request_line = (await reader.readline()).decode().rstrip("\r\n")
             self.request_lines.append(request_line)
@@ -56,7 +59,9 @@ class RecordingServer:
 
             if request_line.startswith("CONNECT "):
                 self.connect_seen.set()
-                writer.write(b"HTTP/1.1 403 Forbidden\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")
+                writer.write(
+                    b"HTTP/1.1 403 Forbidden\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
+                )
             else:
                 writer.write(
                     b"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n"
@@ -80,7 +85,7 @@ async def recording_server() -> AsyncIterator[RecordingServer]:
         await recorder.server.wait_closed()
 
 
-async def _execute(link) -> Tuple[dict, ...]:
+async def _execute(link) -> tuple[dict, ...]:
     async with link:
         return tuple([result.data async for result in link.aexecute(opify(QUERY))])
 
@@ -90,11 +95,15 @@ async def test_aiohttp_routes_through_proxy(recording_server: RecordingServer):
 
     ``example.mesh`` does not resolve, so the request can only succeed via the proxy.
     """
-    link = AIOHttpLink(endpoint_url="http://example.mesh:8080/graphql", proxy=recording_server.url)
+    link = AIOHttpLink(
+        endpoint_url="http://example.mesh:8080/graphql", proxy=recording_server.url
+    )
     results = await _execute(link)
 
     assert results == ({"beast": {"id": "1"}},)
-    assert recording_server.request_lines == ["POST http://example.mesh:8080/graphql HTTP/1.1"]
+    assert recording_server.request_lines == [
+        "POST http://example.mesh:8080/graphql HTTP/1.1"
+    ]
 
 
 async def test_aiohttp_without_proxy_goes_direct(recording_server: RecordingServer):
@@ -121,7 +130,9 @@ class KeepAliveServer:
         host, port = self.server.sockets[0].getsockname()[:2]
         return f"http://{host}:{port}"
 
-    async def handle(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+    async def handle(
+        self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
+    ) -> None:
         self.connections += 1
         try:
             while await reader.readline():
@@ -152,7 +163,9 @@ async def keepalive_server() -> AsyncIterator[KeepAliveServer]:
         server.server.close()
 
 
-async def test_aiohttp_keeps_its_connection_while_entered(keepalive_server: KeepAliveServer):
+async def test_aiohttp_keeps_its_connection_while_entered(
+    keepalive_server: KeepAliveServer,
+):
     """Requests that follow each other on an entered link share one connection."""
     link = AIOHttpLink(endpoint_url=f"{keepalive_server.url}/graphql")
     async with link:
@@ -178,11 +191,15 @@ async def test_aiohttp_not_entered_opens_a_connection_per_request(
 
 async def test_httpx_routes_through_proxy(recording_server: RecordingServer):
     """With a proxy set, httpx sends an absolute-form request to the proxy."""
-    link = HttpxLink(endpoint_url="http://example.mesh:8080/graphql", proxy=recording_server.url)
+    link = HttpxLink(
+        endpoint_url="http://example.mesh:8080/graphql", proxy=recording_server.url
+    )
     results = await _execute(link)
 
     assert results == ({"beast": {"id": "1"}},)
-    assert recording_server.request_lines == ["POST http://example.mesh:8080/graphql HTTP/1.1"]
+    assert recording_server.request_lines == [
+        "POST http://example.mesh:8080/graphql HTTP/1.1"
+    ]
 
 
 async def test_httpx_without_proxy_goes_direct(recording_server: RecordingServer):
@@ -194,7 +211,9 @@ async def test_httpx_without_proxy_goes_direct(recording_server: RecordingServer
     assert recording_server.request_lines == ["POST /graphql HTTP/1.1"]
 
 
-@pytest.mark.skipif(not websocket_connect.SUPPORTS_PROXY, reason="websocket proxies need websockets>=15")
+@pytest.mark.skipif(
+    not websocket_connect.SUPPORTS_PROXY, reason="websocket proxies need websockets>=15"
+)
 async def test_graphql_ws_tunnels_through_proxy(recording_server: RecordingServer):
     """With a proxy set, the websocket link issues ``CONNECT host:port`` to the proxy."""
     link = GraphQLWSLink(
@@ -220,11 +239,19 @@ async def test_graphql_ws_tunnels_through_proxy(recording_server: RecordingServe
     assert recording_server.request_lines[0] == "CONNECT example.mesh:8080 HTTP/1.1"
 
 
-@pytest.mark.skipif(websocket_connect.SUPPORTS_PROXY, reason="only relevant for websockets without proxy support")
+@pytest.mark.skipif(
+    websocket_connect.SUPPORTS_PROXY,
+    reason="only relevant for websockets without proxy support",
+)
 def test_ws_proxy_on_old_websockets_raises():
     """On a websockets without proxy support, asking for a proxy fails loudly."""
     with pytest.raises(RuntimeError, match="websockets>=15"):
-        websocket_connect.ws_connect("ws://example.mesh/graphql", ["graphql-transport-ws"], None, proxy="http://127.0.0.1:1")
+        websocket_connect.ws_connect(
+            "ws://example.mesh/graphql",
+            ["graphql-transport-ws"],
+            None,
+            proxy="http://127.0.0.1:1",
+        )
 
 
 async def _pipe(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
@@ -236,7 +263,9 @@ async def _pipe(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> N
         writer.close()
 
 
-@pytest.mark.skipif(not websocket_connect.SUPPORTS_PROXY, reason="websocket proxies need websockets>=15")
+@pytest.mark.skipif(
+    not websocket_connect.SUPPORTS_PROXY, reason="websocket proxies need websockets>=15"
+)
 async def test_graphql_ws_subscription_through_tunnel():
     """A full subscription round trip through a CONNECT tunnel to a local ws server."""
     from websockets.asyncio.server import serve
@@ -247,28 +276,46 @@ async def test_graphql_ws_subscription_through_tunnel():
             if message["type"] == "connection_init":
                 await ws.send(json.dumps({"type": "connection_ack"}))
             elif message["type"] == "start":
-                await ws.send(json.dumps({"type": "data", "id": message["id"], "payload": {"data": {"newBeast": {"id": "1"}}}}))
+                await ws.send(
+                    json.dumps(
+                        {
+                            "type": "data",
+                            "id": message["id"],
+                            "payload": {"data": {"newBeast": {"id": "1"}}},
+                        }
+                    )
+                )
                 await ws.send(json.dumps({"type": "complete", "id": message["id"]}))
 
-    connect_lines: List[str] = []
+    connect_lines: list[str] = []
 
-    async def tunnel(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+    async def tunnel(
+        reader: asyncio.StreamReader, writer: asyncio.StreamWriter
+    ) -> None:
         connect_lines.append((await reader.readline()).decode().rstrip("\r\n"))
         while (await reader.readline()) not in (b"\r\n", b"\n", b""):
             pass
         up_reader, up_writer = await asyncio.open_connection("127.0.0.1", ws_port)
         writer.write(b"HTTP/1.1 200 Connection established\r\n\r\n")
         await writer.drain()
-        await asyncio.gather(_pipe(reader, up_writer), _pipe(up_reader, writer), return_exceptions=True)
+        await asyncio.gather(
+            _pipe(reader, up_writer), _pipe(up_reader, writer), return_exceptions=True
+        )
 
-    async with serve(ws_handler, "127.0.0.1", 0, subprotocols=["graphql-ws"]) as ws_server:
+    async with serve(
+        ws_handler, "127.0.0.1", 0, subprotocols=["graphql-ws"]
+    ) as ws_server:
         ws_port = ws_server.sockets[0].getsockname()[1]
         proxy = await asyncio.start_server(tunnel, "127.0.0.1", 0)
         proxy_port = proxy.sockets[0].getsockname()[1]
         try:
-            link = GraphQLWSLink(ws_endpoint_url="ws://example.mesh:8080/graphql", proxy=f"http://127.0.0.1:{proxy_port}", allow_reconnect=False)
+            link = GraphQLWSLink(
+                ws_endpoint_url="ws://example.mesh:8080/graphql",
+                proxy=f"http://127.0.0.1:{proxy_port}",
+                allow_reconnect=False,
+            )
 
-            async def run() -> List[dict]:
+            async def run() -> list[dict]:
                 async with link:
                     return [r.data async for r in link.aexecute(opify(SUBSCRIPTION))]
 
@@ -280,8 +327,13 @@ async def test_graphql_ws_subscription_through_tunnel():
     assert connect_lines == ["CONNECT example.mesh:8080 HTTP/1.1"]
 
 
-@pytest.mark.skipif(not websocket_connect.SUPPORTS_PROXY, reason="websockets < 15 never reads proxy variables")
-async def test_graphql_ws_ignores_socks_proxy_variables(monkeypatch: pytest.MonkeyPatch):
+@pytest.mark.skipif(
+    not websocket_connect.SUPPORTS_PROXY,
+    reason="websockets < 15 never reads proxy variables",
+)
+async def test_graphql_ws_ignores_socks_proxy_variables(
+    monkeypatch: pytest.MonkeyPatch,
+):
     """Without a proxy the link connects directly, even with ALL_PROXY=socks5h
     exported for some other tool (websockets would otherwise need python-socks
     and route through it)."""
@@ -293,16 +345,28 @@ async def test_graphql_ws_ignores_socks_proxy_variables(monkeypatch: pytest.Monk
             if message["type"] == "connection_init":
                 await ws.send(json.dumps({"type": "connection_ack"}))
             elif message["type"] == "start":
-                await ws.send(json.dumps({"type": "data", "id": message["id"], "payload": {"data": {"newBeast": {"id": "1"}}}}))
+                await ws.send(
+                    json.dumps(
+                        {
+                            "type": "data",
+                            "id": message["id"],
+                            "payload": {"data": {"newBeast": {"id": "1"}}},
+                        }
+                    )
+                )
                 await ws.send(json.dumps({"type": "complete", "id": message["id"]}))
 
     for var in ("ALL_PROXY", "all_proxy", "HTTP_PROXY", "http_proxy", "SOCKS_PROXY"):
         monkeypatch.setenv(var, "socks5h://127.0.0.1:1")
-    async with serve(ws_handler, "127.0.0.1", 0, subprotocols=["graphql-ws"]) as ws_server:
+    async with serve(
+        ws_handler, "127.0.0.1", 0, subprotocols=["graphql-ws"]
+    ) as ws_server:
         port = ws_server.sockets[0].getsockname()[1]
-        link = GraphQLWSLink(ws_endpoint_url=f"ws://127.0.0.1:{port}/graphql", allow_reconnect=False)
+        link = GraphQLWSLink(
+            ws_endpoint_url=f"ws://127.0.0.1:{port}/graphql", allow_reconnect=False
+        )
 
-        async def run() -> List[dict]:
+        async def run() -> list[dict]:
             async with link:
                 return [r.data async for r in link.aexecute(opify(SUBSCRIPTION))]
 

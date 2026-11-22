@@ -1,8 +1,8 @@
 from collections.abc import AsyncIterator, Awaitable, Callable
 
+from rath.errors import NotComposedError
 from rath.links.base import ContinuationLink
 from rath.operation import GraphQLResult, Operation
-from rath.errors import NotComposedError
 
 
 async def just_print(operation: Operation) -> None:

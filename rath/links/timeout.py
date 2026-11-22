@@ -1,9 +1,9 @@
 import asyncio
 from collections.abc import AsyncIterator
 
+from rath.errors import NotComposedError
 from rath.links.base import ContinuationLink
 from rath.operation import GraphQLResult, Operation
-from rath.errors import NotComposedError
 
 
 async def just_print(operation: Operation) -> None:
@@ -49,11 +49,15 @@ class TimeoutLink(ContinuationLink):
                 while True:
                     # Wait for the next item from the async iterator
                     try:
-                        result = await asyncio.wait_for(aiter.__anext__(), timeout=self.timeout)
+                        result = await asyncio.wait_for(
+                            aiter.__anext__(), timeout=self.timeout
+                        )
                         yield result
                     except StopAsyncIteration:
                         break
             except TimeoutError as e:
-                raise TimeoutError(f"Operation timed out after {self.timeout} seconds") from e
+                raise TimeoutError(
+                    f"Operation timed out after {self.timeout} seconds"
+                ) from e
             except Exception as e:
                 raise e

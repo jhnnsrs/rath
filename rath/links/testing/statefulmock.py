@@ -1,18 +1,19 @@
 import asyncio
+import uuid
+from collections.abc import AsyncIterator, Awaitable, Callable
 from types import TracebackType
 from typing import (
-    Self,
     Any,
+    Self,
 )
-from collections.abc import AsyncIterator, Awaitable, Callable
 
 from pydantic import Field, field_validator
+
+from graphql import FieldNode, OperationType
 from rath.links.base import AsyncTerminatingLink
+from rath.links.errors import TerminatingLinkError
 from rath.links.testing.mock import AsyncMockResolver
 from rath.operation import GraphQLResult, Operation
-from graphql import FieldNode, OperationType
-import uuid
-from rath.links.errors import TerminatingLinkError
 
 
 def target_from_node(node: FieldNode) -> str:

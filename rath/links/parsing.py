@@ -1,9 +1,10 @@
+import asyncio
+from collections.abc import AsyncIterator, Awaitable, Callable
+from typing import Any
+
+from rath.errors import NotComposedError
 from rath.links.base import ContinuationLink
 from rath.operation import GraphQLResult, Operation
-from typing import Any
-from collections.abc import AsyncIterator, Awaitable, Callable
-from rath.errors import NotComposedError
-import asyncio
 
 
 async def apply_recursive(

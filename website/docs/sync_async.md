@@ -10,27 +10,19 @@ should feel natural for both type of scenarios. No matter which Terminating Link
 always the following depending on the context:
 
 ```python title="async.api"
-
 async with Rath(...) as rath:
-
     result = await rath.aexecute(...)
 
     async for reslt in rath.asubscribe(...):
         print(result)
-
-
 ```
 
 ```python title="sync.api"
-
 with Rath(...) as rath:
-
     result = rath.execute(...)
 
     for result in rath.subscribe(...):
         print(result)
-
-
 ```
 
 :::tip
@@ -74,35 +66,38 @@ from koil.qt import QtKoil
 
 
 class QWidget(qtpy.QtWidget):
-
     def __init__(*args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.koil = QtKoil(auto_connect=True) # WIll automaticalll create a threaded eventloop and destroy it on application close
+        self.koil = QtKoil(
+            auto_connect=True
+        )  # WIll automaticalll create a threaded eventloop and destroy it on application close
         self.rath = Rath(...)
         self.text = QLineEdit()
 
-        self.rath.connect() # disconnecting will automatically happen on application close or on call to disconnect
+        self.rath.connect()  # disconnecting will automatically happen on application close or on call to disconnect
         self.subscribe_to_events()
 
     def subscribe_to_events(self):
 
-        self.beastSubscription = self.rath.subscribe("""subscribtion {
+        self.beastSubscription = self.rath.subscribe(
+            """subscribtion {
             watchBeasts {
                 name
                 legs
             }
-        }""", as_task=True)
+        }""",
+            as_task=True,
+        )
 
-        self.beastSubscription.yielded.connect(self.new_beast) #pyqt signal for yield on task
-
+        self.beastSubscription.yielded.connect(
+            self.new_beast
+        )  # pyqt signal for yield on task
 
     def new_beast(res: GraphQLResult):
         self.text.setText(res.data["watchBeasts"]["name"])
 
-
     def close():
         self.beastSubscription.cancel()
-
 ```
 
 ### However

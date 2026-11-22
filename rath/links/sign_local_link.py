@@ -1,12 +1,15 @@
-from .auth import AuthTokenLink
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.backends import default_backend
-from pydantic import field_validator
-from cryptography.hazmat.primitives.asymmetric import rsa
+from collections.abc import Awaitable, Callable
 from typing import Any
-from collections.abc import Callable, Awaitable
+
 import jwt
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+from pydantic import field_validator
+
 from rath.operation import Operation
+
+from .auth import AuthTokenLink
 
 
 class SignLocalLink(AuthTokenLink):

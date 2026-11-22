@@ -99,7 +99,9 @@ def get_attributes_or_error(object: Any, *args: str) -> Any:
                 errors.append(i)
 
     if len(errors) > 0:
-        raise NotQueriedError(f"Required fields {errors} not queried on {object.__class__.__name__}")
+        raise NotQueriedError(
+            f"Required fields {errors} not queried on {object.__class__.__name__}"
+        )
 
     if len(args) == 1:
         return returns[0]

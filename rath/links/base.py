@@ -1,8 +1,10 @@
-from typing import Any, Self
 from collections.abc import AsyncIterator
+from typing import Any, Self
+
 from koil.composition import KoiledModel
-from rath.operation import GraphQLResult, Operation
+
 from rath.errors import NotComposedError
+from rath.operation import GraphQLResult, Operation
 
 
 class Link(KoiledModel):

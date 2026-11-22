@@ -1,16 +1,8 @@
 """Tests for operation.py – opify(), Context, Operation, and exception classes."""
-import pytest
-from graphql import DocumentNode
 
-from rath.operation import (
-    Context,
-    Extensions,
-    GraphQLException,
-    GraphQLResult,
-    Operation,
-    SubscriptionDisconnect,
-    opify,
-)
+import pytest
+
+from graphql import DocumentNode
 from rath.errors import (
     NotComposedError,
     NotConnectedError,
@@ -27,7 +19,15 @@ from rath.links.errors import (
     TokenLoaderNotSetError,
     TokenRefresherNotSetError,
 )
-
+from rath.operation import (
+    Context,
+    Extensions,
+    GraphQLException,
+    GraphQLResult,
+    Operation,
+    SubscriptionDisconnect,
+    opify,
+)
 
 # ---------------------------------------------------------------------------
 # opify()

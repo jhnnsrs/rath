@@ -16,7 +16,12 @@ def test_inside_a_trace_the_request_carries_it() -> None:
     headers = {"Authorization": "Bearer x"}
     entered = context.attach(propagate.extract({"traceparent": TRACEPARENT}))
     try:
-        assert traced(headers) == {"Authorization": "Bearer x", "traceparent": TRACEPARENT}
+        assert traced(headers) == {
+            "Authorization": "Bearer x",
+            "traceparent": TRACEPARENT,
+        }
     finally:
         context.detach(entered)
-    assert headers == {"Authorization": "Bearer x"}, "the operation's own headers are left alone"
+    assert headers == {"Authorization": "Bearer x"}, (
+        "the operation's own headers are left alone"
+    )

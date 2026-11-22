@@ -1,6 +1,6 @@
-from pydantic import BaseModel
 from typing import Any, Protocol, TypeAlias
-from pydantic import GetCoreSchemaHandler
+
+from pydantic import BaseModel, GetCoreSchemaHandler
 from pydantic_core import CoreSchema, core_schema
 
 
@@ -36,7 +36,9 @@ class ID(str):
         if isinstance(v, int):
             return cls(str(v))
 
-        raise TypeError(f"Needs to be either a instance of BaseModel (with an id) or a string got {type(v)}")
+        raise TypeError(
+            f"Needs to be either a instance of BaseModel (with an id) or a string got {type(v)}"
+        )
 
 
 class WithId(Protocol):

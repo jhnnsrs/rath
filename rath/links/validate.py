@@ -1,19 +1,21 @@
-from typing import cast
 from collections.abc import AsyncIterator
+from glob import glob
+from typing import cast
+
+from graphql.language.parser import parse
+from pydantic import model_validator
+
 from graphql import (
     GraphQLSchema,
+    IntrospectionQuery,
     build_ast_schema,
     build_client_schema,
     get_introspection_query,
     validate,
-    IntrospectionQuery,
 )
-from graphql.language.parser import parse
-from pydantic import model_validator
 from rath.links.base import ContinuationLink
 from rath.links.errors import ContinuationLinkError
 from rath.operation import GraphQLResult, Operation, opify
-from glob import glob
 
 
 def schemify(

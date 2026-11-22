@@ -1,4 +1,4 @@
-""" Links module. 
+"""Links module.
 
 
 The links module contains all the links that can be used to compose a client.

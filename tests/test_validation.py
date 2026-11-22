@@ -1,9 +1,11 @@
-from rath.links.validate import ValidatingLink, ValidationError
-from rath.operation import Operation
 import pytest
+
+from rath import Rath
 from rath.links import compose
 from rath.links.testing.mock import AsyncMockLink, AsyncMockResolver
-from rath import Rath
+from rath.links.validate import ValidatingLink, ValidationError
+from rath.operation import Operation
+
 from .utils import build_relative_glob
 
 schema = """

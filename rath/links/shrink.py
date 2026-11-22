@@ -1,5 +1,5 @@
-from rath.operation import Operation
 from rath.links.parsing import ParsingLink
+from rath.operation import Operation
 
 
 class ShrinkingLink(ParsingLink):

@@ -3,14 +3,14 @@
 import copy
 import pickle
 from types import SimpleNamespace
-from typing import Any, List, Optional
+from typing import Any
 
 import pytest
 from pydantic import BaseModel, ConfigDict
 
+from rath.errors import EntityNotFound
 from rath.origin import ORIGIN_KEY, ContextBound, Origin, get_origin, origin_context
 from rath.traits import FederationFetchable
-from rath.errors import EntityNotFound
 from rath.turms.fragment import (
     afetch_fragment_via,
     afetch_fragments_via,
@@ -28,8 +28,8 @@ class Dataset(ContextBound, BaseModel):
     model_config = ConfigDict(frozen=True)
     id: str
     store: Store
-    views: List[Store]
-    maybe: Optional[Store] = None
+    views: list[Store]
+    maybe: Store | None = None
 
 
 class Operation(BaseModel):
@@ -64,7 +64,9 @@ def app() -> UncopyableApp:
 
 @pytest.fixture()
 def bound(app: UncopyableApp) -> Dataset:
-    return Dataset.model_validate(DATA, context=origin_context(client=app, rath="client"))
+    return Dataset.model_validate(
+        DATA, context=origin_context(client=app, rath="client")
+    )
 
 
 def test_one_validation_binds_the_whole_result(app: UncopyableApp) -> None:
@@ -151,7 +153,6 @@ class Entity(ContextBound, FederationFetchable, BaseModel):
         type = "Entity"
 
 
-
 class FakeRath:
     def __init__(self) -> None:
         self.queries: list[dict[str, Any]] = []
@@ -171,7 +172,10 @@ def test_fetched_entity_is_bound_to_what_fetched_it() -> None:
     rath = FakeRath()
 
     entity = fetch_fragment_via(
-        Entity, id="7", rath=rath, origin=origin_context(client="app", rath=rath)  # type: ignore[arg-type]
+        Entity,
+        id="7",
+        rath=rath,  # type: ignore[arg-type]
+        origin=origin_context(client="app", rath=rath),  # type: ignore[arg-type]
     )
 
     assert entity.id == "7"
@@ -184,7 +188,10 @@ async def test_async_fetched_entity_is_bound_too() -> None:
     rath = FakeRath()
 
     entity = await afetch_fragment_via(
-        Entity, id="7", rath=rath, origin=origin_context(client="app", rath=rath)  # type: ignore[arg-type]
+        Entity,
+        id="7",
+        rath=rath,  # type: ignore[arg-type]
+        origin=origin_context(client="app", rath=rath),  # type: ignore[arg-type]
     )
 
     assert entity.bound_client() == "app"
@@ -283,7 +290,10 @@ async def test_many_ids_are_one_request_answered_in_order() -> None:
     rath = RecordingRath({"1": {"id": "1"}, "3": {"id": "3"}})
 
     found = await afetch_fragments_via(
-        InstanceRef, ["3", "2", "1"], rath=rath, origin=origin_context(client="app")  # type: ignore[arg-type]
+        InstanceRef,
+        ["3", "2", "1"],
+        rath=rath,  # type: ignore[arg-type]
+        origin=origin_context(client="app"),
     )
 
     assert len(rath.requests) == 1
@@ -338,7 +348,9 @@ def test_the_caller_can_supply_the_origin() -> None:
 class LayeredRef(InstanceRef):
     @classmethod
     def fetch_origin(cls, client: Any) -> Any:
-        return origin_context(client=client, rath=client.rath, datalayer=client.datalayer)
+        return origin_context(
+            client=client, rath=client.rath, datalayer=client.datalayer
+        )
 
 
 @pytest.mark.asyncio

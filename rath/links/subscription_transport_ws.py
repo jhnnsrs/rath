@@ -1,35 +1,34 @@
+import asyncio
+import json
+import logging
+import ssl
+from collections.abc import AsyncIterator
 from ssl import SSLContext
 from typing import (
-    NotRequired,
     Any,
     Literal,
+    NotRequired,
     Self,
     TypedDict,
 )
-from collections.abc import AsyncIterator
-from graphql import OperationType
-from pydantic import Field
-from rath.links.websocket_connect import ws_connect
-import json
-import asyncio
-import logging
-import ssl
+
 import certifi
+from pydantic import Field
+
+from graphql import OperationType
+from rath.links.base import AsyncTerminatingLink
 from rath.links.errors import (
     LinkNotConnectedError,
     TerminatingLinkError,
     TokenLoaderNotSetError,
 )
-
-
+from rath.links.websocket_connect import ws_connect
 from rath.operation import (
     GraphQLException,
     GraphQLResult,
     Operation,
     SubscriptionDisconnect,
 )
-from rath.links.base import AsyncTerminatingLink
-
 
 logger = logging.getLogger(__name__)
 
@@ -474,7 +473,7 @@ class SubscriptionTransportWsLink(AsyncTerminatingLink):
 
         id = operation.id
         subscribe_queue: asyncio.Queue[TransportMessage] = asyncio.Queue()
-        
+
         if not self._ongoing_subscriptions:
             self._ongoing_subscriptions = {}
 

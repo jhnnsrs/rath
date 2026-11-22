@@ -1,10 +1,13 @@
-from testcontainers.compose import DockerCompose
+import subprocess
+
 import pytest
+from testcontainers.compose import DockerCompose
+
 from rath import Rath
 from rath.links.aiohttp import AIOHttpLink
+
 from .integration.utils import wait_for_http_response
 from .utils import build_relative
-import subprocess
 
 
 class DockerV2Compose(DockerCompose):

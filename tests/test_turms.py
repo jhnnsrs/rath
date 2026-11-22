@@ -1,7 +1,9 @@
 import pytest
-from rath.links.testing.mock import AsyncMockLink
-from .apis.tests import get_beasts, aget_beasts
+
 from rath import Rath
+from rath.links.testing.mock import AsyncMockLink
+
+from .apis.tests import aget_beasts, get_beasts
 from .mocks import MutationAsync, QueryAsync
 
 

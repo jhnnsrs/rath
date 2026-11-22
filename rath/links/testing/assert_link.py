@@ -1,4 +1,5 @@
 from collections.abc import AsyncIterator, Callable
+
 from rath.links.base import AsyncTerminatingLink
 from rath.operation import GraphQLResult, Operation
 
@@ -26,8 +27,8 @@ class AssertLink(AsyncTerminatingLink):
             The result of the operation
         """
         for assertion in self.assertions:
-            assert assertion(
-                operation
-            ), f"Assertion failed for operation {operation} on {assertion}"
+            assert assertion(operation), (
+                f"Assertion failed for operation {operation} on {assertion}"
+            )
 
         yield GraphQLResult(data={})

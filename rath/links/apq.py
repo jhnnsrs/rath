@@ -1,9 +1,9 @@
 import hashlib
 from collections.abc import AsyncIterator
 
+from rath.errors import NotComposedError
 from rath.links.base import ContinuationLink
 from rath.operation import GraphQLException, GraphQLResult, Operation
-from rath.errors import NotComposedError
 
 
 class ApqLink(ContinuationLink):
@@ -19,9 +19,7 @@ class ApqLink(ContinuationLink):
         sha256.update(query.encode("utf-8"))
         return sha256.hexdigest()
 
-    async def aexecute(
-        self, operation: Operation
-    ) -> AsyncIterator[GraphQLResult]:
+    async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
         if not self.next:
             raise NotComposedError("No next link set")
 

@@ -18,7 +18,9 @@ except ImportError:  # pragma: no cover - websockets < 13
 
     LEGACY_WEBSOCKETS = True
 
-SUPPORTS_PROXY = not LEGACY_WEBSOCKETS and "proxy" in inspect.signature(_connect).parameters
+SUPPORTS_PROXY = (
+    not LEGACY_WEBSOCKETS and "proxy" in inspect.signature(_connect).parameters
+)
 
 
 def ws_connect(

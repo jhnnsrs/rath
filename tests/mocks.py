@@ -1,5 +1,6 @@
-from rath.links.testing.mock import AsyncMockResolver
 import asyncio
+
+from rath.links.testing.mock import AsyncMockResolver
 
 
 class QueryAsync(AsyncMockResolver):

@@ -1,12 +1,14 @@
 import sys
+
+from countries.schema import Countries
+from koil.qt import QtKoil
+from PyQt5 import QtWidgets
+from rath.qt import QtRathQuery
+
+from rath import Rath
+from rath.links import compose
 from rath.links.aiohttp import AIOHttpLink
 from rath.links.validate import ValidatingLink
-from rath.links import compose
-from rath import Rath
-from rath.qt import QtRathQuery
-from PyQt5 import QtWidgets
-from koil.qt import QtKoil
-from countries.schema import Countries
 
 
 class QtRathWidget(QtWidgets.QWidget):

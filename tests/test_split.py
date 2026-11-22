@@ -1,10 +1,12 @@
+import pytest
+
 from graphql import OperationType
+from rath import Rath
+from rath.links import split
 from rath.links.testing.mock import AsyncMockLink
 from rath.links.testing.statefulmock import AsyncStatefulMockLink
-import pytest
-from rath.links import split
+
 from .mocks import *
-from rath import Rath
 
 
 @pytest.fixture()

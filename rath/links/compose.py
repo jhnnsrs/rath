@@ -1,10 +1,11 @@
-from typing import Self, Any
 from collections.abc import AsyncIterator
+from typing import Any, Self
 
 from pydantic import field_validator
+
+from rath.errors import NotComposedError
 from rath.links.base import ContinuationLink, Link, TerminatingLink
 from rath.operation import GraphQLResult, Operation
-from rath.errors import NotComposedError
 
 
 class ComposedLink(TerminatingLink):
@@ -29,9 +30,13 @@ class ComposedLink(TerminatingLink):
         if not all(isinstance(link, Link) for link in value):
             raise ValueError("ComposedLink requires all links to be Links")
 
-        assert isinstance(value[-1], TerminatingLink), "Last link must be a TerminatingLink"
+        assert isinstance(value[-1], TerminatingLink), (
+            "Last link must be a TerminatingLink"
+        )
         for link in value[:-1]:
-            assert isinstance(link, ContinuationLink), f"All but the last must be ContinuationLinks: check {link}"
+            assert isinstance(link, ContinuationLink), (
+                f"All but the last must be ContinuationLinks: check {link}"
+            )
 
         return value
 
@@ -50,7 +55,9 @@ class ComposedLink(TerminatingLink):
         # We need to make sure that the links are connected in the correct order
         for i in range(len(self.links) - 1):
             link = self.links[i]
-            assert isinstance(link, ContinuationLink), f"All but the last must be ContinuationLinks: check {self.links[i]}"
+            assert isinstance(link, ContinuationLink), (
+                f"All but the last must be ContinuationLinks: check {self.links[i]}"
+            )
             link.set_next(self.links[i + 1])
 
         for link in self.links:
@@ -96,7 +103,9 @@ class TypedComposedLink(TerminatingLink):
         for _, link in self:
             if isinstance(link, Link):
                 if current_link:
-                    assert isinstance(current_link, ContinuationLink), f"All but the last must be ContinuationLinks: check {current_link}"
+                    assert isinstance(current_link, ContinuationLink), (
+                        f"All but the last must be ContinuationLinks: check {current_link}"
+                    )
                     current_link.set_next(link)
                     await current_link.__aenter__()
                 else:
@@ -126,7 +135,9 @@ class TypedComposedLink(TerminatingLink):
     async def aexecute(self, operation: Operation) -> AsyncIterator[GraphQLResult]:
         """Execute the first link"""
         if not self._firstlink:
-            raise NotComposedError("Links need to be composed before they can be executed. (Through __aenter__)")
+            raise NotComposedError(
+                "Links need to be composed before they can be executed. (Through __aenter__)"
+            )
 
         async for result in self._firstlink.aexecute(operation):
             yield result

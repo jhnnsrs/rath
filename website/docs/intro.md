@@ -113,7 +113,6 @@ result = rath.query(query)
 
 # later
 rath.disconnect()
-
 ```
 
 :::warning
@@ -137,9 +136,8 @@ rath = Rath(link=link)
 
 
 async def main():
-  async with rath as r:
-
-    query = """query TestQuery {
+    async with rath as r:
+        query = """query TestQuery {
       capsules {
         id
         missions {
@@ -149,7 +147,7 @@ async def main():
     }
     """
 
-    result = await r.query(query)
+        result = await r.query(query)
 
 
 asyncio.run(main())

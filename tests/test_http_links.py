@@ -4,14 +4,14 @@ The aiohttp/httpx links build their own client internally, so most paths require
 live server. The subscription guard needs no network at all, and the httpx response
 handling is exercised with a small monkeypatched AsyncClient.
 """
+
 import pytest
 
 import rath.links.httpx as httpx_module
 from rath.links.aiohttp import AIOHttpLink
-from rath.links.httpx import HttpxLink
 from rath.links.errors import MalformedResponseError
+from rath.links.httpx import HttpxLink
 from rath.operation import GraphQLException, opify
-
 
 SUBSCRIPTION = "subscription { newBeast { id } }"
 QUERY = "query GetBeast { beast { id } }"
@@ -115,7 +115,9 @@ async def test_httpx_raises_graphql_exception_with_errors(monkeypatch):
 
 async def test_httpx_returns_data_on_success(monkeypatch):
     """Happy-path control through the patched client."""
-    _patch_httpx_response(monkeypatch, _FakeResponse(200, {"data": {"beast": {"id": "1"}}}))
+    _patch_httpx_response(
+        monkeypatch, _FakeResponse(200, {"data": {"beast": {"id": "1"}}})
+    )
 
     link = HttpxLink(endpoint_url="http://example.com/graphql")
     async with link:

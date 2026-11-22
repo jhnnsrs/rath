@@ -11,8 +11,8 @@ the lookup is only as well scoped as the server makes it: check that the service
 scopes ``_entities`` like its ``get_x`` queries before switching a type over.
 """
 
-from typing import Any
 from collections.abc import Callable, Sequence
+from typing import Any
 
 from rath.scalars import IDCoercible
 from rath.turms.fragment import TFragment, afetch_fragment_via, afetch_fragments_via
@@ -60,7 +60,8 @@ def federated(
         )
 
     async def aexpand_many(
-        client: Any, ids: Sequence[IDCoercible]  # noqa: ANN401
+        client: Any,
+        ids: Sequence[IDCoercible],  # noqa: ANN401
     ) -> list[TFragment | None]:
         return await afetch_fragments_via(
             fragment, ids, rath=client.rath, origin=bound_to(client)

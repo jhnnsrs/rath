@@ -1,10 +1,12 @@
 import pytest
+from koil import Koil
+
+from rath import Rath
 from rath.links import compose
 from rath.links.testing.mock import AsyncMockLink
 from rath.links.testing.statefulmock import AsyncStatefulMockLink
-from rath import Rath
+
 from .mocks import MutationAsync, QueryAsync, SubscriptionAsync
-from koil import Koil
 
 
 @pytest.fixture()

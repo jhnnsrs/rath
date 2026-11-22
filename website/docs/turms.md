@@ -74,7 +74,6 @@ query get_beasts {
 In normal rath logic you would write the code something like this
 
 ```python
-
 rath = Rath(AIOHttpLink(url="..."))
 
 with rath:
@@ -92,7 +91,6 @@ with rath:
     """)
 
     first_beast_name = result.data["get_beasts"][0]["commonName"]
-
 ```
 
 This would be a perfectly fine scenario, however accessing nested dictionaries, can lead to unexpected
@@ -182,7 +180,9 @@ class Beast(BaseModel):
     class Meta:
         """Meta class for Beast"""
 
-        document = "fragment Beast on Beast {\n  commonName\n  taxClass\n  __typename\n}"
+        document = (
+            "fragment Beast on Beast {\n  commonName\n  taxClass\n  __typename\n}"
+        )
         name = "Beast"
         type = "Beast"
 

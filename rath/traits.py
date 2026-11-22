@@ -1,10 +1,19 @@
-from typing import Any, TypeVar
 from collections.abc import Sequence
+from typing import Any, TypeVar
+
 from rath.origin import (
     ORIGIN_KEY as ORIGIN_KEY,
+)
+from rath.origin import (
     ContextBound as ContextBound,
+)
+from rath.origin import (
     Origin as Origin,
+)
+from rath.origin import (
     get_origin as get_origin,
+)
+from rath.origin import (
     origin_context as origin_context,
 )
 from rath.scalars import IDCoercible
@@ -58,7 +67,9 @@ class FederationFetchable:
 
     @classmethod
     def expand_many(
-        cls: type[T], ids: Sequence[IDCoercible], client: Any  # noqa: ANN401
+        cls: type[T],
+        ids: Sequence[IDCoercible],
+        client: Any,  # noqa: ANN401
     ) -> list[T | None]:
         """Fetch several entities in one request, ``None`` where there is none."""
         return fetch_fragments_via(
@@ -67,7 +78,9 @@ class FederationFetchable:
 
     @classmethod
     async def aexpand_many(
-        cls: type[T], ids: Sequence[IDCoercible], client: Any  # noqa: ANN401
+        cls: type[T],
+        ids: Sequence[IDCoercible],
+        client: Any,  # noqa: ANN401
     ) -> list[T | None]:
         """Asynchronously fetch several entities in one request, in the order of ``ids``."""
         return await afetch_fragments_via(

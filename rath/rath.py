@@ -1,19 +1,19 @@
+from collections.abc import AsyncGenerator, Generator
 from types import TracebackType
-from koil.composition import KoiledModel
-from pydantic import Field, field_validator
-from rath.errors import NotConnectedError
-from rath.links.base import TerminatingLink, ContinuationLink
 from typing import (
     Any,
 )
-from collections.abc import AsyncGenerator, Generator
+
+from koil import unkoil, unkoil_gen
+from koil.composition import KoiledModel
+from pydantic import Field, field_validator
+
 from graphql import (
     DocumentNode,
 )
+from rath.errors import NotConnectedError
+from rath.links.base import ContinuationLink, TerminatingLink
 from rath.operation import GraphQLResult, Operation, opify
-from koil import unkoil_gen, unkoil
-
-
 
 
 class Rath(KoiledModel):
@@ -151,9 +151,7 @@ class Rath(KoiledModel):
         Returns:
             GraphQLResult: The result of the query
         """
-        return unkoil(
-            self.aquery, query, variables, headers, operation_name, **kwargs
-        )
+        return unkoil(self.aquery, query, variables, headers, operation_name, **kwargs)
 
     def subscribe(
         self,

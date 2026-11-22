@@ -1,26 +1,28 @@
 import asyncio
+import json
+import logging
+import ssl
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import datetime
 from http import HTTPStatus
-import json
 from ssl import SSLContext
 from typing import Any, Self
-from collections.abc import AsyncIterator
-from rath.links.types import Payload
-from rath.trace import traced
+
 import aiohttp
-from graphql import OperationType
+import certifi
 from pydantic import Field
-from rath.operation import GraphQLException, GraphQLResult, Operation
+
+from graphql import OperationType
 from rath.links.base import AsyncTerminatingLink
 from rath.links.errors import (
     AuthenticationError,
     MalformedResponseError,
     is_auth_error,
 )
-import logging
-import certifi
-import ssl
+from rath.links.types import Payload
+from rath.operation import GraphQLException, GraphQLResult, Operation
+from rath.trace import traced
 
 logger = logging.getLogger(__name__)
 
@@ -212,7 +214,9 @@ class AIOHttpLink(AsyncTerminatingLink):
 
         async with self._request_session() as session:
             async with session.post(
-                self.endpoint_url, headers=traced(operation.context.headers), **post_kwargs
+                self.endpoint_url,
+                headers=traced(operation.context.headers),
+                **post_kwargs,
             ) as response:
                 if response.status in self.auth_errors:
                     raise AuthenticationError(

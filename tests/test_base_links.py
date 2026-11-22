@@ -1,13 +1,14 @@
 """Tests for Link, ContinuationLink, ComposedLink and the compose() helper."""
+
+from collections.abc import AsyncIterator
+
 import pytest
-from typing import AsyncIterator
 
-from rath.links.base import AsyncTerminatingLink, ContinuationLink, Link
-from rath.links import compose
-from rath.links.compose import ComposedLink
 from rath.errors import NotComposedError
-from rath.operation import opify, GraphQLResult, Operation
-
+from rath.links import compose
+from rath.links.base import AsyncTerminatingLink, ContinuationLink
+from rath.links.compose import ComposedLink
+from rath.operation import GraphQLResult, Operation, opify
 
 QUERY = """
 query {

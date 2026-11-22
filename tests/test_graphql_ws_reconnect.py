@@ -8,7 +8,9 @@ from rath.links.graphql_ws import GQL_CONNECTION_ACK, GraphQLWSLink
 
 
 @pytest.mark.asyncio
-async def test_the_acknowledgement_of_a_reconnect_does_not_fail_the_connection() -> None:
+async def test_the_acknowledgement_of_a_reconnect_does_not_fail_the_connection() -> (
+    None
+):
     """Every reconnect is handed the future of the first connection. Resolving it a second
     time raised, which ended each new connection the moment the server acknowledged it."""
     link = GraphQLWSLink(ws_endpoint_url="ws://localhost/graphql")

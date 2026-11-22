@@ -1,14 +1,13 @@
+import io
+from collections.abc import AsyncGenerator, AsyncIterator
+from typing import Any
+
+import aiohttp
+from pydantic import Field
+
 from rath.errors import NotComposedError
 from rath.links.base import ContinuationLink
 from rath.operation import GraphQLResult, Operation
-from collections.abc import AsyncIterator
-
-import io
-import aiohttp
-from collections.abc import AsyncGenerator
-from pydantic import Field
-
-from typing import Any
 
 FILE_CLASSES = (
     io.IOBase,
@@ -98,9 +97,13 @@ class FileExtraction(ContinuationLink):
         The variables dict is then updated to replace the file-like objects with nulls.
         """
         if not self.next:
-            raise NotComposedError("FileExtractionLink must be composed with another link")
+            raise NotComposedError(
+                "FileExtractionLink must be composed with another link"
+            )
 
-        operation.variables, operation.context.files = parse_nested_files(operation.variables, file_classes=self.file_classes)
+        operation.variables, operation.context.files = parse_nested_files(
+            operation.variables, file_classes=self.file_classes
+        )
 
         async for result in self.next.aexecute(operation):
             yield result

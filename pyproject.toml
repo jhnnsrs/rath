@@ -22,31 +22,6 @@ aiohttp = [
 httpx = ["httpx>=0.23.0,<0.24"]
 signing = ["cryptography>=41.0.3,<42"]
 
-[tool.uv]
-dev-dependencies = [
-    "httpx>=0.23.0,<0.24",
-    "autoflake>=1.7.7,<2",
-    "pytest>=7.2.0,<8",
-    "testcontainers>=3.7.0,<4",
-    "pytest-qt>=4.2.0,<5",
-    "pytest-asyncio>=0.20.2,<0.21",
-    "aiohttp>=3.8.3,<4",
-    "websockets>=15",
-    "black>=22.10.0,<23",
-    "pytest-cov>=4.0.0,<5",
-    "ruff>0.11",
-    "cryptography>=41.0.3,<42",
-    "pyjwt>=2.8.0,<3",
-    "turms>=2.3.0",
-    # `tests/test_qt.py` imports `koil.qt`, which imports qtpy. This used to
-    # arrive by accident through a `fakts==1.0.0` dev-pin nothing imported;
-    # removing that dead pin took qtpy with it. Ask for it directly.
-    "koil[qtpy]>=3.3.3",
-    "pyqt5==5.15.11",
-    "python-semantic-release>=9.21.1",
-    "dokker>=2.8",
-]
-
 [tool.hatch.build.targets.sdist]
 include = ["rath"]
 
@@ -62,38 +37,6 @@ include = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.ruff]
-extend-select = ["ANN", "D1", "UP"]
-extend-ignore = ["ANN101", "ANN002", "ANN003", "D100", "ANN401", "UP037", "UP038", "UP042"]
-
-# Exclude a variety of commonly ignored directories.
-exclude = [
-    ".bzr",
-    ".direnv",
-    ".eggs",
-    ".git",
-    ".hg",
-    ".nox",
-    ".pants.d",
-    ".pytype",
-    ".ruff_cache",
-    ".svn",
-    ".tox",
-    ".venv",
-    "__pypackages__",
-    "_build",
-    "buck-out",
-    "build",
-    "dist",
-    "node_modules",
-    "venv",
-    "tests",
-    "examples",
-]
-
-# Same as Black.
-line-length = 300
-
 [[tool.pydoc-markdown.loaders]]
 type = "python"
 search_path = ["rath"]
@@ -107,10 +50,34 @@ markers = [
     "public: marks tests that require a public api",
 ]
 
-
 [tool.semantic_release]
 version_toml = ["pyproject.toml:project.version"]
 upload_to_pypi = true
 branch = "main"
 build_command = "uv build"
 
+[dependency-groups]
+dev = [
+    "httpx>=0.23.0,<0.24",
+    "autoflake>=1.7.7,<2",
+    "pytest>=7.2.0,<8",
+    "testcontainers>=3.7.0,<4",
+    "pytest-qt>=4.2.0,<5",
+    "pytest-asyncio>=0.20.2,<0.21",
+    "aiohttp>=3.8.3,<4",
+    "websockets>=15",
+    "black>=22.10.0,<23",
+    "pytest-cov>=4.0.0,<5",
+    "cryptography>=41.0.3,<42",
+    "pyjwt>=2.8.0,<3",
+    "turms>=2.3.0",
+    # `tests/test_qt.py` imports `koil.qt`, which imports qtpy. This used to
+    # arrive by accident through a `fakts==1.0.0` dev-pin nothing imported;
+    # removing that dead pin took qtpy with it. Ask for it directly.
+    "koil[qtpy]>=3.3.3",
+    "pyqt5==5.15.11",
+    "python-semantic-release>=9.21.1",
+    "dokker>=2.8",
+    "ruff==0.17.6",
+    "basedpyright==1.40.2",
+]

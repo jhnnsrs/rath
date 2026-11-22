@@ -1,0 +1,9 @@
+# This repo's ruff settings: the arkitekt standard (ruff.shared.toml, synced
+# from arkitektio/.github) plus what is this repo's own. Add excludes for
+# vendored code and per-file ignores here; never edit ruff.shared.toml.
+extend = "ruff.shared.toml"
+target-version = "py311"
+# turms-generated GraphQL clients the tests run against.
+extend-exclude = [
+  "tests/apis",
+]

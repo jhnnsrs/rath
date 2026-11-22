@@ -1,9 +1,10 @@
 import json
 from typing import Any
-from pydantic import BaseModel
-from rath.operation import Operation
-from rath.links.parsing import ParsingLink
 
+from pydantic import BaseModel
+
+from rath.links.parsing import ParsingLink
+from rath.operation import Operation
 
 ValidNestedTypes = BaseModel | dict[str, Any] | list[Any] | Any
 
@@ -79,6 +80,8 @@ class DictingLink(ParsingLink):
             The parsed operation
         """
 
-        shrinked_variables = parse_variables(operation.variables, by_alias=self.by_alias)
+        shrinked_variables = parse_variables(
+            operation.variables, by_alias=self.by_alias
+        )
         operation.variables.update(shrinked_variables)
         return operation

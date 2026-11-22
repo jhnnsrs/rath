@@ -1,14 +1,15 @@
 """Tests for ApqLink (Automatic Persisted Queries)."""
-import hashlib
-import pytest
-from typing import AsyncIterator
 
+import hashlib
+from collections.abc import AsyncIterator
+
+import pytest
+
+from rath.errors import NotComposedError
+from rath.links import compose
 from rath.links.apq import ApqLink
 from rath.links.base import AsyncTerminatingLink
-from rath.links import compose
-from rath.errors import NotComposedError
-from rath.operation import opify, GraphQLException, GraphQLResult, Operation
-
+from rath.operation import GraphQLException, GraphQLResult, Operation, opify
 
 QUERY = """
 query {

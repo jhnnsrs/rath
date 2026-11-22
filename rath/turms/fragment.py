@@ -1,10 +1,9 @@
-from rath.origin import origin_context
-from rath.rath import Rath
-from typing import Any, Protocol, TypeVar
 from collections.abc import Sequence
+from typing import Any, Protocol, TypeVar
 
 from rath.errors import EntityNotFound
-
+from rath.origin import origin_context
+from rath.rath import Rath
 from rath.scalars import IDCoercible
 
 
@@ -124,10 +123,14 @@ async def afetch_fragments_via(
     return _build(fragment, entities, ids, origin or origin_context(rath=rath))
 
 
-def _only(fragment: type[TFragment], id: IDCoercible, found: list[TFragment | None]) -> TFragment:
+def _only(
+    fragment: type[TFragment], id: IDCoercible, found: list[TFragment | None]
+) -> TFragment:
     entity = found[0]
     if entity is None:
-        raise EntityNotFound(f"No {fragment.Meta.type} with id {id!r} (or none you may see).")
+        raise EntityNotFound(
+            f"No {fragment.Meta.type} with id {id!r} (or none you may see)."
+        )
     return entity
 
 

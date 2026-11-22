@@ -24,9 +24,9 @@ of them deliberately do not depend on that package.
 """
 
 import contextvars
+from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import Protocol
-from collections.abc import Iterator
 
 TASK_HEADER = "Rekuest-Task"
 """The header a request carries its task's provenance token in."""

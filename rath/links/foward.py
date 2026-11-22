@@ -1,8 +1,8 @@
 from collections.abc import AsyncIterator
 
+from rath.errors import NotComposedError
 from rath.links.base import ContinuationLink
 from rath.operation import GraphQLResult, Operation
-from rath.errors import NotComposedError
 
 
 class ForwardLink(ContinuationLink):

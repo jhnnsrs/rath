@@ -1,5 +1,8 @@
+import asyncio
+import logging
 from collections.abc import AsyncIterator
 
+from rath.errors import NotComposedError
 from rath.links.base import ContinuationLink
 from rath.operation import (
     GraphQLException,
@@ -7,9 +10,6 @@ from rath.operation import (
     Operation,
     SubscriptionDisconnect,
 )
-import logging
-import asyncio
-from rath.errors import NotComposedError
 
 logger = logging.getLogger(__name__)
 

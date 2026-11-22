@@ -1,12 +1,14 @@
+import uuid
 from typing import Any
+
 from graphql.language import OperationDefinitionNode, print_ast
+from pydantic import BaseModel, ConfigDict, Field
+
 from graphql import (
     DocumentNode,
     get_operation_ast,
     parse,
 )
-from pydantic import BaseModel, ConfigDict, Field
-import uuid
 
 
 class Context(BaseModel):
