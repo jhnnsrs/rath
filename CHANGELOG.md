@@ -1,6 +1,70 @@
 # CHANGELOG
 
 
+## v4.2.1 (2026-11-22)
+
+### Bug Fixes
+
+- Every argument and return annotated, no Any; bugbear and async findings fixed
+  ([`6189f81`](https://github.com/jhnnsrs/rath/commit/6189f8147b24d7920d9826305d37330264f9c795))
+
+The rest of the arkitekt standard by hand, across the package, the tests and the examples (the
+  turms-generated tests/apis stay excluded).
+
+Self is gone: every link's __aenter__ takes a TypeVar bound to its class. __aexit__ tracebacks are
+  TracebackType; the websocket links type their client as websockets' ClientConnection and
+  ws_connect returns its connect. Origin, origin_context and ContextBound take object for the opaque
+  client (origin_context returns dict[str, Origin]); federated()'s expanders take a HasRath
+  protocol. FederationFetchable keeps Any for its client, with a noqa saying why: packages (mikro,
+  elektro) override fetch_origin with their own client type, which any narrower base type would make
+  an incompatible override. get_attributes_or_error gains overloads (one name: the value; several: a
+  tuple), the recursive parsing helpers take object and keep a dict a dict through an overload.
+  Before-validators take the input they are written for. Retry exhaustion and a bad PEM key raise
+  from the error they end. NeverSucceedingLink waits on an event that is never set instead of a
+  sleep loop.
+
+Tests: fixtures and resolvers typed, the star import is explicit, the compose validation tests
+  expect pydantic's ValidationError rather than any Exception, an unused test helper method is gone.
+  No behaviour change: the suite passes on 3.11 and 3.12 (185 passed, 1 skipped), integration and
+  public tests included.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+Claude-Session: https://claude.ai/code/session_011cg5eFTPpZkvu6HSjH3Bwp
+
+### Code Style
+
+- Adopt the arkitekt Python standard (ruff format, safe fixes)
+  ([`f7edc78`](https://github.com/jhnnsrs/rath/commit/f7edc78f20cb559b7b618f36eb64cfa2abdc98d4))
+
+ruff.shared.toml / pyright.shared.json synced from arkitektio/.github; the repo's own settings move
+  to ruff.toml / pyrightconfig.json (the old [tool.ruff] section is gone, and with it the exclusion
+  of tests/ and examples/; the turms-generated tests/apis stay excluded); the dev dependencies move
+  from [tool.uv] to the dev group, where ruff and basedpyright are pinned; a new quality.yaml calls
+  the shared python-quality workflow. The code is reformatted (line length 88, as Black) and ruff's
+  safe fixes applied (import order, modern annotations). Three type: ignore comments the wrapping
+  split from their argument are back on its line. No behaviour change: the suite passes as before
+  (185 passed, 1 skipped).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+Claude-Session: https://claude.ai/code/session_011cg5eFTPpZkvu6HSjH3Bwp
+
+### Continuous Integration
+
+- The shared quality workflow, required, with a type-check baseline
+  ([`eabc0e9`](https://github.com/jhnnsrs/rath/commit/eabc0e968af82acf26cf7ef3e89383b51282192f))
+
+.basedpyright/baseline.json holds the 36 errors the repo had when it adopted the standard (34 before
+  it, plus two the websocket client's type now reveals: a bytes message would not concatenate into
+  the debug log line): CI fails on any other. .git-blame-ignore-revs lists the formatting-only
+  commit. CLAUDE.md describes the standard instead of the old ruff setup.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+Claude-Session: https://claude.ai/code/session_011cg5eFTPpZkvu6HSjH3Bwp
+
+
 ## v4.2.0 (2026-11-19)
 
 ### Build System
